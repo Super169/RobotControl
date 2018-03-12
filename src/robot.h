@@ -1,7 +1,7 @@
 #ifndef _robot_h_
 #define _robot_h_
 
-#include "UBTServo.h"
+#include "UBTech.h"
 #include "FS.h"
 
 #define DEBUG Serial
@@ -66,27 +66,7 @@ char* actionDataFile = (char *) "/robot.dat";
 
 SoftwareSerial ss(12, 12, false, 256);
 
-UBTServo servo(&ss, &DEBUG);  // Debug on Serial1
-
-UBTServo servos[] {
-	NULL,
-	UBTServo(1, &ss, &DEBUG),
-	UBTServo(2, &ss, &DEBUG),
-	UBTServo(3, &ss, &DEBUG),
-	UBTServo(4, &ss, &DEBUG),
-	UBTServo(5, &ss, &DEBUG),
-	UBTServo(6, &ss, &DEBUG),
-	UBTServo(7, &ss, &DEBUG),
-	UBTServo(8, &ss, &DEBUG),
-	UBTServo(9, &ss, &DEBUG),
-	UBTServo(10, &ss, &DEBUG),
-	UBTServo(11, &ss, &DEBUG),
-	UBTServo(12, &ss, &DEBUG),
-	UBTServo(13, &ss, &DEBUG),
-	UBTServo(14, &ss, &DEBUG),
-	UBTServo(15, &ss, &DEBUG),
-	UBTServo(16, &ss, &DEBUG)
-};
+UBTech servo(&ss, &DEBUG);  // Debug on Serial1
 
 int servoCnt = 0;
 byte *retBuffer;
