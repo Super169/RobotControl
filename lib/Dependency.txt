@@ -1,0 +1,2 @@
+git clone http://super169.asuscomm.com:30000/PlatformIO/UBTech.git
+git clone http://super169.asuscomm.com:30000/arduino/espsoftwareserial.git -b dev
