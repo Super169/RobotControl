@@ -6,7 +6,7 @@
 */
 
 #pragma region "UBTech Command"
-void cmd_UBTCommand(byte b1) {
+void UBT_ServoCommand(byte b1) {
 	delay(1);  // just for safety
 	byte cmd[10];
 	byte result[10];

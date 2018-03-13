@@ -1,5 +1,10 @@
 #include "robot.h"
 
+
+void V1_CommandSet(byte b1) {
+
+}
+
 void serialPrintByte(byte data) {
 	if (data < 0x10) Serial.print("0");
 	Serial.print(data, HEX);

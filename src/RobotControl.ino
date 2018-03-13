@@ -13,12 +13,10 @@ UBTech Controller Command
 - EF FE 00 00 00 00 00 00 {sum} ED : Servo status
 - F2 2F 00 00 00 00 00 00 {sum} ED : Stop play
 - F5 5F 01 00 00 00 00 00 {sum} ED : Firmware version
-- FB BF : Get USB Type - not implemented
-- F4 4F : Get USB Type - not implemented
+- FB BF - not implemented : will be handled as BT command
+- F4 4F : fine tuning - not implemented
 - F9 9F : Get USB Type - not implemented
 - F3 3F {len} xx - xx {sum} ED : Play action by name
-
-
 
 UBTech Alpha 1 BT Protocol
 - FB BF {len} {cmd} xx ... xx {sum} ED
@@ -62,9 +60,6 @@ void setup() {
 	DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
 	unsigned long actionSzie = sizeof(actionTable);
 
-
-DEBUG.println("All servos ready");
-
 	servo.begin();
 	ReadSPIFFS(false);
 
@@ -72,21 +67,62 @@ DEBUG.println("All servos ready");
 }
 
 void loop() {
-	fx_remoteControl();
+	CheckSerialInput();
+	playAction();
+	CheckSerialInput();
+	remoteControl();
 }
 
-void fx_remoteControl() {
-	while (!Serial.available());
-	cmd = Serial.read();
-	delay(1);
-	switch (cmd) {
-
-		case 0xFA:
-		case 0xFC:
-			cmd_UBTCommand(cmd);
-			break;
+// move data from Serial buffer to command buffer
+void CheckSerialInput() {
+	if (Serial.available()) {
+		delay(1); // make sure one command is completed
+		while (Serial.available()) {
+			cmdBuffer.write(Serial.read());
+		}
 	}
-	clearInputBuffer();
+}
+
+void playAction() {
+
+}
+
+void remoteControl() {
+	while (Serial.available()) {
+		cmd = Serial.read();
+		delay(1);
+		switch (cmd) {
+
+			case 0xFB:
+				UBT_BTCommand(cmd);
+				break;
+
+			case 0xF1:
+			case 0xF2:
+			case 0xF3:
+			case 0xF4:
+			case 0xF5:
+			case 0xF9:
+			case 0xEF:
+				UBT_ControlBoard(cmd);
+				break;
+
+			case 0xFA:
+			case 0xFC:
+				UBT_ServoCommand(cmd);
+				break;
+
+			case 0xA9:
+				V2_CommandSet(cmd);
+				break;
+
+			default:
+				V1_CommandSet(cmd);
+				break;
+				
+		}
+	}
+	// clearInputBuffer();
 }
 
 void clearInputBuffer() {

@@ -3,8 +3,13 @@
 
 #include "UBTech.h"
 #include "FS.h"
+#include "Buffer.h"
 
 #define DEBUG Serial
+
+#define BUFFER_SIZE 1024
+
+Buffer cmdBuffer(BUFFER_SIZE);
 
 #define MAX_ACTION 26
 #define MAX_POSES 30 
@@ -59,6 +64,15 @@
 
 #pragma region "Global variables"
 
+byte cmdBuf[BUFFER_SIZE];
+int bufReadPtr = 0;
+int bufWritePtr = 0;
+bool bufOverflow = false;
+// if bufReadPtr = bufWritePtr : no data
+// when bufWritePtr = bufReadPtr - 1; buffer full, don't write to it
+
+
+
 byte actionTable[MAX_ACTION][MAX_POSES][MAX_POSES_SIZE];
 byte comboTable[MAX_COMBO][MAX_COMBO_SIZE];
 
@@ -82,6 +96,19 @@ byte ch, cmd;
 
 void cmd_ReadSPIFFS();
 void ReadSPIFFS(bool sendResult);
+
+void UBT_BTCommand(byte b1);
+void UBT_ControlBoard(byte b1);
+void UBT_ServoCommand(byte b1);
+
+void V1_CommandSet(byte b1);  // To be obsolete
+void V2_CommandSet(byte b1);
+
+void DebugPrintByte(byte data);
+
+byte CheckSum(byte *cmd);
+byte CheckVarSum(byte *cmd);
+byte CheckFullSum(byte *cmd);
 
 #pragma endregion
 
