@@ -49,7 +49,10 @@ GPIO-2  : Serial1 - debug console
 void setup() {
 	// Delay 2s to wait for all servo started
 	delay(5000);
-	servo.setDebug(false);  // Disable servo debug first, enable it later if needed
+
+	// SetDebug(false);  // Disable servo debug first, enable it later if needed
+	SetDebug(true);
+
 	retBuffer = servo.retBuffer();
 
 	// start both serial by default, serial for command input, serial1 for debug console
@@ -57,13 +60,14 @@ void setup() {
 	Serial.begin(115200);
 	Serial1.begin(115200);
 
+/*
 	DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
 	unsigned long actionSzie = sizeof(actionTable);
 
 	servo.begin();
 	ReadSPIFFS(false);
-
-	DEBUG.println(F("Control board ready"));
+*/
+	DEBUG.println(F("Control board ready\n\n"));
 }
 
 void loop() {
@@ -88,13 +92,15 @@ void playAction() {
 }
 
 void remoteControl() {
-	while (Serial.available()) {
-		cmd = Serial.read();
-		delay(1);
+	bool goNext = true;
+	int preCount;
+	while (cmdBuffer.available()) {
+		preCount = cmdBuffer.available();
+		cmd = cmdBuffer.peek();
 		switch (cmd) {
 
 			case 0xFB:
-				UBT_BTCommand(cmd);
+				goNext = UBT_BTCommand();
 				break;
 
 			case 0xF1:
@@ -104,31 +110,76 @@ void remoteControl() {
 			case 0xF5:
 			case 0xF9:
 			case 0xEF:
-				UBT_ControlBoard(cmd);
+				goNext = UBT_ControlBoard();
 				break;
 
 			case 0xFA:
 			case 0xFC:
-				UBT_ServoCommand(cmd);
+				goNext = UBT_ServoCommand();
 				break;
 
 			case 0xA9:
-				V2_CommandSet(cmd);
+				goNext = V2_CommandSet();
+				break;
+
+
+			case 'A':
+			case 'a':
+			case 'B':
+			case 'b':
+			case 'D':
+			case 'F':
+			case 'f':
+			case 'J':
+			case 'L':
+			case 'l':
+			case 'M':
+			case 'm':
+			case 'R':
+			case 'T':
+			case 't':
+			case 'S':
+			case 'U':
+			case 'W':
+			case 'Z':
+				goNext = V1_CommandSet();
 				break;
 
 			default:
-				V1_CommandSet(cmd);
+				cmdSkip(true);
 				break;
-				
-		}
-	}
-	// clearInputBuffer();
-}
 
-void clearInputBuffer() {
-	while (Serial.available()) {
-		Serial.read();
-		delay(1);
+		}
+		// for some situation, command data not yet competed.
+		// need to study if it should wait for full data inside the handler
+		if (goNext) {
+			if (preCount == cmdBuffer.available()) {
+				// Program bug, no data handled, but not ask for wait
+				if (debug) {
+					DEBUG.print(F("preCount: "));
+					DEBUG.print(preCount);
+					DEBUG.print(F(" => "));
+					DEBUG.println(cmdBuffer.available());
+					DEBUG.print(F("****** Missing handler: "));
+					DebugShowSkipByte();
+				}
+				cmdBuffer.skip();
+			}
+			lastCmdMs = 0;
+		} else {
+			if ((lastCmdMs)	&& (millis() - lastCmdMs > MAX_WAIT_CMD)) {
+				// Exceed max wait time for a command
+				if (debug) {
+					DEBUG.print(F("Command timeout: "));
+					DebugShowSkipByte();
+				}
+				cmdBuffer.skip();
+				lastCmdMs = 0;
+			} else {
+				if (!lastCmdMs) lastCmdMs = millis();
+				break;
+			}
+		}
 	}
 }
 

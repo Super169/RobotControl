@@ -1,9 +1,51 @@
 #include "robot.h"
 
 
-void V1_CommandSet(byte b1) {
-
+bool V1_CommandSet() {
+	byte cmd = cmdBuffer.read();
+	switch (cmd) {
+			case 'A':
+				break;
+			case 'a':
+				break;
+			case 'B':
+				break;
+			case 'b':
+				break;
+			case 'D':
+				break;
+			case 'F':
+				break;
+			case 'f':
+				break;
+			case 'J':
+				break;
+			case 'L':
+				break;
+			case 'l':
+				break;
+			case 'M':
+				break;
+			case 'm':
+				break;
+			case 'R':
+				break;
+			case 'T':
+				break;
+			case 't':
+				break;
+			case 'S':
+				break;
+			case 'U':
+				break;
+			case 'W':
+				break;
+			case 'Z':
+				break;
+	}
+	return true;
 }
+
 
 void serialPrintByte(byte data) {
 	if (data < 0x10) Serial.print("0");

@@ -5,11 +5,17 @@ Buffer::Buffer(uint16_t size)
 	_size = size;
 	if (size == 0) return;
     _buffer = (byte *) malloc(size);
+	reset();
 }
 
 Buffer::~Buffer() {
 	free(_buffer);
 }
+
+void Buffer::reset() {
+	_head = _tail = 0;
+}
+
 
 uint16_t Buffer::available() {
 	if (!_size) return 0;
@@ -54,15 +60,23 @@ byte Buffer::read() {
 	if ((!_size) || (_head == _tail)) return 0;
 	byte data = _buffer[_head];
 	_head = (_head + 1) % _size;
+	if (_head == _tail) reset();  // reset the point to reduce the chance of multiple read for block read
 	return data;
 }
 
 bool Buffer::read(byte *storage, uint16_t count) {
 	if (!peek(storage, count)) return false;
 	_head = (_head + count) % _size;
+	if (_head == _tail) reset();  // reset the point to reduce the chance of multiple read for block read
 	return true;
 }
 
+bool Buffer::skip(uint16_t count) {
+	if (available() < count) return false;
+	_head = (_head + count) % _size;
+	if (_head == _tail) reset();
+	return true;
+}
 
 bool Buffer::write(byte data) {
 	if (!_size) return false;

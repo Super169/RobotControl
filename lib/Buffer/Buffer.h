@@ -7,6 +7,7 @@ class Buffer {
     public:
         Buffer(uint16_t size);
         ~Buffer();
+		void reset();
 		uint16_t available();
 		byte peek();
 		byte peek(uint16_t ptr);
@@ -14,7 +15,12 @@ class Buffer {
 		byte write();
 		byte read();
 		bool read(byte *storage, uint16_t count);
+		bool skip() { return skip(1); }
+		bool skip(uint16_t count);
 		bool write(byte data);
+
+		int head() { return _head; }
+		int tail() { return _tail; }
 
 	private:
 		uint16_t _size;

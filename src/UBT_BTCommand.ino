@@ -1,5 +1,5 @@
 #include "robot.h"
 
-void UBT_BTCommand(byte b1) {
-	
+bool UBT_BTCommand() {
+	return true;	
 }

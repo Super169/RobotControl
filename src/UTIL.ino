@@ -1,33 +1,9 @@
 #include "robot.h"
 
-int BuferAvailable() {
-	int count = bufWritePtr - bufReadPtr;
-	if (count < 0) count += BUFFER_SIZE;
-	return count;
+void SetDebug(bool mode) {
+	debug = mode;
+	servo.setDebug(mode);
 }
-
-byte BufferPeek() {
-	if (BuferAvailable()) {
-		return cmdBuf[bufReadPtr];
-	}
-	return 0;  // should not peek without checking available
-}
-
-byte BufferRead() {
-	if (BuferAvailable()) {
-		return cmdBuf[bufReadPtr++];
-	}
-	return 0;  // should not read without checking available
-}
-
-bool BufferWrite(byte data) {
-	int newWritePtr = (bufWritePtr + 1) % BUFFER_SIZE;
-	if (newWritePtr == bufReadPtr) return false;
-	cmdBuf[bufWritePtr] = data;
-	bufWritePtr = newWritePtr;
-}
-
-
 
 void DebugPrintByte(byte data) {
 	if (data < 0x10) Serial.print("0");
@@ -72,4 +48,25 @@ byte CheckFullSum(byte *cmd) {
 		sum += cmd[i];
 	}
 	return sum;
+}
+
+void clearInputBuffer() {
+	while (Serial.available()) {
+		Serial.read();
+		if (!Serial.available()) delay(1);  // make sure no more data coming, add 1ms delay when no data.
+	}
+}
+
+bool cmdSkip(bool flag) {
+	DebugShowSkipByte();
+	cmdBuffer.skip();
+	return flag;
+}
+
+void DebugShowSkipByte() {
+	if (debug) {
+		DEBUG.print("Skip byte: ");
+		DebugPrintByte(cmdBuffer.peek());
+		DEBUG.println();
+	}
 }

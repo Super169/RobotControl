@@ -6,25 +6,45 @@
 */
 
 #pragma region "UBTech Command"
-void UBT_ServoCommand(byte b1) {
-	delay(1);  // just for safety
+bool UBT_ServoCommand() {	
+
+	// if (cmdBuffer.available() < 10) return false;
+	// It's not logicaly that 10 byte cannot be received within 1 ms, so consider as invalid input directly
+	if (cmdBuffer.available() < 10) {
+		if (debug) DEBUG.print(F("Invalid length\n"));
+		return cmdSkip(true);
+	}
+
 	byte cmd[10];
 	byte result[10];
-	cmd[0] = b1;
-	for (int i = 1; i < 10; i++) {
-		if (!Serial.available()) return;  // skip for incomplete command, it should be ready after delay(1);
-		cmd[i] = Serial.read();
+
+	cmdBuffer.peek(cmd, 10);  // Don't read command, just check the data first
+	if (cmd[9] != 0xED) {
+		if (debug) DEBUG.print(F("Invalid end code\n"));
+		return cmdSkip(true);
 	}
-	if (cmd[9] != 0xED) return;  // invalid end code
-	if (((cmd[0] == 0xFA) && (cmd[1] != 0xAF)) || ((cmd[0] == 0xFC) && (cmd[1] != 0xCF))) return;  // invalid start code
-	byte sum = 0;
-	for (int i = 2; i < 8; i++) {
-		sum += cmd[i];
+
+	if (((cmd[0] == 0xFA) && (cmd[1] != 0xAF)) || ((cmd[0] == 0xFC) && (cmd[1] != 0xCF))) {
+		if (debug) DEBUG.print(F("Invalid start code\n"));
+		return cmdSkip(true);
 	}
-	if (cmd[8] != sum) return;  // invalid checksum
+
+	byte sum = CheckSum(cmd);
+	if (cmd[8] != sum) {
+		if (debug) {
+			if (debug) DEBUG.print(F("Invalid checksum\n"));
+		}
+		return cmdSkip(true);
+	}
+	// Now a complete command received, clear data from buffer
+	cmdBuffer.skip(10);
+
 	int cnt =  (servo.execute(cmd, result));
 	if (cnt > 0) {
 		Serial.write(result, cnt);
 	}
+
+	if (debug) DEBUG.print(F("UBT Servo Command executed\n"));
+	return true;
 }
 #pragma endregion

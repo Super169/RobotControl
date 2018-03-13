@@ -1,5 +1,5 @@
 #include "robot.h"
 
-void UBT_ControlBoard(byte b1) {
-	
+bool UBT_ControlBoard() {
+	return true;
 }
