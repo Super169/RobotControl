@@ -1,16 +1,46 @@
 #include "robot.h"
 
+// A - Angle : (V1_GetServoAngle, V1_GetServoAngleText)
+// B - Debug
+// C
+// D - Download Action Data (MCU -> PC)
+// E
+// F - Free Servo
+// G 
+// H
+// I
+// J
+// K
+// L - Lock servo
+// M - Move
+// N
+// O
+// P - Play Action/Combo
+// Q
+// R - Read Action Data form SPIFFS
+// S - Stop Action
+// T - Detect Servo
+// U - Upload Action Data (PC -> MCU)
+// V
+// W - Write Action Data to SPIFFS
+// X 
+// Y 
+// Z - Reset Connection
 
 bool V1_CommandSet() {
 	byte cmd = cmdBuffer.read();
 	switch (cmd) {
 			case 'A':
+				V1_GetServoAngle();
 				break;
 			case 'a':
+				V1_GetServoAngleText();
 				break;
 			case 'B':
+				SetDebug(true);
 				break;
 			case 'b':
+				SetDebug(false);
 				break;
 			case 'D':
 				break;
@@ -31,8 +61,10 @@ bool V1_CommandSet() {
 			case 'R':
 				break;
 			case 'T':
+				V1_DetectServo();
 				break;
 			case 't':
+				V1_DetectServoText();
 				break;
 			case 'S':
 				break;
@@ -41,11 +73,13 @@ bool V1_CommandSet() {
 			case 'W':
 				break;
 			case 'Z':
+				V1_ResetConnection();
 				break;
 	}
 	return true;
 }
 
+#pragma region "Utilities"
 
 void serialPrintByte(byte data) {
 	if (data < 0x10) Serial.print("0");
@@ -67,9 +101,12 @@ int getServoId() {
 	return id;
 }
 
-#pragma region Get Servo Angle
+#pragma endregion
 
-void cmd_GetServoAngleHex() {
+#pragma region "A,a - Get Servo Angle"
+
+void V1_GetServoAngle() {
+	if (debug) DEBUG.println(F("[V1_GetServoAngleHex]"));
 	byte outBuffer[32];
 	for (int id = 1; id <= 16; id++) {
 		int pos = 2 * (id - 1);
@@ -86,10 +123,19 @@ void cmd_GetServoAngleHex() {
 			outBuffer[pos+1] = 0;
 		}
 	}
+	if (debug) {
+		for (int i = 0; i < 32; i++) {
+			DebugPrintByte(outBuffer[i]);
+			DEBUG.print(" ");
+		}
+		DEBUG.println();
+	}
 	Serial.write(outBuffer, 32);
 }
 
-void cmd_GetServoAngle() {
+void V1_GetServoAngleText() {
+	if (debug) DEBUG.println(F("[V1_GetServoAngleHex]"));
+	// No extra debug output for Text command
 	Serial.println(F("\nServo Angle:\n"));
 	for (int id = 1; id <= 16; id++) {
 		Serial.print(F("Servo "));
@@ -113,6 +159,52 @@ void cmd_GetServoAngle() {
 
 #pragma endregion
 
+#pragma region "T - Test/Detect Servo"
+
+void V1_DetectServo() {
+	if (debug) DEBUG.println(F("[V1_DetectServo]"));
+	byte showAngle = 0;
+	if (cmdBuffer.available()) showAngle = cmdBuffer.read();
+	servo.detectServo(1,16);
+	if ((showAngle) && (showAngle != '0')) V1_GetServoAngle();
+}
+
+void V1_DetectServoText() {
+	if (debug) DEBUG.println(F("[V1_DetectServoText]"));
+	byte showAngle = 0;
+	if (cmdBuffer.available()) showAngle = cmdBuffer.read();
+	servo.detectServo(1,16);
+	if ((showAngle) && (showAngle != '0')) V1_GetServoAngleText();
+}
+
+#pragma endregion
+
+#pragma region "Z - Reset Connection"
+
+void V1_ResetConnection() {
+	if (debug) DEBUG.println(F("[V1_ResetConnection]"));
+	servo.end();
+	delay(200);
+	servo.begin();
+	byte showAngle = 0;
+	if (cmdBuffer.available()) showAngle = cmdBuffer.read();
+	if ((showAngle) && (showAngle != '0')) V1_GetServoAngle();
+}
+
+#pragma endregion
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void cmd_GetServoAdjAngleHex() {
 	byte outBuffer[32];
@@ -130,19 +222,6 @@ void cmd_GetServoAdjAngleHex() {
 	Serial.write(outBuffer, 32);
 }
 
-
-#pragma region Test/Detect Servo
-
-void cmd_DetectServoHex() {
-	servo.detectServo(1,16);
-	cmd_GetServoAngleHex();
-}
-
-void cmd_DetectServo() {
-	servo.detectServo(1,16);
-}
-
-#pragma endregion
 
 #pragma region Lock/Free Servo
 
@@ -306,12 +385,6 @@ void playAction(byte actionCode) {
 	servo.setDebug(false);
 }
 
-void fx_resetConnection() {
-	Serial.println("Reset servo connection");
-	servo.end();
-	delay(100);
-	servo.begin();
-}
 
 
 #pragma region Read/Write SPIFFS
