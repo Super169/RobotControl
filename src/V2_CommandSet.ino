@@ -9,20 +9,32 @@
 
 // Command set:
 //
-//   01 - Reset (fix length)     	: A9 9A 03 01 00 04 ED
-//   02 - Set Debug (fix length) 	: A9 9A 03 02 00 05 ED
-//   03 - Set DevMode (fix length) 	: A9 9A 03 03 01 07 ED
-//   11 - Get Angle (fix length) 	: A9 9A 02 11 13 ED
-//   21 - Read SPIFFS (fix length) 	: A9 9A 02 21 23 ED
-//   22 - Write SPIFFS (fix length) : A9 9A 02 22 24 ED
+//   01 - Reset (fix)    		 	: A9 9A 03 01 00 04 ED
+//   02 - Set Debug (fix) 			: A9 9A 03 02 01 06 ED
+//   03 - Set DevMode (fix) 		: A9 9A 03 03 01 07 ED
+//   11 - Get Angle (fix) 			: A9 9A 02 11 13 ED
+//   12 - Get One Angle (fix)		: A9 9A 03 12 01 16 ED
+//   13 - Get Adj Angle (fix)		: A9 9A 02 13 15 ED
+//   14 - Get One Adj Angle (fix) 	: A9 9A 03 14 01 18 ED
+//	 21 - Lock servo (var)			: A9 9A 06 21 01 02 03 04 31 ED
+//	 22 - Unlock servo (var)		: A9 9A 05 22 01 02 03 2D ED
+//   F1 - Read SPIFFS (fix) 		: A9 9A 02 F1 F3 ED
+//   F2 - Write SPIFFS (fix) 		: A9 9A 02 F2 F4 ED
 
 
-#define V2_CMD_RESET		0x01
-#define V2_CMD_DEBUG		0x02
-#define V2_CMD_DEVMODE      0x03
-#define V2_CMD_SERVOANGLE	0x11
-#define V2_CMD_READSPIFFS   0x21
-#define V2_CMD_WRITESPIFFS  0x22
+#define V2_CMD_RESET			0x01
+#define V2_CMD_DEBUG			0x02
+#define V2_CMD_DEVMODE      	0x03
+#define V2_CMD_SERVOANGLE		0x11
+#define V2_CMD_ONEANGLE			0x12
+#define V2_CMD_SERVOADJANGLE	0x13
+#define V2_CMD_ONEADJANGLE		0x14
+
+#define V2_CMD_LOCKSERVO		0x21
+#define V2_CMD_UNLOCKSERVO		0x22
+
+#define V2_CMD_READSPIFFS   	0xF1
+#define V2_CMD_WRITESPIFFS  	0xF2
 
 
 bool V2_CommandSet() {
@@ -88,12 +100,33 @@ bool V2_CommandSet() {
 			V2_GetServoAngle();
 			break;
 
+		case V2_CMD_ONEANGLE:
+			V2_GetOneAngle(cmd);
+			break;
+
+		case V2_CMD_SERVOADJANGLE:
+			V2_GetServoAdjAngle();
+			break;
+
+		case V2_CMD_ONEADJANGLE:
+			V2_GetOneAdjAngle(cmd);
+			break;
+
+		case V2_CMD_LOCKSERVO:
+			V2_LockServo(cmd, true);
+			break;
+
+		case V2_CMD_UNLOCKSERVO:
+			V2_LockServo(cmd, false);
+			break;
+
+
 		case V2_CMD_READSPIFFS:
-			V2_ReadSPIFFS(cmd);
+			V2_ReadSPIFFS();
 			break;
 
 		case V2_CMD_WRITESPIFFS:
-			V2_WriteSPIFFS(cmd);
+			V2_WriteSPIFFS();
 			break;
 
 		default:
@@ -119,6 +152,8 @@ void V2_SendResult(byte *result) {
 	Serial.write(result, size);
 }
 
+#pragma region V2_CMD_RESET / V2_CMD_DEBUG / V2_CMD_DEVMODE
+
 void V2_Reset(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_Reset]"));
 	servo.end();
@@ -140,45 +175,170 @@ void V2_SetDevMode(byte *cmd) {
 	devMode = (cmd[4] ? 1 : 0);
 }
 
-#pragma region 11 - GetServoAngle
+#pragma endregion
+
+#pragma region V2_CMD_SERVOANGLE / V2_CMD_ONEANGLE
 
 void V2_GetServoAngle() {
 	if (debug) DEBUG.println(F("[V2_GetServoAngle]"));
 	uint16_t len = 34;
-	byte outBuffer[len+4];
-	outBuffer[2] = len;
-	outBuffer[3] = V2_CMD_SERVOANGLE;
+	byte result[len+4];
+	result[2] = len;
+	result[3] = V2_CMD_SERVOANGLE;
 
 	for (int id = 1; id <= 16; id++) {
 		int pos = 4 + 2 * (id - 1);
 		if (servo.exists(id)) {
 			if (servo.isLocked(id)) {
-				outBuffer[pos] = servo.lastAngle(id);
-				outBuffer[pos+1] = (servo.isLocked(id) ? 1 : 0);
+				result[pos] = servo.lastAngle(id);
+				result[pos+1] = 1;
 			} else {
-				outBuffer[pos] = servo.getPos(id);
-				outBuffer[pos+1] = 0;
+				result[pos] = servo.getPos(id);
+				result[pos+1] = 0;
 			}
 		} else {
-			outBuffer[pos] = 0xFF;
-			outBuffer[pos+1] = 0;
+			result[pos] = 0xFF;
+			result[pos+1] = 0;
 		}
 	}
 	if (debug) {
 		for (int i = 0; i < 32; i++) {
-			DebugPrintByte(outBuffer[i]);
+			DebugPrintByte(result[i]);
 			DEBUG.print(" ");
 		}
 		DEBUG.println();
 	}
-	V2_SendResult(outBuffer);
+	V2_SendResult(result);
+}
+
+void V2_GetOneAngle(byte *cmd) {
+
+	if (debug) DEBUG.println(F("[V2_GetOneAngle]"));
+	byte result[2] = {0xff, 0x00};
+
+	if (cmd[2] == 3) {
+		byte id = cmd[4];
+		if ((id) && (id <= 16) && (servo.exists(id))) {
+				if (servo.isLocked(id)) {
+					result[0] = servo.lastAngle(id);
+					result[1] = 1;
+				} else {
+					result[0] = servo.getPos(id);
+					result[1] = 0;
+				}
+		} 
+	}
+	
+	Serial.write(result, 2);
+
+}
+
+
+#pragma endregion
+
+#pragma region V2_CMD_SERVOADJANGLE / V2_CMD_ONEADJANGLE
+
+void V2_GetServoAdjAngle() {
+	if (debug) DEBUG.println(F("[V2_GetServoAdjAngle]"));
+	uint16_t len = 34;
+	byte result[len+4];
+	result[2] = len;
+	result[3] = V2_CMD_SERVOADJANGLE;
+	for (int id = 1; id <= 16; id++) {
+		int pos = 4 + 2 * (id - 1);
+		if (servo.exists(id)) {
+			uint16  adjAngle = servo.getAdjAngle(id);
+			result[pos] = adjAngle / 256;
+			result[pos+1] = adjAngle % 256;
+		} else {
+			result[pos] = 0x7F;
+			result[pos+1] = 0x7F;
+		}
+	}
+	V2_SendResult(result);
+}
+
+void V2_GetOneAdjAngle(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_GetOneAdjAngle]"));
+	byte result[2] = {0x7f, 0xff};
+	if (cmd[2] == 3) {
+		byte id = 0;
+		if (cmd[2] > 2) id = cmd[4];
+		if ((id) && (id <= 16) && (servo.exists(id))) {
+			uint16_t  adjAngle = servo.getAdjAngle(id);
+			result[0] = adjAngle / 256;
+			result[1] = adjAngle % 256;
+		}
+	}
+	Serial.write(result, 2);
 }
 
 #pragma endregion
 
+#pragma region V2_CMD_LOCKSERVO / V2_CMD_LOCKSERVO
+
+void V2_LockServo(byte *cmd, bool goLock) {
+	if (debug) DEBUG.println(F("[V2_LockServo]"));
+
+	byte result[40];  // max: A9 9A len cmd n {2 * n} {sum} ED - n <= 16 => max: 39
+	result[3] = cmd[3];
+	byte cnt = 0;
+	if ((cmd[2] == 2) || ((cmd[2] == 3) && (cmd[4] == 0))) {
+		// All servo
+		for (int id = 1; id <= 16; id++)  {
+			byte pos = 5 + 2 * cnt;
+			if (servo.exists(id)) {
+				result[pos] = id;
+				if (servo.isLocked(id) && goLock) {
+					// prevent lock servo if already locked, and request to lock
+					result[pos + 1] = servo.lastAngle(id);
+				} else  {
+					result[pos + 1] = servo.getPos(id, goLock);	
+				}
+				cnt++;
+			}
+		}
+		result[4] = cnt;
+	} else {
+		int reqCnt = cmd[2] - 2;
+		for (int i = 0; i < reqCnt; i++) {
+			byte id = cmd[4 + i];
+			if (id) {
+				// check if already exists
+				for (int j = 0; j < i; i++) {
+					if (cmd[4 + j] == id) {
+						if (debug) {
+							DEBUG.print("Duplicate ID: ");
+							DEBUG.println(id);
+						}
+						id = 0; // clear the id if already exists
+						break;
+					}
+				}
+			}
+			if (id) {
+				byte pos = 5 + 2 * cnt;
+				if (servo.exists(id)) {
+					result[pos] = id;
+					if (servo.isLocked(id) && goLock) {
+						// prevent lock servo if already locked, and request to lock
+						result[pos + 1] = servo.lastAngle(id);
+					} else  {
+						result[pos + 1] = servo.getPos(id, goLock);	
+					}
+					cnt++;
+				}
+			}
+		}
+	}
+	result[2] = 3 +  result[4] * 2;
+	V2_SendResult(result);
+}
+
+
 #pragma region SPIFFS: V2_CMD_READSPIFFS / V2_CMD_WRITESPIFFS
 
-void V2_ReadSPIFFS(byte *cmd) {
+void V2_ReadSPIFFS() {
 	if (debug) DEBUG.println(F("[V2_ReadSPIFFS]"));
 	GoReadSPIFFS(true);
 }
@@ -222,7 +382,7 @@ void GoReadSPIFFS(bool sendResult) {
 	if (sendResult) Serial.write(result, 2);
 }
 
-void V2_WriteSPIFFS(byte *cmd) {
+void V2_WriteSPIFFS() {
 	if (debug) DEBUG.println(F("[V2_WriteSPIFFS]"));
 	byte result[2];
 	result[0] = V2_CMD_WRITESPIFFS;
