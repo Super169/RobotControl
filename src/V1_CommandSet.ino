@@ -33,45 +33,75 @@ bool V1_CommandSet() {
 			case 'A':
 				V1_GetServoAngle();
 				break;
+
 			case 'a':
 				V1_GetServoAngleText();
 				break;
+
 			case 'B':
 				SetDebug(true);
 				break;
+
 			case 'b':
 				SetDebug(false);
 				break;
+
 			case 'D':
+				V1_DownloadActionData();
 				break;
+
 			case 'F':
+				V1_LockServo(false);
 				break;
+
 			case 'f':
+				V1_LockServoText(false);
 				break;
+
 			case 'J':
+				V1_GetServoAdjAngle();
 				break;
+
 			case 'L':
+				V1_LockServo(true);
 				break;
+
 			case 'l':
+				V1_LockServoText(true);
 				break;
+
 			case 'M':
+				V1_MoveServo();
 				break;
+
 			case 'm':
+				V1_MoveServoText();
 				break;
+
+			case 'P':
+				V1_PlayAction();
+				break;
+				
 			case 'R':
+				V1_ReadSPIFFS();
 				break;
+				
 			case 'T':
 				V1_DetectServo();
 				break;
+
 			case 't':
 				V1_DetectServoText();
 				break;
-			case 'S':
-				break;
+
 			case 'U':
+				V1_UploadActionData();
 				break;
+
 			case 'W':
+				V1_WriteSPIFFS();
 				break;
+
 			case 'Z':
 				V1_ResetConnection();
 				break;
@@ -87,8 +117,8 @@ void serialPrintByte(byte data) {
 }
 
 int getServoId() {
-	if (!Serial.available()) return -1;
-	int id = (byte) Serial.read();
+	if (!cmdBuffer.available()) return -1;
+	int id = (byte) cmdBuffer.read();
 	if ((id >= '0') && (id <= '9')) {
 		id -= '0';
 	} else if ((id >= 'A') && (id <= 'G')) {
@@ -106,7 +136,7 @@ int getServoId() {
 #pragma region "A,a - Get Servo Angle"
 
 void V1_GetServoAngle() {
-	if (debug) DEBUG.println(F("[V1_GetServoAngleHex]"));
+	if (debug) DEBUG.println(F("[V1_GetServoAngle]"));
 	byte outBuffer[32];
 	for (int id = 1; id <= 16; id++) {
 		int pos = 2 * (id - 1);
@@ -134,7 +164,7 @@ void V1_GetServoAngle() {
 }
 
 void V1_GetServoAngleText() {
-	if (debug) DEBUG.println(F("[V1_GetServoAngleHex]"));
+	if (debug) DEBUG.println(F("[V1_GetServoAngleText]"));
 	// No extra debug output for Text command
 	Serial.println(F("\nServo Angle:\n"));
 	for (int id = 1; id <= 16; id++) {
@@ -159,87 +189,44 @@ void V1_GetServoAngleText() {
 
 #pragma endregion
 
-#pragma region "T - Test/Detect Servo"
+#pragma region "D - Download Action Data"
 
-void V1_DetectServo() {
-	if (debug) DEBUG.println(F("[V1_DetectServo]"));
-	byte showAngle = 0;
-	if (cmdBuffer.available()) showAngle = cmdBuffer.read();
-	servo.detectServo(1,16);
-	if ((showAngle) && (showAngle != '0')) V1_GetServoAngle();
-}
-
-void V1_DetectServoText() {
-	if (debug) DEBUG.println(F("[V1_DetectServoText]"));
-	byte showAngle = 0;
-	if (cmdBuffer.available()) showAngle = cmdBuffer.read();
-	servo.detectServo(1,16);
-	if ((showAngle) && (showAngle != '0')) V1_GetServoAngleText();
-}
-
-#pragma endregion
-
-#pragma region "Z - Reset Connection"
-
-void V1_ResetConnection() {
-	if (debug) DEBUG.println(F("[V1_ResetConnection]"));
-	servo.end();
-	delay(200);
-	servo.begin();
-	byte showAngle = 0;
-	if (cmdBuffer.available()) showAngle = cmdBuffer.read();
-	if ((showAngle) && (showAngle != '0')) V1_GetServoAngle();
-}
-
-#pragma endregion
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void cmd_GetServoAdjAngleHex() {
-	byte outBuffer[32];
-	for (int id = 1; id <= 16; id++) {
-		int pos = 2 * (id - 1);
-		if (servo.exists(id)) {
-			uint16  adjAngle = servo.getAdjAngle(id);
-			outBuffer[pos] = adjAngle / 256;
-			outBuffer[pos+1] = adjAngle % 256;
-		} else {
-			outBuffer[pos] = 0x7F;
-			outBuffer[pos+1] = 0x7F;
-		}
+void V1_DownloadActionData() {
+	if (debug) DEBUG.println(F("[V1_DownloadActionData]"));
+	byte *ptr = (byte *)actionTable;
+	long size = MAX_POSES * MAX_POSES_SIZE;
+	for(int action = 0; action < MAX_ACTION; action ++) {
+		Serial.write(ptr, size);
+		ptr += size;
+		delay(1);  // add 1 ms delay for processing the data
 	}
-	Serial.write(outBuffer, 32);
 }
 
+#pragma endregion
 
-#pragma region Lock/Free Servo
+#pragma region "F, f, L, l - Lock/Free Servo"
 
 // Return: 
 //   0 - L/U
 //   1 - log count
 //   (2n)   - servo id
 //   (2n+1) - angle / 0xFF for error
-void cmd_LockServoHex(bool goLock) {
+
+void V1_LockServo(bool goLock) {
+	if (debug) {
+		DEBUG.print(F("V1_LockServo("));
+		DEBUG.print(goLock ? "TRUE" : "FALSE");
+		DEBUG.println(F(")"));
+	}
 	byte result[40];
 	byte cnt = 0;
-	char mode = (goLock ? 'L' : 'U');
+	char mode = (goLock ? 'L' : 'F');
 	result[0] = mode;
-	while (Serial.available()) {
-		byte id = Serial.read();
+	while (cmdBuffer.available()) {
+		byte id = cmdBuffer.read();
 		if ((cnt == 0) && (id == 0)) {
 			// Only 1 paramter 0x00 for lock/unlock all
-			if (!Serial.available()) {
+			if (!cmdBuffer.available()) {
 				for (int servoId = 1; servoId <= 16; servoId++)  {
 					result[2*servoId] = servoId;
 					if (servo.exists(servoId)) {
@@ -267,9 +254,14 @@ void cmd_LockServoHex(bool goLock) {
 	Serial.write(result, cnt);
 }
 
-void cmd_LockServo(bool goLock) {
+void V1_LockServoText(bool goLock) {
+	if (debug) {
+		DEBUG.print(F("V1_LockServoText("));
+		DEBUG.print(goLock ? "TRUE" : "FALSE");
+		DEBUG.println(F(")"));
+	}
 	int id = getServoId();
-	char mode = (goLock ? 'l' : 'u');
+	char mode = (goLock ? 'L' : 'F');
 	switch (id) {
 		case -1:
 			Serial.print(mode);
@@ -304,158 +296,39 @@ void cmd_LockServo(bool goLock) {
 
 #pragma endregion
 
+#pragma region "J - Get Servo Adjust Angle"
 
-void showServoInfoHex() {
-	servoCnt = 0;
-	byte outBuffer[16];
+void V1_GetServoAdjAngle() {
+	if (debug) DEBUG.println(F("[V1_GetServoAdjAngle]"));
+	byte outBuffer[32];
 	for (int id = 1; id <= 16; id++) {
+		int pos = 2 * (id - 1);
 		if (servo.exists(id)) {
-			outBuffer[id-1] = servo.getPos(id);
+			uint16  adjAngle = servo.getAdjAngle(id);
+			outBuffer[pos] = adjAngle / 256;
+			outBuffer[pos+1] = adjAngle % 256;
 		} else {
-			outBuffer[id-1] = 0xFF;
+			outBuffer[pos] = 0x7F;
+			outBuffer[pos+1] = 0x7F;
 		}
 	}
-	Serial.write(outBuffer, 16);
-}
-
-void showServoInfo() {
-	Serial.println(F("\n\nAvailable servo:"));
-	servoCnt = 0;
-	for (int id = 1; id <= 16; id++) {
-		if (id < 10) Serial.print('0');
-		Serial.print(id);
-		Serial.print(F(": "));
-		if (servo.exists(id)) {
-			byte angle = servo.getPos(id);
-			for (int i = 4; i <8; i++) {
-				Serial.print(retBuffer[i] < 0x10 ? " 0" : " ");
-				Serial.print(retBuffer[i], HEX);
-			}
-			Serial.print("  [");
-			Serial.print(angle, DEC);
-			Serial.println("]");
-			servoCnt++;
-		} else {
-			Serial.println("Missing");
-		}
-
-	}
-	Serial.println();
-	if (servoCnt > 0) {
-		Serial.print(servoCnt);
-	} else {
-		Serial.print(F("No "));
-	}
-	Serial.print(F(" servo detected."));
-}
-
-void fx_playAction() {
-	byte actionCode = 0;  // action 0, 'A' is standby action
-	if (Serial.available()) {
-		byte ch = Serial.read();
-		if ((ch >= 'A') && (ch <= 'Z')) {
-			actionCode = ch - 'A';
-		} else {
-			return; // Return for invalid action
-		}
-	}		
-	playAction(actionCode);
-}
-
-void playAction(byte actionCode) {
-	Serial.println("Play Action");
-	servo.setDebug(true);
-	for (int po = 0; po < MAX_POSES; po++) {
-		int waitTime = actionTable[actionCode][po][WAIT_TIME_HIGH] * 256 + actionTable[actionCode][po][WAIT_TIME_LOW];
-		byte time = actionTable[actionCode][po][EXECUTE_TIME];
-		// End with all zero, so wait time will be 0x00, 0x00, and time will be 0x00 also
-		if ((waitTime == 0) && (time == 0)) break;
-		if (time > 0) {
-			for (int id = 1; id <= 16; id++) {
-				byte angle = actionTable[actionCode][po][ID_OFFSET + id];
-				// max 240 degree, no action required if angle not changed, except first action
-				if ((angle <= 0xf0) && 
-					((po == 0) || (angle != actionTable[actionCode][po-1][ID_OFFSET + id]))) {
-					servo.move(id, angle, time);
-				}
-			}
-		}
-		delay(waitTime);
-	}
-	servo.setDebug(false);
-}
-
-
-
-#pragma region Read/Write SPIFFS
-
-void cmd_ReadSPIFFS() {
-	ReadSPIFFS(true);
-}
-
-void ReadSPIFFS(bool sendResult) {
-	byte result[2];
-	result[0] = 'R';
-	SPIFFS.begin();
-	if (SPIFFS.exists(actionDataFile)) {
-		File f = SPIFFS.open(actionDataFile, "r");
-		if (!f) {
-			result[1] = READ_ERR_OPEN_FILE;
-		} else {
-			if (f.size() != sizeof(actionTable)) {
-				result[1] = READ_ERR_FILE_SIZE;
-			} else {
-				memset(actionTable, 0, sizeof(actionTable));
-				size_t wCnt = f.readBytes((char *)actionTable, sizeof(actionTable));
-				f.close();
-				if (wCnt == sizeof(actionTable)) {
-					result[1] = READ_OK;
-				} else {
-					result[1] = READ_ERR_READ_FILE;
-				}
-			}
-		}
-	} else {
-		result[1] = READ_ERR_NOT_FOUND;
-	}
-	SPIFFS.end();	
-	if (sendResult) Serial.write(result, 2);
-}
-
-bool cmd_WriteSPIFFS() {
-	byte result[2];
-	result[0] = 'W';
-	SPIFFS.begin();
-	File f = SPIFFS.open(actionDataFile, "w");
-	if (!f) {
-		result[1] = WRITE_ERR_OPEN_FILE;
-	} else {
-		size_t wCnt = f.write((byte *)actionTable, sizeof(actionTable));
-		f.close();
-		if (wCnt == sizeof(actionTable)) {
-			result[1] = WRITE_OK;
-		} else {
-			result[1] = WRITE_ERR_WRITE_FILE;
-		}
-	}
-	SPIFFS.end();	
-	Serial.write(result, 2);
+	Serial.write(outBuffer, 32);
 }
 
 #pragma endregion
 
-
-#pragma region Move Servo
+#pragma region "M,m - Move Servo"
 
 // Input id, angle, time
 // Output - action, status, # servo, id
-void cmd_MoveServoHex() {
+void V1_MoveServo() {
+	if (debug) DEBUG.println(F("[V1_MoveServo]"));
 	byte result[20];
-	int moveCount = goMoveServoHex(result);
+	int moveCount = V1_goMoveServo(result);
 	Serial.write(result, moveCount + 3);
 }
 
-int goMoveServoHex(byte *result) {
+int V1_goMoveServo(byte *result) {
 	result[0] = 'M';
 	result[1] = 0x00;
 	result[2] = 0x00;
@@ -463,20 +336,21 @@ int goMoveServoHex(byte *result) {
 	byte inCount = 0;
 	byte moveData[16][3];
 	byte moveCnt = 0;
-	while (Serial.available()) {
+	while (cmdBuffer.available()) {
 		if (inCount >= 51) {
 			result[1] = MOVE_ERR_PARM_CNT;
 			return 0;	
 		}
-		inBuffer[inCount++] = (byte) Serial.read();
+		inBuffer[inCount++] = (byte) cmdBuffer.read();
 	}
-	return moveMultiServo(inCount, inBuffer, result);
+	return V1_moveMultiServo(inCount, inBuffer, result);
 }
 
 
-void cmd_moveServo() {
+void V1_MoveServoText() {
+	if (debug) DEBUG.println(F("[V1_MoveServoText]"));
 	byte result[20];
-	int moveCount = goMoveServo(result);
+	int moveCount = V1_goMoveServoText(result);
 	Serial.print("\nMove - ");
 	if (result[1]) {
 		Serial.print(" Error : ");
@@ -493,15 +367,20 @@ void cmd_moveServo() {
 	Serial.println();
 }
 
-int SerialParseInt() {
-	if (!Serial.available()) return -1;
-	ch = Serial.peek();
+int V1_BufferParseInt() {
+	if (!cmdBuffer.available()) return -1;
+	ch = cmdBuffer.peek();
 	if ((ch < '0') || (ch > '9')) return -2;
-	int data = Serial.parseInt();
+	int data = 0;
+	while ((ch >= '0') && (ch <= '9')) {
+		ch = cmdBuffer.read() - '0';
+		data = data * 10 + ch;
+		ch = cmdBuffer.peek();
+	}
 	return data;
 }
 
-int goMoveServo(byte *result)
+int V1_goMoveServoText(byte *result)
 {
 	result[0] = 'M';
 	result[1] = 0x00;
@@ -510,34 +389,34 @@ int goMoveServo(byte *result)
 	byte inCount = 0;
 	byte moveData[16][3];
 	byte moveCnt = 0;
-	while (Serial.available()) {
+	while (cmdBuffer.available()) {
 		if (inCount >= 51) {
 			result[1] = MOVE_ERR_PARM_CNT;
 			return 0;	
 		}
-		int value = SerialParseInt();
+		int value = V1_BufferParseInt();
 		if ((value < 0) || (value > 255)) {
 			result[1] = MOVE_ERR_PARM_VALUE;
 			return 0;	
 		}
 		inBuffer[inCount++] = (byte) value;
 
-		if (Serial.available()) {
-			if ((Serial.peek() == 0x0A) || (Serial.peek() == 0x0D)) {
+		if (cmdBuffer.available()) {
+			if ((cmdBuffer.peek() == 0x0A) || (cmdBuffer.peek() == 0x0D)) {
 				break;
 			}
-			if (Serial.peek() != ',') {
+			if (cmdBuffer.peek() != ',') {
 				result[1] = MOVE_ERR_PARM_CONTENT;
 				return 0;	
 			}
 			// Read the ',' separator
-			Serial.read();  
+			cmdBuffer.read();  
 		} 
 	}
-	moveMultiServo(inCount, inBuffer, result);
+	V1_moveMultiServo(inCount, inBuffer, result);
 }
 
-int moveMultiServo(int inCount, byte* inBuffer, byte *result) {
+int V1_moveMultiServo(int inCount, byte* inBuffer, byte *result) {
 	if ((inCount < 6) || (inCount % 3 != 0)) {
 		result[1] = MOVE_ERR_PARM_CNT;
 		return 0;
@@ -607,41 +486,178 @@ int moveMultiServo(int inCount, byte* inBuffer, byte *result) {
 
 #pragma endregion
 
-#pragma region Download / Upload Action Data
+#pragma region "P - Play action"
 
-void cmd_DownloadActionDataHex() {
-	byte *ptr = (byte *)actionTable;
-	long size = MAX_POSES * MAX_POSES_SIZE;
-	for(int action = 0; action < MAX_ACTION; action ++) {
-		Serial.write(ptr, size);
-		ptr += size;
-		delay(1);  // add 1 ms delay for processing the data
-	}
+void V1_PlayAction() {
+	if (debug) DEBUG.println(F("[V1_PlayAction]"));
+	byte actionCode = 0;  // action 0, 'A' is standby action
+	if (cmdBuffer.available()) {
+		byte ch = cmdBuffer.read();
+		if ((ch >= 'A') && (ch <= 'Z')) {
+			actionCode = ch - 'A';
+		} else {
+			return; // Return for invalid action
+		}
+	}		
+	V1_goPlayAction(actionCode);
 }
+
+void V1_goPlayAction(byte actionCode) {
+	Serial.println("Play Action");
+	for (int po = 0; po < MAX_POSES; po++) {
+		int waitTime = actionTable[actionCode][po][WAIT_TIME_HIGH] * 256 + actionTable[actionCode][po][WAIT_TIME_LOW];
+		byte time = actionTable[actionCode][po][EXECUTE_TIME];
+		// End with all zero, so wait time will be 0x00, 0x00, and time will be 0x00 also
+		if ((waitTime == 0) && (time == 0)) break;
+		if (time > 0) {
+			for (int id = 1; id <= 16; id++) {
+				byte angle = actionTable[actionCode][po][ID_OFFSET + id];
+				// max 240 degree, no action required if angle not changed, except first action
+				if ((angle <= 0xf0) && 
+					((po == 0) || (angle != actionTable[actionCode][po-1][ID_OFFSET + id]))) {
+					servo.move(id, angle, time);
+				}
+			}
+		}
+		delay(waitTime);
+	}
+	servo.setDebug(false);
+}
+
+#pragma endregion
+
+#pragma region "R,W - Read/Write SPIFFS"
+
+void V1_ReadSPIFFS() {
+	if (debug) DEBUG.println(F("[V1_ReadSPIFFS]"));
+	V1_goReadSPIFFS(true);
+}
+
+void V1_goReadSPIFFS(bool sendResult) {
+	byte result[2];
+	result[0] = 'R';
+	SPIFFS.begin();
+	if (SPIFFS.exists(actionDataFile)) {
+		File f = SPIFFS.open(actionDataFile, "r");
+		if (!f) {
+			result[1] = READ_ERR_OPEN_FILE;
+		} else {
+			if (f.size() != sizeof(actionTable)) {
+				result[1] = READ_ERR_FILE_SIZE;
+			} else {
+				memset(actionTable, 0, sizeof(actionTable));
+				size_t wCnt = f.readBytes((char *)actionTable, sizeof(actionTable));
+				f.close();
+				if (wCnt == sizeof(actionTable)) {
+					result[1] = READ_OK;
+				} else {
+					result[1] = READ_ERR_READ_FILE;
+				}
+			}
+		}
+	} else {
+		result[1] = READ_ERR_NOT_FOUND;
+	}
+	SPIFFS.end();	
+	if (sendResult) Serial.write(result, 2);
+}
+
+bool V1_WriteSPIFFS() {
+	if (debug) DEBUG.println(F("[V1_WriteSPIFFS]"));
+	byte result[2];
+	result[0] = 'W';
+	SPIFFS.begin();
+	File f = SPIFFS.open(actionDataFile, "w");
+	if (!f) {
+		result[1] = WRITE_ERR_OPEN_FILE;
+	} else {
+		size_t wCnt = f.write((byte *)actionTable, sizeof(actionTable));
+		f.close();
+		if (wCnt == sizeof(actionTable)) {
+			result[1] = WRITE_OK;
+		} else {
+			result[1] = WRITE_ERR_WRITE_FILE;
+		}
+	}
+	SPIFFS.end();	
+	Serial.write(result, 2);
+}
+
+#pragma endregion
+
+#pragma region "T - Test/Detect Servo"
+
+void V1_DetectServo() {
+	if (debug) DEBUG.println(F("[V1_DetectServo]"));
+	byte showAngle = 0;
+	if (cmdBuffer.available()) showAngle = cmdBuffer.read();
+	servo.detectServo(1,16);
+	if ((showAngle) && (showAngle != '0')) V1_GetServoAngle();
+}
+
+void V1_DetectServoText() {
+	if (debug) DEBUG.println(F("[V1_DetectServoText]"));
+	byte showAngle = 0;
+	if (cmdBuffer.available()) showAngle = cmdBuffer.read();
+	servo.detectServo(1,16);
+	if ((showAngle) && (showAngle != '0')) V1_GetServoAngleText();
+}
+
+#pragma endregion
+
+#pragma region "U - Upload Action Data"
 
 //  'W' actionId 0xFF				=> clear action
 //  'W' actionId poseId 20xData 	=> upload pose data
 
-void cmd_UploadActionDataHex() {
+// conversion for cmdBuffer
+// - This part is not as simple as before, as data go to serial buffer not cmdBuffer directly
+// - For each action, around 30 * 60 = 600 bytes, so better wait all data available in cmdBuffer first
+// - In general, it will read one post each time, 
+// -   0 - 'W' 
+// -   1 - Action Code
+// -   2 - Pose Code
+// -   3~22 - Pose Data
+// -   i.e. 22 data after command is read
+
+void V1_UploadActionData() {
+	if (debug) DEBUG.println(F("[V1_UploadActionData]"));
+
 	byte inBuffer[MAX_POSES_SIZE];
 	byte result[6];
 	memset(result,0xfe,4);
 	result[0] = 'W';
 	int poseCnt = 0;
 	byte *ptr;
-	if (Serial.available()) {
-		result[1] = Serial.read();
-		if (Serial.available()) {
-			result[2] = Serial.read();
-			poseCnt = 0;
-			while (Serial.available()) {
-				inBuffer[poseCnt++] = Serial.read();
-				if (poseCnt >= MAX_POSES_SIZE) break;
-				delay(1);  // for safety, add 1ms delay here,otherwise it may cause missing data.   It won't cause much delay, as only 20 bytes is sent
-			}
-		}
+
+	if (cmdBuffer.available() < 2) {
+		// Invalid case, as 1ms delay in command reading, which should be able to read 10 continue bytes.
+		if (debug) DEBUG.println(F("Incomplete Header, skip command and clear buffer"));
+		cmdBuffer.reset();
+		result[1] = 0xFF;
+		result[2] = 0xFF;
+		result[3] = UPLOAD_ERR_HEADER;
+		result[4] = (byte) cmdBuffer.available();
+		Serial.write(result, 5);
+		return;
 	}
 
+	result[1] = cmdBuffer.read();
+	result[2] = cmdBuffer.read();
+
+	// Since only around 12 data / ms, would be better to wait 2 ms to make sure data completed
+	if ((result[2] != 0xFF) && (cmdBuffer.available() < MAX_POSES_SIZE)) {
+		delay(1);
+		clearInputBuffer();
+	}
+
+	// read data from buffer if completed
+	poseCnt = cmdBuffer.available();
+	if ((result[2] != 0xFF) && (poseCnt >= MAX_POSES_SIZE)) {
+		cmdBuffer.read(inBuffer, MAX_POSES_SIZE);
+	}
+
+	// Check data content
 	if (result[1] > MAX_ACTION) {
 		result[3] = UPLOAD_ERR_ACTION;
 		Serial.write(result, 4);
@@ -681,6 +697,20 @@ void cmd_UploadActionDataHex() {
 	memcpy(ptr, inBuffer, MAX_POSES_SIZE);
 	result[3] = UPLOAD_OK;
 	Serial.write(result, 4);
+}
+
+#pragma endregion
+
+#pragma region "Z - Reset Connection"
+
+void V1_ResetConnection() {
+	if (debug) DEBUG.println(F("[V1_ResetConnection]"));
+	servo.end();
+	delay(200);
+	servo.begin();
+	byte showAngle = 0;
+	if (cmdBuffer.available()) showAngle = cmdBuffer.read();
+	if ((showAngle) && (showAngle != '0')) V1_GetServoAngle();
 }
 
 #pragma endregion

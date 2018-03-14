@@ -56,10 +56,11 @@ Buffer cmdBuffer(BUFFER_SIZE);
 
 #define UPLOAD_OK 				0x00
 #define UPLOAD_CLEAR_OK			0x00
-#define UPLOAD_ERR_ACTION		0x01
-#define UPLOAD_ERR_POSE         0x02
-#define UPLOAD_ERR_POSE_DATA    0x03
-#define UPLOAD_ERR_CLEAR_POSE   0x04
+#define UPLOAD_ERR_HEADER		0x01
+#define UPLOAD_ERR_ACTION		0x02
+#define UPLOAD_ERR_POSE         0x03
+#define UPLOAD_ERR_POSE_DATA    0x04
+#define UPLOAD_ERR_CLEAR_POSE   0x05
 
 #define MAX_WAIT_CMD 			100
 
