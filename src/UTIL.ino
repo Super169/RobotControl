@@ -5,12 +5,6 @@ void SetDebug(bool mode) {
 	servo.setDebug(mode);
 }
 
-void DebugPrintByte(byte data) {
-	if (data < 0x10) Serial.print("0");
-	DEBUG.print(data, HEX);
-}
-
-
 // XX XX {id} {cmd} xx xx xx xx {sum} ED
 // {sum} = cmd[8] = sum ( {id} {cmd} xx xx xx xx )
 byte CheckSum(byte *cmd) {
@@ -65,8 +59,6 @@ bool cmdSkip(bool flag) {
 
 void DebugShowSkipByte() {
 	if (debug) {
-		DEBUG.print("Skip byte: ");
-		DebugPrintByte(cmdBuffer.peek());
-		DEBUG.println();
+		DEBUG.printf("Skip byte: %02X\n", cmdBuffer.peek());
 	}
 }

@@ -117,7 +117,6 @@ bool V2_CommandSet();
 #pragma region "UTIL.ino"
 
 void SetDebug(bool mode);
-void DebugPrintByte(byte data);
 
 byte CheckSum(byte *cmd);
 byte CheckVarSum(byte *cmd);

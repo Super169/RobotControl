@@ -155,8 +155,7 @@ void V1_GetServoAngle() {
 	}
 	if (debug) {
 		for (int i = 0; i < 32; i++) {
-			DebugPrintByte(outBuffer[i]);
-			DEBUG.print(" ");
+			DEBUG.printf("%02X ",outBuffer[i]);
 		}
 		DEBUG.println();
 	}

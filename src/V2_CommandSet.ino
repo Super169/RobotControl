@@ -54,8 +54,7 @@ bool V2_CommandSet() {
 
 	if (debug) {
 		for (int i = 0; i < len + 4; i++) {
-			DebugPrintByte(cmd[i]);
-			DEBUG.print(" ");
+			DEBUG.printf("%02X ", cmd[i]);
 		}
 	}
 
@@ -66,9 +65,7 @@ bool V2_CommandSet() {
 
 	byte sum = CheckVarSum(cmd);
 	if (debug) {
-		DEBUG.print("=>  ");
-		DebugPrintByte(sum);
-		DEBUG.print("\n");
+		DEBUG.printf("=> %02X\n", sum);
 	}
 
 	// bypass checksum in devMode
@@ -131,12 +128,8 @@ bool V2_CommandSet() {
 
 		default:
 			if (debug) {
-				DEBUG.print(F("Undefined command: "));
-				DebugPrintByte(cmd[3]);
-				DEBUG.println();
+				DEBUG.printf("Undefined command: %02X\n", cmd[3]);
 			}
-
-
 	}
 
 	return true;
@@ -203,8 +196,7 @@ void V2_GetServoAngle() {
 	}
 	if (debug) {
 		for (int i = 0; i < 32; i++) {
-			DebugPrintByte(result[i]);
-			DEBUG.print(" ");
+			DEBUG.printf("%02X ", result[i]);
 		}
 		DEBUG.println();
 	}
@@ -308,8 +300,7 @@ void V2_LockServo(byte *cmd, bool goLock) {
 				for (int j = 0; j < i; i++) {
 					if (cmd[4 + j] == id) {
 						if (debug) {
-							DEBUG.print("Duplicate ID: ");
-							DEBUG.println(id);
+							DEBUG.printf("Duplicate ID: %d \n", id);
 						}
 						id = 0; // clear the id if already exists
 						break;
@@ -355,8 +346,7 @@ void GoReadSPIFFS(bool sendResult) {
 		} else {
 			if (f.size() != sizeof(actionTable)) {
 				if (debug) {
-					DEBUG.print(F("Invalid File size: "));
-					DEBUG.println(f.size());
+					DEBUG.printf("Invalid File size: %d\n", f.size());
 				}
 				result[1] = READ_ERR_FILE_SIZE;
 			} else {
