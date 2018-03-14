@@ -95,6 +95,7 @@ byte ch, cmd;
 long lastCmdMs = 0;
 
 bool debug = true;
+bool devMode = false;
 
 #pragma endregion
 
