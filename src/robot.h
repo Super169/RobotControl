@@ -5,7 +5,7 @@
 #include "FS.h"
 #include "Buffer.h"
 
-#define DEBUG Serial
+#define DEBUG Serial1
 
 #define BUFFER_SIZE 64
 

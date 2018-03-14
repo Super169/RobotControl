@@ -135,6 +135,7 @@ void remoteControl() {
 			case 'l':
 			case 'M':
 			case 'm':
+			case 'P':
 			case 'R':
 			case 'T':
 			case 't':
