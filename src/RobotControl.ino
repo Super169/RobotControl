@@ -59,11 +59,13 @@ void setup() {
 	// Note: due to ESP-12 hw setting, serial1 cannot be used for input
 	Serial.begin(115200);
 	Serial1.begin(115200);
+	delay(100);
 
 	DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
 	unsigned long actionSzie = sizeof(actionTable);
 
 	servo.begin();
+	servo.lockAll();
 	// TODO: change to V2 when ready
 	UBT_ReadSPIFFS(0);
 
