@@ -267,17 +267,8 @@ void V1_LockServoText(bool goLock) {
 void V1_GetServoAdjAngle() {
 	if (debug) DEBUG.println(F("[V1_GetServoAdjAngle]"));
 	byte outBuffer[32];
-	for (int id = 1; id <= 16; id++) {
-		int pos = 2 * (id - 1);
-		if (servo.exists(id)) {
-			uint16  adjAngle = servo.getAdjAngle(id);
-			outBuffer[pos] = adjAngle / 256;
-			outBuffer[pos+1] = adjAngle % 256;
-		} else {
-			outBuffer[pos] = 0x7F;
-			outBuffer[pos+1] = 0x7F;
-		}
-	}
+
+	UBT_GetServoAdjAngle(outBuffer);
 	Serial.write(outBuffer, 32);
 }
 

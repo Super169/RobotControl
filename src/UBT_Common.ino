@@ -27,7 +27,19 @@ void UBT_GetServoAngle(byte *result) {
 	}
 }
 
-
+void UBT_GetServoAdjAngle(byte *result) {
+	for (int id = 1; id <= 16; id++) {
+		int pos =2 * (id - 1);
+		if (servo.exists(id)) {
+			uint16  adjAngle = servo.getAdjAngle(id);
+			result[pos] = adjAngle / 256;
+			result[pos+1] = adjAngle % 256;
+		} else {
+			result[pos] = 0x7F;
+			result[pos+1] = 0x7F;
+		}
+	}
+}
 
 void UBT_ReadSPIFFS(byte cmdCode) {
 	byte result[2];

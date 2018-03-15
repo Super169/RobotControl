@@ -217,18 +217,10 @@ void V2_GetServoAdjAngle() {
 	byte result[len+4];
 	result[2] = len;
 	result[3] = V2_CMD_SERVOADJANGLE;
-	for (int id = 1; id <= 16; id++) {
-		int pos = 4 + 2 * (id - 1);
-		if (servo.exists(id)) {
-			uint16  adjAngle = servo.getAdjAngle(id);
-			result[pos] = adjAngle / 256;
-			result[pos+1] = adjAngle % 256;
-		} else {
-			result[pos] = 0x7F;
-			result[pos+1] = 0x7F;
-		}
-	}
+	byte *ptr = result + 4;
+	UBT_GetServoAdjAngle(ptr);
 	V2_SendResult(result);
+
 }
 
 void V2_GetOneAdjAngle(byte *cmd) {
