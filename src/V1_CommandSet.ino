@@ -111,11 +111,6 @@ bool V1_CommandSet() {
 
 #pragma region "Utilities"
 
-void serialPrintByte(byte data) {
-	if (data < 0x10) Serial.print("0");
-	Serial.print(data, HEX);
-}
-
 int getServoId() {
 	if (!cmdBuffer.available()) return -1;
 	int id = (byte) cmdBuffer.read();
@@ -167,21 +162,12 @@ void V1_GetServoAngleText() {
 	// No extra debug output for Text command
 	Serial.println(F("\nServo Angle:\n"));
 	for (int id = 1; id <= 16; id++) {
-		Serial.print(F("Servo "));
-		Serial.print(id);
-		Serial.print(": ");
+		Serial.printf("Servo %02d:", id);
 		if (servo.exists(id)) {
 			byte angle = servo.getPos(id);
-			Serial.print(angle, DEC);
-			Serial.print(" [");
-			serialPrintByte(angle);
-			Serial.print("]  ");
-			if (servo.isLocked(id)) {
-				Serial.print(" Locked");
-			}
-			Serial.println();
+			Serial.printf("%d [0x%02X]  %s\n", angle, angle, (servo.isLocked(id) ? "Locked": ""));
 		} else {
-			Serial.println("Not Available");
+			Serial.println("--");
 		}
 	}
 }
@@ -352,16 +338,12 @@ void V1_MoveServoText() {
 	int moveCount = V1_goMoveServoText(result);
 	Serial.print("\nMove - ");
 	if (result[1]) {
-		Serial.print(" Error : ");
-		serialPrintByte(result[1]);
-		Serial.println();
+		Serial.printf(" Error: %02X\n", result[1]);
 		return;
 	}
-	Serial.print(moveCount);
-	Serial.print(" servo moved: ");
+	Serial.printf("%d servo moved: ", moveCount);
 	for (int i = 0; i < moveCount; i++) {
-		Serial.print(" ");
-		Serial.print(result[ 3 + i]);
+		Serial.printf(" %d", result[ 3 + i]);
 	}
 	Serial.println();
 }
@@ -495,6 +477,7 @@ void V1_PlayAction() {
 		if ((ch >= 'A') && (ch <= 'Z')) {
 			actionCode = ch - 'A';
 		} else {
+			if (debug) DEBUG.printf("Invalid action: %02X\n", ch);
 			return; // Return for invalid action
 		}
 	}		

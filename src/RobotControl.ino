@@ -48,7 +48,7 @@ GPIO-2  : Serial1 - debug console
 
 void setup() {
 	// Delay 2s to wait for all servo started
-	delay(5000);
+	delay(2000);
 
 	// SetDebug(false);  // Disable servo debug first, enable it later if needed
 	SetDebug(true);
@@ -60,13 +60,13 @@ void setup() {
 	Serial.begin(115200);
 	Serial1.begin(115200);
 
-/*
 	DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
 	unsigned long actionSzie = sizeof(actionTable);
 
 	servo.begin();
-	ReadSPIFFS(false);
-*/
+	// TODO: change to V2 when ready
+	V1_goReadSPIFFS(false);
+
 	DEBUG.println(F("Control board ready\n\n"));
 }
 
