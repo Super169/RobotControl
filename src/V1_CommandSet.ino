@@ -705,8 +705,9 @@ void V1_UploadActionData() {
 void V1_ResetConnection() {
 	if (debug) DEBUG.println(F("[V1_ResetConnection]"));
 	servo.end();
-	delay(200);
+	delay(100);
 	servo.begin();
+	delay(100);
 	byte showAngle = 0;
 	if (cmdBuffer.available()) showAngle = cmdBuffer.read();
 	if ((showAngle) && (showAngle != '0')) V1_GetServoAngle();
