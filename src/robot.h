@@ -104,12 +104,12 @@ bool devMode = false;
 void cmd_ReadSPIFFS();
 void ReadSPIFFS(bool sendResult);
 
-bool UBT_BTCommand();
-bool UBT_ControlBoard();
-bool UBT_ServoCommand();
+bool UBTBT_Command();
+bool UBTCB_Command();
+bool UBTSV_Command();
 
-bool V1_CommandSet();  // To be obsolete
-bool V2_CommandSet();
+bool V1_Command();  // To be obsolete
+bool V2_Command();
 
 #pragma endregion
 
@@ -129,4 +129,8 @@ void DebugShowSkipByte();
 
 #pragma endregion
 
+
+void UBT_GetServoAngle(byte *result);
+void UBT_ReadSPIFFS(byte cmdCode);
+void UBT_WriteSPIFFS(byte cmdCode);
 #endif

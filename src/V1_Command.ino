@@ -27,7 +27,7 @@
 // Y 
 // Z - Reset Connection
 
-bool V1_CommandSet() {
+bool V1_Command() {
 	byte cmd = cmdBuffer.read();
 	switch (cmd) {
 			case 'A':
@@ -133,41 +133,22 @@ int getServoId() {
 void V1_GetServoAngle() {
 	if (debug) DEBUG.println(F("[V1_GetServoAngle]"));
 	byte outBuffer[32];
-	for (int id = 1; id <= 16; id++) {
-		int pos = 2 * (id - 1);
-		if (servo.exists(id)) {
-			if (servo.isLocked(id)) {
-				outBuffer[pos] = servo.lastAngle(id);
-				outBuffer[pos+1] = (servo.isLocked(id) ? 1 : 0);
-			} else {
-				outBuffer[pos] = servo.getPos(id);
-				outBuffer[pos+1] = 0;
-			}
-		} else {
-			outBuffer[pos] = 0xFF;
-			outBuffer[pos+1] = 0;
-		}
-	}
-	if (debug) {
-		for (int i = 0; i < 32; i++) {
-			DEBUG.printf("%02X ",outBuffer[i]);
-		}
-		DEBUG.println();
-	}
+	UBT_GetServoAngle(outBuffer);
 	Serial.write(outBuffer, 32);
 }
 
 void V1_GetServoAngleText() {
 	if (debug) DEBUG.println(F("[V1_GetServoAngleText]"));
-	// No extra debug output for Text command
+	byte outBuffer[32];
+	UBT_GetServoAngle(outBuffer);
 	Serial.println(F("\nServo Angle:\n"));
 	for (int id = 1; id <= 16; id++) {
+		int pos = 2 *  (id - 1);
 		Serial.printf("Servo %02d:", id);
-		if (servo.exists(id)) {
-			byte angle = servo.getPos(id);
-			Serial.printf("%d [0x%02X]  %s\n", angle, angle, (servo.isLocked(id) ? "Locked": ""));
-		} else {
+		if (outBuffer[pos] == 0xFF) {
 			Serial.println("--");
+		} else {
+			Serial.printf("%d [0x%02X]  %s\n", outBuffer[pos], outBuffer[pos], (outBuffer[pos+1] ? "Locked": ""));
 		}
 	}
 }
@@ -512,57 +493,12 @@ void V1_goPlayAction(byte actionCode) {
 
 void V1_ReadSPIFFS() {
 	if (debug) DEBUG.println(F("[V1_ReadSPIFFS]"));
-	V1_goReadSPIFFS(true);
-}
-
-void V1_goReadSPIFFS(bool sendResult) {
-	byte result[2];
-	result[0] = 'R';
-	SPIFFS.begin();
-	if (SPIFFS.exists(actionDataFile)) {
-		File f = SPIFFS.open(actionDataFile, "r");
-		if (!f) {
-			result[1] = READ_ERR_OPEN_FILE;
-		} else {
-			if (f.size() != sizeof(actionTable)) {
-				result[1] = READ_ERR_FILE_SIZE;
-			} else {
-				memset(actionTable, 0, sizeof(actionTable));
-				size_t wCnt = f.readBytes((char *)actionTable, sizeof(actionTable));
-				f.close();
-				if (wCnt == sizeof(actionTable)) {
-					result[1] = READ_OK;
-				} else {
-					result[1] = READ_ERR_READ_FILE;
-				}
-			}
-		}
-	} else {
-		result[1] = READ_ERR_NOT_FOUND;
-	}
-	SPIFFS.end();	
-	if (sendResult) Serial.write(result, 2);
+	UBT_ReadSPIFFS('R');
 }
 
 bool V1_WriteSPIFFS() {
 	if (debug) DEBUG.println(F("[V1_WriteSPIFFS]"));
-	byte result[2];
-	result[0] = 'W';
-	SPIFFS.begin();
-	File f = SPIFFS.open(actionDataFile, "w");
-	if (!f) {
-		result[1] = WRITE_ERR_OPEN_FILE;
-	} else {
-		size_t wCnt = f.write((byte *)actionTable, sizeof(actionTable));
-		f.close();
-		if (wCnt == sizeof(actionTable)) {
-			result[1] = WRITE_OK;
-		} else {
-			result[1] = WRITE_ERR_WRITE_FILE;
-		}
-	}
-	SPIFFS.end();	
-	Serial.write(result, 2);
+	UBT_WriteSPIFFS('W');
 }
 
 #pragma endregion

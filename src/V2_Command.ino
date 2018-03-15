@@ -37,7 +37,7 @@
 #define V2_CMD_WRITESPIFFS  	0xF2
 
 
-bool V2_CommandSet() {
+bool V2_Command() {
 
 	if (cmdBuffer.available() < 6) return false;
 	byte header[3];
@@ -179,27 +179,8 @@ void V2_GetServoAngle() {
 	result[2] = len;
 	result[3] = V2_CMD_SERVOANGLE;
 
-	for (int id = 1; id <= 16; id++) {
-		int pos = 4 + 2 * (id - 1);
-		if (servo.exists(id)) {
-			if (servo.isLocked(id)) {
-				result[pos] = servo.lastAngle(id);
-				result[pos+1] = 1;
-			} else {
-				result[pos] = servo.getPos(id);
-				result[pos+1] = 0;
-			}
-		} else {
-			result[pos] = 0xFF;
-			result[pos+1] = 0;
-		}
-	}
-	if (debug) {
-		for (int i = 0; i < 32; i++) {
-			DEBUG.printf("%02X ", result[i]);
-		}
-		DEBUG.println();
-	}
+	byte *ptr = result + 4;
+	UBT_GetServoAngle(ptr);
 	V2_SendResult(result);
 }
 
@@ -326,70 +307,15 @@ void V2_LockServo(byte *cmd, bool goLock) {
 	V2_SendResult(result);
 }
 
-
 #pragma region SPIFFS: V2_CMD_READSPIFFS / V2_CMD_WRITESPIFFS
 
 void V2_ReadSPIFFS() {
 	if (debug) DEBUG.println(F("[V2_ReadSPIFFS]"));
-	GoReadSPIFFS(true);
-}
-
-void GoReadSPIFFS(bool sendResult) {
-	byte result[2];
-	result[0] = V2_CMD_READSPIFFS;
-	SPIFFS.begin();
-	if (SPIFFS.exists(actionDataFile)) {
-		File f = SPIFFS.open(actionDataFile, "r");
-		if (!f) {
-			if (debug) DEBUG.println(F("Fail to open SPIFFS file"));
-			result[1] = READ_ERR_OPEN_FILE;
-		} else {
-			if (f.size() != sizeof(actionTable)) {
-				if (debug) {
-					DEBUG.printf("Invalid File size: %d\n", f.size());
-				}
-				result[1] = READ_ERR_FILE_SIZE;
-			} else {
-				memset(actionTable, 0, sizeof(actionTable));
-				size_t wCnt = f.readBytes((char *)actionTable, sizeof(actionTable));
-				f.close();
-				if (wCnt == sizeof(actionTable)) {
-					result[1] = READ_OK;
-				} else {
-					if (debug) DEBUG.println(F("Errro reading SPIFFS file"));
-					result[1] = READ_ERR_READ_FILE;
-				}
-			}
-		}
-	} else {
-		if (debug) {
-			DEBUG.print(F("SPIFFS file not found: "));
-			DEBUG.println(actionDataFile);
-		}
-		result[1] = READ_ERR_NOT_FOUND;
-	}
-	SPIFFS.end();	
-	if (sendResult) Serial.write(result, 2);
+	UBT_ReadSPIFFS(V2_CMD_READSPIFFS);
 }
 
 void V2_WriteSPIFFS() {
 	if (debug) DEBUG.println(F("[V2_WriteSPIFFS]"));
-	byte result[2];
-	result[0] = V2_CMD_WRITESPIFFS;
-	SPIFFS.begin();
-	File f = SPIFFS.open(actionDataFile, "w");
-	if (!f) {
-		result[1] = WRITE_ERR_OPEN_FILE;
-	} else {
-		size_t wCnt = f.write((byte *)actionTable, sizeof(actionTable));
-		f.close();
-		if (wCnt == sizeof(actionTable)) {
-			result[1] = WRITE_OK;
-		} else {
-			result[1] = WRITE_ERR_WRITE_FILE;
-		}
-	}
-	SPIFFS.end();	
-	Serial.write(result, 2);
+	UBT_WriteSPIFFS(V2_CMD_WRITESPIFFS);
 }
 #pragma endregion

@@ -1,12 +1,11 @@
-#include "robot.h"
-
 /*
-	Servo command can be passed to servo directly
+	UBT Servo Coomunization Command
 
 */
+#include "robot.h"
 
 #pragma region "UBTech Command"
-bool UBT_ServoCommand() {	
+bool UBTSV_Command() {	
 
 	// if (cmdBuffer.available() < 10) return false;
 	// It's not logicaly that 10 byte cannot be received within 1 ms, so consider as invalid input directly

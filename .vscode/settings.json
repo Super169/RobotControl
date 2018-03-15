@@ -6,7 +6,8 @@
 	"files.associations": {
 		"array": "cpp",
 		"initializer_list": "cpp",
-		"valarray": "cpp"
+		"valarray": "cpp",
+		"functional": "cpp"
 	},
 	"C_Cpp.errorSquiggles": "Disabled"
 }

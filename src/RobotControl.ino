@@ -65,7 +65,7 @@ void setup() {
 
 	servo.begin();
 	// TODO: change to V2 when ready
-	V1_goReadSPIFFS(false);
+	UBT_ReadSPIFFS(0);
 
 	DEBUG.println(F("Control board ready\n\n"));
 }
@@ -100,7 +100,7 @@ void remoteControl() {
 		switch (cmd) {
 
 			case 0xFB:
-				goNext = UBT_BTCommand();
+				goNext = UBTBT_Command();
 				break;
 
 			case 0xF1:
@@ -110,16 +110,16 @@ void remoteControl() {
 			case 0xF5:
 			case 0xF9:
 			case 0xEF:
-				goNext = UBT_ControlBoard();
+				goNext = UBTCB_Command();
 				break;
 
 			case 0xFA:
 			case 0xFC:
-				goNext = UBT_ServoCommand();
+				goNext = UBTSV_Command();
 				break;
 
 			case 0xA9:
-				goNext = V2_CommandSet();
+				goNext = V2_Command();
 				break;
 
 
@@ -143,7 +143,7 @@ void remoteControl() {
 			case 'U':
 			case 'W':
 			case 'Z':
-				goNext = V1_CommandSet();
+				goNext = V1_Command();
 				break;
 
 			default:
