@@ -70,6 +70,8 @@ void setup() {
 	UBT_ReadSPIFFS(0);
 
 	DEBUG.println(F("Control board ready\n\n"));
+
+	actionData.WriteSPIFFS();
 }
 
 void loop() {

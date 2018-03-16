@@ -51,7 +51,6 @@
 #define V2_CMD_READSPIFFS   	0xF1
 #define V2_CMD_WRITESPIFFS  	0xF2
 
-
 bool V2_Command() {
 
 	if (cmdBuffer.available() < 6) return false;

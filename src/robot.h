@@ -4,6 +4,7 @@
 #include "UBTech.h"
 #include "FS.h"
 #include "Buffer.h"
+#include "ActionData.h"
 
 #define DEBUG Serial1
 
@@ -16,6 +17,8 @@ bool enable_V2 = true;
 bool enable_UBTBT = true;
 bool enable_UBTCB = true;
 bool enable_UBTSV = true;
+
+ActionData actionData;
 
 #define MAX_ACTION 26
 #define MAX_POSES 30 
@@ -134,7 +137,6 @@ bool cmdSkip(bool flag);
 void DebugShowSkipByte();
 
 #pragma endregion
-
 
 void UBT_GetServoAngle(byte *result);
 void UBT_ReadSPIFFS(byte cmdCode);
