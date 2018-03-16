@@ -22,6 +22,8 @@
 //   14 - Get One Adj Angle (fix) 	: A9 9A 03 14 01 18 ED
 //	 21 - Lock servo (var)			: A9 9A 06 21 01 02 03 04 31 ED
 //	 22 - Unlock servo (var)		: A9 9A 05 22 01 02 03 2D ED
+//	 23 - Servo move (var)			: A9 9A 05 23 00 5A A0 22 ED
+//									: A9 9A 08 23 01 5A A0 02 00 A0 C8 ED 
 //	 31 - Set LED (var)				: A9 9A 04 31 00 01 36 ED
 //                                  : A9 9A 06 31 01 00 02 01 3B ED
 //   F1 - Read SPIFFS (fix) 		: A9 9A 02 F1 F3 ED
@@ -41,6 +43,8 @@
 
 #define V2_CMD_LOCKSERVO		0x21
 #define V2_CMD_UNLOCKSERVO		0x22
+
+#define V2_CMD_SERVOMOVE		0x23
 
 #define V2_CMD_LED				0x31
 
@@ -144,6 +148,10 @@ bool V2_Command() {
 			V2_LockServo(cmd, false);
 			break;
 
+		case V2_CMD_SERVOMOVE:
+			V2_ServoMove(cmd);
+			break;
+
 		case V2_CMD_LED:
 			V2_SetLED(cmd);
 			break;
@@ -190,12 +198,14 @@ void V2_Reset(byte *cmd) {
 void V2_SetDebug(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_SetDebug]"));
 	byte status = (cmd[4] ? 1 : 0);
-	SetDebug(cmd[4]);
+	SetDebug(status);
+	if (debug) DEBUG.printf("Debug mode %s\n", (status ? "enabled" : "disabled"));
 }
 
 void V2_SetDevMode(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_SetDevMode]"));
 	devMode = (cmd[4] ? 1 : 0);
+	if (debug) DEBUG.printf("Developer mode %s\n", (devMode ? "enabled" : "disabled"));
 }
 
 void V2_CommandEnable(byte *cmd) {
@@ -291,32 +301,6 @@ void V2_GetOneAdjAngle(byte *cmd) {
 
 #pragma endregion
 
-
-void V2_SetLED(byte *cmd) {
-	byte id, mode;
-	if (debug) DEBUG.println(F("[V2_SetLED]"));
-	if ((cmd[2] == 4) && (cmd[4] == 0)) {
-		mode = (cmd[5] ? 0 : 1);
-		for (int id = 1; id <= 16; id++) {
-			if (servo.exists(id)) {
-				if (debug) DEBUG.printf("Turn servo %02d LED %s\n", id, (mode ? "OFF" : "ON"));
-				servo.setLED(id, mode);
-			} 
-		}
-	} else {
-		int cnt = (cmd[2] - 2) / 2;
-		for (int i = 0; i < cnt; i++) {
-			int pos = 4 + 2 * i;
-			id = cmd[pos];
-			if (servo.exists(id)) {
-				mode = (cmd[pos+1] ? 0 : 1);
-				if (debug) DEBUG.printf("Turn servo %02d LED %s\n", id, (mode ? "OFF" : "ON"));
-				servo.setLED(id, mode);
-			}
-		}
-	}
-}
-
 #pragma region V2_CMD_LOCKSERVO / V2_CMD_LOCKSERVO
 
 void V2_LockServo(byte *cmd, bool goLock) {
@@ -374,6 +358,106 @@ void V2_LockServo(byte *cmd, bool goLock) {
 	}
 	result[2] = 3 +  result[4] * 2;
 	V2_SendResult(result);
+}
+
+#pragma endregion
+
+
+#pragma region  V2_CMD_SERVOMOVE
+
+void V2_ServoMove(byte *cmd) {
+	byte moveAngle, moveTime;
+	if (debug) DEBUG.println(F("[V2_ServoMove]"));
+	int cnt = (cmd[2] - 2) / 3;
+	byte moveParm[32];
+	memset(moveParm, 0xFF, 32);
+	int pos;
+
+	if ((cnt == 1) && (cmd[4] == 0)) {
+		moveAngle = cmd[5];
+		moveTime = cmd[6];
+		for (byte id = 1; id <= 16; id++ ) {
+			if (servo.exists(id)) {
+				pos = 2 * (id - 1);
+				moveParm[pos] = moveAngle;
+				moveParm[pos+1] = moveTime;
+			}
+		}
+	} else {
+		byte id;
+		for (int i = 0; i < cnt; i++) {
+			pos = 4 + 3 * i;
+			id = cmd[pos];
+			if ((id != 0) && servo.exists(id) && (moveParm[2*(id-1)] == 0xFF)) {
+				moveAngle = cmd[pos+1];
+				moveTime = cmd[pos+2];
+				pos = 2 * (id - 1);
+				moveParm[pos] = moveAngle;
+				moveParm[pos+1] = moveTime;
+			} else {
+				if (debug) DEBUG.printf("Servo ID: %02d is invalid/duplicated\n", id);
+			}
+		}
+	}
+	
+	if (debug) {
+		DEBUG.println("move parameters:");
+		for (int i=0; i < 32; i++) {
+			DEBUG.printf("%02X ", moveParm[i]);
+		}
+		DEBUG.println();
+	}
+
+	int moveCnt = 0;
+	byte result[54]; // max: A9 9A {len} {cmd} (3 * 16) {sum} ED = 48 + 6 = 54
+	for (int id = 1; id <= 16; id++) {
+		pos = 2 * (id - 1);
+		if (moveParm[pos] != 0xFF) {
+			int resultPos = 4 + 3 * moveCnt;
+			result[resultPos] = id;
+			moveAngle = moveParm[pos];
+			moveTime = moveParm[pos+1];
+			result[resultPos+1] = moveAngle;
+			result[resultPos+2] = moveTime;
+			if (debug) DEBUG.printf("Move servo %02d to %d [%02X], time: %d [%02X]\n", id, moveAngle, moveAngle, moveTime, moveTime);
+			servo.move(id, moveAngle, moveTime);
+			moveCnt++;
+		}
+	}
+	result[2] = 2 + 3 * moveCnt;
+	result[3] = V2_CMD_SERVOMOVE;
+	V2_SendResult(result);
+	
+}
+
+#pragma endregion
+
+
+#pragma region V2_CMD_LED
+
+void V2_SetLED(byte *cmd) {
+	DEBUG.print(F("[V2_SetLED]"));
+	byte id, mode;
+	if ((cmd[2] == 4) && (cmd[4] == 0)) {
+		mode = (cmd[5] ? 0 : 1);
+		for (int id = 1; id <= 16; id++) {
+			if (servo.exists(id)) {
+				if (debug) DEBUG.printf("Turn servo %02d LED %s\n", id, (mode ? "OFF" : "ON"));
+				servo.setLED(id, mode);
+			} 
+		}
+	} else {
+		int cnt = (cmd[2] - 2) / 2;
+		for (int i = 0; i < cnt; i++) {
+			int pos = 4 + 2 * i;
+			id = cmd[pos];
+			if (servo.exists(id)) {
+				mode = (cmd[pos+1] ? 0 : 1);
+				if (debug) DEBUG.printf("Turn servo %02d LED %s\n", id, (mode ? "OFF" : "ON"));
+				servo.setLED(id, mode);
+			}
+		}
+	}
 }
 
 #pragma endregion
