@@ -10,14 +10,20 @@
 // Command set:
 //
 //   01 - Reset (fix)    		 	: A9 9A 03 01 00 04 ED
-//   02 - Set Debug (fix) 			: A9 9A 03 02 01 06 ED
-//   03 - Set DevMode (fix) 		: A9 9A 03 03 01 07 ED
+//   02 - Set Debug (fix) 			: A9 9A 03 02 00 05 ED
+//                                    A9 9A 03 02 01 06 ED    
+//   03 - Set DevMode (fix) 		: A9 9A 03 03 00 06 ED
+//									  A9 9A 03 03 01 07 ED
+//   0A - Command Enable (fix)		: A9 9A 02 0A 0C ED
+//                                    A9 9A 07 0A 00 01 01 01 01 15 ED
 //   11 - Get Angle (fix) 			: A9 9A 02 11 13 ED
 //   12 - Get One Angle (fix)		: A9 9A 03 12 01 16 ED
 //   13 - Get Adj Angle (fix)		: A9 9A 02 13 15 ED
 //   14 - Get One Adj Angle (fix) 	: A9 9A 03 14 01 18 ED
 //	 21 - Lock servo (var)			: A9 9A 06 21 01 02 03 04 31 ED
 //	 22 - Unlock servo (var)		: A9 9A 05 22 01 02 03 2D ED
+//	 31 - Set LED (var)				: A9 9A 04 31 00 01 36 ED
+//                                  : A9 9A 06 31 01 00 02 01 3B ED
 //   F1 - Read SPIFFS (fix) 		: A9 9A 02 F1 F3 ED
 //   F2 - Write SPIFFS (fix) 		: A9 9A 02 F2 F4 ED
 
@@ -25,6 +31,9 @@
 #define V2_CMD_RESET			0x01
 #define V2_CMD_DEBUG			0x02
 #define V2_CMD_DEVMODE      	0x03
+
+#define V2_CMD_ENABLE			0x0A
+
 #define V2_CMD_SERVOANGLE		0x11
 #define V2_CMD_ONEANGLE			0x12
 #define V2_CMD_SERVOADJANGLE	0x13
@@ -32,6 +41,8 @@
 
 #define V2_CMD_LOCKSERVO		0x21
 #define V2_CMD_UNLOCKSERVO		0x22
+
+#define V2_CMD_LED				0x31
 
 #define V2_CMD_READSPIFFS   	0xF1
 #define V2_CMD_WRITESPIFFS  	0xF2
@@ -79,6 +90,18 @@ bool V2_Command() {
 	// header, checksum, endcode passed
 	cmdBuffer.skip(len+4);
 
+	// V2_CMD_ENABLE should always available
+	if ((!enable_V2) && (cmd[3] != V2_CMD_ENABLE)) {
+		if (debug) {
+			DEBUG.print(F("V2 Command disabled:"));
+			for (int i = 0; i < len + 4; i++) {
+				DEBUG.printf(" %02X", cmd[i]);
+			}
+			DEBUG.println();
+		}  
+		return true;
+	}
+
 	switch (cmd[3]) {
 
 		case V2_CMD_RESET:
@@ -91,6 +114,10 @@ bool V2_Command() {
 
 		case V2_CMD_DEVMODE:			
 			V2_SetDevMode(cmd);
+			break;
+
+		case V2_CMD_ENABLE:
+			V2_CommandEnable(cmd);
 			break;
 
 		case V2_CMD_SERVOANGLE:
@@ -117,6 +144,9 @@ bool V2_Command() {
 			V2_LockServo(cmd, false);
 			break;
 
+		case V2_CMD_LED:
+			V2_SetLED(cmd);
+			break;
 
 		case V2_CMD_READSPIFFS:
 			V2_ReadSPIFFS();
@@ -166,6 +196,27 @@ void V2_SetDebug(byte *cmd) {
 void V2_SetDevMode(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_SetDevMode]"));
 	devMode = (cmd[4] ? 1 : 0);
+}
+
+void V2_CommandEnable(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_CommandEnable]"));
+	byte result[6];
+	// Should have only 2 options:
+	//   cmd[2] = 7 : set all 5 flags
+	//   cmd[2] = 2 : enquiry  (just assume all non-7 length is for enquiry)
+	if (cmd[2] == 7) {
+		enable_V1 = cmd[4];
+		enable_V2 = cmd[5];
+		enable_UBTBT = cmd[6];
+		enable_UBTCB = cmd[7];
+		enable_UBTSV = cmd[8];
+	} 
+	result[0] = (enable_V1 ? 1 : 0);
+	result[1] = (enable_V2 ? 1 : 0);
+	result[2] = (enable_UBTBT ? 1 : 0);
+	result[3] = (enable_UBTCB ? 1 : 0);
+	result[4] = (enable_UBTSV ? 1 : 0);
+	Serial.write(result, 5);
 }
 
 #pragma endregion
@@ -240,6 +291,32 @@ void V2_GetOneAdjAngle(byte *cmd) {
 
 #pragma endregion
 
+
+void V2_SetLED(byte *cmd) {
+	byte id, mode;
+	if (debug) DEBUG.println(F("[V2_SetLED]"));
+	if ((cmd[2] == 4) && (cmd[4] == 0)) {
+		mode = (cmd[5] ? 0 : 1);
+		for (int id = 1; id <= 16; id++) {
+			if (servo.exists(id)) {
+				if (debug) DEBUG.printf("Turn servo %02d LED %s\n", id, (mode ? "OFF" : "ON"));
+				servo.setLED(id, mode);
+			} 
+		}
+	} else {
+		int cnt = (cmd[2] - 2) / 2;
+		for (int i = 0; i < cnt; i++) {
+			int pos = 4 + 2 * i;
+			id = cmd[pos];
+			if (servo.exists(id)) {
+				mode = (cmd[pos+1] ? 0 : 1);
+				if (debug) DEBUG.printf("Turn servo %02d LED %s\n", id, (mode ? "OFF" : "ON"));
+				servo.setLED(id, mode);
+			}
+		}
+	}
+}
+
 #pragma region V2_CMD_LOCKSERVO / V2_CMD_LOCKSERVO
 
 void V2_LockServo(byte *cmd, bool goLock) {
@@ -298,6 +375,8 @@ void V2_LockServo(byte *cmd, bool goLock) {
 	result[2] = 3 +  result[4] * 2;
 	V2_SendResult(result);
 }
+
+#pragma endregion
 
 #pragma region SPIFFS: V2_CMD_READSPIFFS / V2_CMD_WRITESPIFFS
 

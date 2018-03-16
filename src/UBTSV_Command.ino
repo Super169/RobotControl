@@ -38,6 +38,8 @@ bool UBTSV_Command() {
 	// Now a complete command received, clear data from buffer
 	cmdBuffer.skip(10);
 
+	if (!enable_UBTSV) return true;
+
 	int cnt =  (servo.execute(cmd, result));
 	if (cnt > 0) {
 		Serial.write(result, cnt);

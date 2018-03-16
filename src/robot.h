@@ -11,6 +11,12 @@
 
 Buffer cmdBuffer(BUFFER_SIZE);
 
+bool enable_V1 = true;
+bool enable_V2 = true;
+bool enable_UBTBT = true;
+bool enable_UBTCB = true;
+bool enable_UBTSV = true;
+
 #define MAX_ACTION 26
 #define MAX_POSES 30 
 // #define MAX_POSES_SIZE 40

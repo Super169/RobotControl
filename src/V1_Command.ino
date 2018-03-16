@@ -29,6 +29,17 @@
 
 bool V1_Command() {
 	byte cmd = cmdBuffer.read();
+
+	// a little bit danger as subsequent data may trrigger other commands
+	// but unforunately, V1 command does not have start/sum/end structure, 
+	// it need to identify the command one by one until parameters read.
+	// For to simplify the logic, skip the command directly here.
+	// Unless the data part meet the start/sum/end of other command, it will not be triggered.
+	if (!enable_V1) {
+		if (debug)  DEBUG.printf("V1 Command disabled: %c [0x%02X]\n", cmd, cmd);
+		return true;
+	}
+
 	switch (cmd) {
 			case 'A':
 				V1_GetServoAngle();
@@ -144,11 +155,11 @@ void V1_GetServoAngleText() {
 	Serial.println(F("\nServo Angle:\n"));
 	for (int id = 1; id <= 16; id++) {
 		int pos = 2 *  (id - 1);
-		Serial.printf("Servo %02d:", id);
+		Serial.printf("Servo %02d: ", id);
 		if (outBuffer[pos] == 0xFF) {
-			Serial.println("--");
+			Serial.println("---");
 		} else {
-			Serial.printf("%d [0x%02X]  %s\n", outBuffer[pos], outBuffer[pos], (outBuffer[pos+1] ? "Locked": ""));
+			Serial.printf("%3d [0x%02X]  %s\n", outBuffer[pos], outBuffer[pos], (outBuffer[pos+1] ? "Locked": ""));
 		}
 	}
 }
