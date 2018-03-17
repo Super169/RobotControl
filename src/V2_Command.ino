@@ -303,7 +303,7 @@ void V2_GetOneAdjAngle(byte *cmd) {
 #pragma region V2_CMD_LOCKSERVO / V2_CMD_LOCKSERVO
 
 void V2_LockServo(byte *cmd, bool goLock) {
-	if (debug) DEBUG.println(F("[V2_LockServo]"));
+	if (debug) DEBUG.printf("[V2_LockServo - %s]\n", (goLock ? "Lock" : "Unlock"));
 
 	byte result[40];  // max: A9 9A len cmd n {2 * n} {sum} ED - n <= 16 => max: 39
 	result[3] = cmd[3];
@@ -324,13 +324,14 @@ void V2_LockServo(byte *cmd, bool goLock) {
 			}
 		}
 		result[4] = cnt;
+		if (debug) DEBUG.printf("All servo: %d\n",cnt);
 	} else {
 		int reqCnt = cmd[2] - 2;
 		for (int i = 0; i < reqCnt; i++) {
 			byte id = cmd[4 + i];
 			if (id) {
 				// check if already exists
-				for (int j = 0; j < i; i++) {
+				for (int j = 0; j < i; j++) {
 					if (cmd[4 + j] == id) {
 						if (debug) {
 							DEBUG.printf("Duplicate ID: %d \n", id);
@@ -354,13 +355,14 @@ void V2_LockServo(byte *cmd, bool goLock) {
 				}
 			}
 		}
+		result[4] = cnt;
+		if (debug) DEBUG.printf("Selected %d servos : %d\n", reqCnt, cnt);
 	}
 	result[2] = 3 +  result[4] * 2;
 	V2_SendResult(result);
 }
 
 #pragma endregion
-
 
 #pragma region  V2_CMD_SERVOMOVE
 

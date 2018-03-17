@@ -468,7 +468,7 @@ void V1_PlayAction() {
 }
 
 void V1_goPlayAction(byte actionCode) {
-	Serial.println("Play Action");
+	if (debug) DEBUG.printf("Start playing action %c\n", (actionCode + 'A'));
 	for (int po = 0; po < MAX_POSES; po++) {
 		int waitTime = actionTable[actionCode][po][WAIT_TIME_HIGH] * 256 + actionTable[actionCode][po][WAIT_TIME_LOW];
 		byte time = actionTable[actionCode][po][EXECUTE_TIME];
@@ -486,7 +486,7 @@ void V1_goPlayAction(byte actionCode) {
 		}
 		delay(waitTime);
 	}
-	servo.setDebug(false);
+	if (debug) DEBUG.printf("Action %c completed\n", (actionCode + 'A'));
 }
 
 #pragma endregion
