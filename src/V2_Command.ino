@@ -26,6 +26,11 @@
 //									: A9 9A 08 23 01 5A A0 02 00 A0 C8 ED 
 //	 31 - Set LED (var)				: A9 9A 04 31 00 01 36 ED
 //                                  : A9 9A 06 31 01 00 02 01 3B ED
+//   61 - Read Action Header (fix) 	: A9 9A 03 61 01 65 ED
+//   62 - Read Action Data (fix)	: A9 9A 03 62 01 65 ED
+//   63 - Read Action Post (fix)	: A9 9A 03 61 01 65 ED
+
+
 //   F1 - Read SPIFFS (fix) 		: A9 9A 02 F1 F3 ED
 //   F2 - Write SPIFFS (fix) 		: A9 9A 02 F2 F4 ED
 
@@ -47,6 +52,14 @@
 #define V2_CMD_SERVOMOVE		0x23
 
 #define V2_CMD_LED				0x31
+
+#define V2_CMD_GET_ADHEADER		0x61
+#define V2_CMD_GET_ADDATA		0x62
+#define V2_CMD_GET_ADPOSE		0x63
+
+#define V2_CMD_SAVE_ADHEADER	0x71
+#define V2_CMD_SAVE_ADPOSE		0x72
+
 
 #define V2_CMD_READSPIFFS   	0xF1
 #define V2_CMD_WRITESPIFFS  	0xF2
@@ -161,6 +174,26 @@ bool V2_Command() {
 
 		case V2_CMD_WRITESPIFFS:
 			V2_WriteSPIFFS();
+			break;
+
+		case V2_CMD_GET_ADHEADER:
+			V2_GetAdHeader(cmd);
+			break;
+
+		case V2_CMD_GET_ADDATA:
+			V2_GetAdData(cmd);
+			break;
+
+		case V2_CMD_GET_ADPOSE:
+			V2_GetAdPose(cmd);
+			break;
+		
+		case V2_CMD_SAVE_ADHEADER:
+			V2_SaveAdHeader(cmd);
+			break;
+
+		case V2_CMD_SAVE_ADPOSE:
+			V2_SaveAdPose(cmd);
 			break;
 
 		default:
@@ -463,6 +496,76 @@ void V2_SetLED(byte *cmd) {
 
 #pragma endregion
 
+#pragma region ActionTable
+
+bool V2_CheckActionId(byte actionId) {
+
+	if (debug) DEBUG.printf("Current Id: %d; requested Id: %d\n", actionData.id(), actionId);
+	if (actionId != actionData.id() ) {
+		if (!actionData.ReadSPIFFS(actionId)) {
+			// anything to do if still fail to read
+			if (debug) DEBUG.println("Fail to get Id matched.");
+			return false;
+		}
+	} 
+	return true;
+}
+
+
+void V2_GetAdHeader(byte *cmd) {
+	if (debug) DEBUG.println("[V2_GetAdHeader]");
+	byte aId = cmd[4];	
+	if (!V2_CheckActionId(aId)) {
+		return;	
+	}
+	V2_SendResult((byte *) actionData.Header());
+
+}
+
+void V2_GetAdData(byte *cmd) {
+	
+	DEBUG.print(F("[V2_GetAdData]"));
+	byte aId = cmd[4];	
+	if (!V2_CheckActionId(aId)) {
+		return;	
+	}
+	byte poseCnt = actionData.PoseCnt();
+	byte dataSize = poseCnt * AD_POSE_SIZE;
+	byte len = dataSize + 2;
+	byte d1[4] = { 0xA9, 0x9A, len, V2_CMD_GET_ADDATA};
+	byte sum = len + V2_CMD_GET_ADDATA;
+	byte *data = actionData.Data();
+	for (int i = 0; i < dataSize; i++) {
+		sum += data[i];
+	}
+	Serial.write(d1, 4);
+	Serial.write(data, dataSize);
+	Serial.write(sum);
+	Serial.write(0xED);
+	
+}
+
+
+void V2_GetAdPose(byte *cmd) {
+	DEBUG.print(F("[V2_GetAdPose]"));
+	byte aId = cmd[4];
+	byte aPose = cmd[5];
+}
+
+void V2_SaveAdHeader(byte *cmd) {
+	DEBUG.print(F("[V2_SaveAdHeader]"));
+	byte aId = cmd[4];	
+}
+
+void V2_SaveAdPose(byte *cmd) {
+	DEBUG.print(F("[V2_SaveAdPose]"));
+	byte aId = cmd[4];
+	byte aPose = cmd[5];
+}
+
+#pragma endregion
+
+
 #pragma region SPIFFS: V2_CMD_READSPIFFS / V2_CMD_WRITESPIFFS
 
 void V2_ReadSPIFFS() {
@@ -475,3 +578,5 @@ void V2_WriteSPIFFS() {
 	UBT_WriteSPIFFS(V2_CMD_WRITESPIFFS);
 }
 #pragma endregion
+
+

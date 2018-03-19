@@ -9,9 +9,12 @@
 #define AD_OFFSET_ID   		4
 #define AD_OFFSET_NAMESIZE	10
 #define AD_OFFSET_NAME  	11
-#define AD_OFFSET_STEP  	48
+#define AD_OFFSET_POSECNT 	48
 #define AD_DATA_SIZE		8200
 #define AD_POSE_SIZE		32
+
+#define ACTION_FILE "/alpha/action/%03d.dat"
+
 
 
 class ActionData {
@@ -23,14 +26,25 @@ class ActionData {
 		byte WriteSPIFFS();
 		// bool DumpActionHeader(byte actionId);
 		// bool DumpActionData(byte actionId);
-	
+		byte id() { return _id; }
+
+		byte * Header() { return (byte *) _header; }
+		byte * Data() { return (byte *) _data; }
+
+		byte PoseCnt() { return _header[AD_OFFSET_POSECNT]; }
+
+
 	private:
-		byte *_header;
-		byte *_data;
+
+		bool ReadActionFile(int actionId);
+
+		byte _header[AD_HEADER_SIZE];
+		byte _data[AD_DATA_SIZE];
 		byte _id;
 		byte _len;
 		char *_name;
 		byte *_action;
+		char _filename[25];
 };
 
 #endif

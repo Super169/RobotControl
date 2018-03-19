@@ -63,15 +63,23 @@ void setup() {
 
 	DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
 	unsigned long actionSzie = sizeof(actionTable);
-
+/*
 	servo.begin();
 	servo.lockAll();
 	// TODO: change to V2 when ready
 	UBT_ReadSPIFFS(0);
-
+*/
 	DEBUG.println(F("Control board ready\n\n"));
 
-	actionData.WriteSPIFFS();
+
+	// Testing on ActionData
+	actionData.InitObject(1);
+	actionData.Header()[48] = 1;
+	byte wCnt = actionData.WriteSPIFFS();
+	Serial.printf("\nBytes write: %d\n", wCnt);
+	bool success = actionData.ReadSPIFFS(1);
+	Serial.printf("\nRead action %d : %s\n", 1, (success ? "Success" : "Failed"));
+
 }
 
 void loop() {
