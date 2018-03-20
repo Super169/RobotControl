@@ -9,7 +9,7 @@
 
 // Command set:
 //
-//   01 - Reset (fix)    		 	: A9 9A 03 01 00 04 ED
+//   01 - Reset (fix)    		 	: A9 9A 02 01 03 ED
 //   02 - Set Debug (fix) 			: A9 9A 03 02 00 05 ED
 //                                    A9 9A 03 02 01 06 ED    
 //   03 - Set DevMode (fix) 		: A9 9A 03 03 00 06 ED
@@ -242,7 +242,7 @@ void V2_SetDevMode(byte *cmd) {
 
 void V2_CommandEnable(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_CommandEnable]"));
-	byte result[6];
+	byte result[10];
 	// Should have only 2 options:
 	//   cmd[2] = 7 : set all 5 flags
 	//   cmd[2] = 2 : enquiry  (just assume all non-7 length is for enquiry)
@@ -253,12 +253,15 @@ void V2_CommandEnable(byte *cmd) {
 		enable_UBTCB = cmd[7];
 		enable_UBTSV = cmd[8];
 	} 
-	result[0] = (enable_V1 ? 1 : 0);
-	result[1] = (enable_V2 ? 1 : 0);
-	result[2] = (enable_UBTBT ? 1 : 0);
-	result[3] = (enable_UBTCB ? 1 : 0);
-	result[4] = (enable_UBTSV ? 1 : 0);
-	Serial.write(result, 5);
+	result[2] = 6;
+	result[3] = (enable_V1 ? 1 : 0);
+	result[4] = (enable_V2 ? 1 : 0);
+	result[5] = (enable_UBTBT ? 1 : 0);
+	result[6] = (enable_UBTCB ? 1 : 0);
+	result[7] = (enable_UBTSV ? 1 : 0);
+
+	V2_SendResult(result);
+	// Serial.write(result, 5);
 }
 
 #pragma endregion
@@ -267,12 +270,10 @@ void V2_CommandEnable(byte *cmd) {
 
 void V2_GetServoAngle() {
 	if (debug) DEBUG.println(F("[V2_GetServoAngle]"));
-	uint16_t len = 34;
+	uint16_t len = 33;
 	byte result[len+4];
 	result[2] = len;
-	result[3] = V2_CMD_SERVOANGLE;
-
-	byte *ptr = result + 4;
+	byte *ptr = result + 3;
 	UBT_GetServoAngle(ptr);
 	V2_SendResult(result);
 }
@@ -280,22 +281,31 @@ void V2_GetServoAngle() {
 void V2_GetOneAngle(byte *cmd) {
 
 	if (debug) DEBUG.println(F("[V2_GetOneAngle]"));
-	byte result[2] = {0xff, 0x00};
+	byte result[8];
+	result[2] = 4;
 
 	if (cmd[2] == 3) {
 		byte id = cmd[4];
+		result [3] = id;
 		if ((id) && (id <= 16) && (servo.exists(id))) {
 				if (servo.isLocked(id)) {
-					result[0] = servo.lastAngle(id);
-					result[1] = 1;
+					result[4] = servo.lastAngle(id);
+					result[5] = 1;
 				} else {
-					result[0] = servo.getPos(id);
-					result[1] = 0;
+					result[4] = servo.getPos(id);
+					result[5] = 0;
 				}
-		} 
+		} else {
+			result[4] = 0xff;
+			result[5] = 0xff;
+		}
+	} else {
+		result[3] = 0x00;
+		result[4] = 0xff;
+		result[5] = 0xff;
 	}
-	
-	Serial.write(result, 2);
+
+	V2_SendResult(result);
 
 }
 
@@ -306,11 +316,10 @@ void V2_GetOneAngle(byte *cmd) {
 
 void V2_GetServoAdjAngle() {
 	if (debug) DEBUG.println(F("[V2_GetServoAdjAngle]"));
-	uint16_t len = 34;
+	uint16_t len = 33;
 	byte result[len+4];
 	result[2] = len;
-	result[3] = V2_CMD_SERVOADJANGLE;
-	byte *ptr = result + 4;
+	byte *ptr = result + 3;
 	UBT_GetServoAdjAngle(ptr);
 	V2_SendResult(result);
 
@@ -318,17 +327,27 @@ void V2_GetServoAdjAngle() {
 
 void V2_GetOneAdjAngle(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_GetOneAdjAngle]"));
-	byte result[2] = {0x7f, 0xff};
+	byte result[8];
+	result[2] = 4;
+
 	if (cmd[2] == 3) {
-		byte id = 0;
+		byte id = cmd[4];
+		result [3] = id;
 		if (cmd[2] > 2) id = cmd[4];
 		if ((id) && (id <= 16) && (servo.exists(id))) {
 			uint16_t  adjAngle = servo.getAdjAngle(id);
-			result[0] = adjAngle / 256;
-			result[1] = adjAngle % 256;
+			result[4] = adjAngle / 256;
+			result[5] = adjAngle % 256;
+		} else {
+			result[4] = 0x7F;
+			result[5] = 0x7F;
 		}
+	} else {
+		result[3] = 0x00;
+		result[4] = 0x7F;
+		result[5] = 0x7F;
 	}
-	Serial.write(result, 2);
+	V2_SendResult(result);
 }
 
 #pragma endregion
@@ -443,7 +462,7 @@ void V2_ServoMove(byte *cmd) {
 	}
 
 	int moveCnt = 0;
-	byte result[54]; // max: A9 9A {len} {cmd} (3 * 16) {sum} ED = 48 + 6 = 54
+	byte result[54]; // max: A9 9A {len} {cnt} (3 * 16) {sum} ED = 48 + 6 = 54
 	for (int id = 1; id <= 16; id++) {
 		pos = 2 * (id - 1);
 		if (moveParm[pos] != 0xFF) {
@@ -459,7 +478,7 @@ void V2_ServoMove(byte *cmd) {
 		}
 	}
 	result[2] = 2 + 3 * moveCnt;
-	result[3] = V2_CMD_SERVOMOVE;
+	result[3] = moveCnt;
 	V2_SendResult(result);
 	
 }

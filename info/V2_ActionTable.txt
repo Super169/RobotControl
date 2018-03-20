@@ -40,8 +40,8 @@ Header (128 bytes)
 Step data start at 0x80, length of step
 00 #
 01 Enabled
-01 servo time
-02 ~ 17 : servo angle
+02 servo time
+03 ~ 18 : servo angle
 18 ~ 19 : wait time in ms (max 65535)
 
 20 ~ 21 : set LED flag
