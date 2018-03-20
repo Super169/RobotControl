@@ -137,7 +137,7 @@ bool V2_Command() {
 			break;
 
 		case V2_CMD_SERVOANGLE:
-			V2_GetServoAngle();
+			V2_GetServoAngle(cmd);
 			break;
 
 		case V2_CMD_ONEANGLE:
@@ -145,7 +145,7 @@ bool V2_Command() {
 			break;
 
 		case V2_CMD_SERVOADJANGLE:
-			V2_GetServoAdjAngle();
+			V2_GetServoAdjAngle(cmd);
 			break;
 
 		case V2_CMD_ONEADJANGLE:
@@ -168,14 +168,6 @@ bool V2_Command() {
 			V2_SetLED(cmd);
 			break;
 
-		case V2_CMD_READSPIFFS:
-			V2_ReadSPIFFS();
-			break;
-
-		case V2_CMD_WRITESPIFFS:
-			V2_WriteSPIFFS();
-			break;
-
 		case V2_CMD_GET_ADHEADER:
 			V2_GetAdHeader(cmd);
 			break;
@@ -194,6 +186,14 @@ bool V2_Command() {
 
 		case V2_CMD_SAVE_ADPOSE:
 			V2_SaveAdPose(cmd);
+			break;
+
+		case V2_CMD_READSPIFFS:
+			V2_ReadSPIFFS(cmd);
+			break;
+
+		case V2_CMD_WRITESPIFFS:
+			V2_WriteSPIFFS(cmd);
 			break;
 
 		default:
@@ -215,6 +215,14 @@ void V2_SendResult(byte *result) {
 	Serial.write(result, size);
 }
 
+void V2_SendSigleByteResult(byte cmdCode, byte data) {
+	byte result[7];
+	result[2] = 3;
+	result[3] = cmdCode;
+	result[4] = data;
+	V2_SendResult(result);
+}
+
 #pragma region V2_CMD_RESET / V2_CMD_DEBUG / V2_CMD_DEVMODE
 
 void V2_Reset(byte *cmd) {
@@ -224,7 +232,7 @@ void V2_Reset(byte *cmd) {
 	servo.begin();
 	byte showAngle = 0;
 	if (cmd[2] > 2) showAngle = cmd[4];
-	if ((showAngle) && (showAngle != '0')) V2_GetServoAngle();
+	if ((showAngle) && (showAngle != '0')) V2_GetServoAngle(cmd);
 }
 
 void V2_SetDebug(byte *cmd) {
@@ -242,7 +250,7 @@ void V2_SetDevMode(byte *cmd) {
 
 void V2_CommandEnable(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_CommandEnable]"));
-	byte result[10];
+	byte result[11];
 	// Should have only 2 options:
 	//   cmd[2] = 7 : set all 5 flags
 	//   cmd[2] = 2 : enquiry  (just assume all non-7 length is for enquiry)
@@ -253,12 +261,13 @@ void V2_CommandEnable(byte *cmd) {
 		enable_UBTCB = cmd[7];
 		enable_UBTSV = cmd[8];
 	} 
-	result[2] = 6;
-	result[3] = (enable_V1 ? 1 : 0);
-	result[4] = (enable_V2 ? 1 : 0);
-	result[5] = (enable_UBTBT ? 1 : 0);
-	result[6] = (enable_UBTCB ? 1 : 0);
-	result[7] = (enable_UBTSV ? 1 : 0);
+	result[2] = 7;
+	result[3] = cmd[3];
+	result[4] = (enable_V1 ? 1 : 0);
+	result[5] = (enable_V2 ? 1 : 0);
+	result[6] = (enable_UBTBT ? 1 : 0);
+	result[7] = (enable_UBTCB ? 1 : 0);
+	result[8] = (enable_UBTSV ? 1 : 0);
 
 	V2_SendResult(result);
 	// Serial.write(result, 5);
@@ -268,41 +277,47 @@ void V2_CommandEnable(byte *cmd) {
 
 #pragma region V2_CMD_SERVOANGLE / V2_CMD_ONEANGLE
 
-void V2_GetServoAngle() {
+void V2_GetServoAngle(byte *cmd) {
+	
 	if (debug) DEBUG.println(F("[V2_GetServoAngle]"));
-	uint16_t len = 33;
+	uint16_t len = 34;
 	byte result[len+4];
+	
 	result[2] = len;
-	byte *ptr = result + 3;
+	result[3] = cmd[3];
+	byte *ptr = result + 4;
+	
 	UBT_GetServoAngle(ptr);
 	V2_SendResult(result);
+	
 }
 
 void V2_GetOneAngle(byte *cmd) {
 
 	if (debug) DEBUG.println(F("[V2_GetOneAngle]"));
-	byte result[8];
+	byte result[9];
 	result[2] = 4;
+	result[3] = cmd[3];
 
 	if (cmd[2] == 3) {
 		byte id = cmd[4];
-		result [3] = id;
+		result [4] = id;
 		if ((id) && (id <= 16) && (servo.exists(id))) {
 				if (servo.isLocked(id)) {
-					result[4] = servo.lastAngle(id);
-					result[5] = 1;
+					result[5] = servo.lastAngle(id);
+					result[6] = 1;
 				} else {
-					result[4] = servo.getPos(id);
-					result[5] = 0;
+					result[5] = servo.getPos(id);
+					result[6] = 0;
 				}
 		} else {
-			result[4] = 0xff;
 			result[5] = 0xff;
+			result[6] = 0xff;
 		}
 	} else {
-		result[3] = 0x00;
-		result[4] = 0xff;
+		result[4] = 0x00;
 		result[5] = 0xff;
+		result[6] = 0xff;
 	}
 
 	V2_SendResult(result);
@@ -314,12 +329,13 @@ void V2_GetOneAngle(byte *cmd) {
 
 #pragma region V2_CMD_SERVOADJANGLE / V2_CMD_ONEADJANGLE
 
-void V2_GetServoAdjAngle() {
+void V2_GetServoAdjAngle(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_GetServoAdjAngle]"));
-	uint16_t len = 33;
+	uint16_t len = 34;
 	byte result[len+4];
 	result[2] = len;
-	byte *ptr = result + 3;
+	result[3] = cmd[3];
+	byte *ptr = result + 4;
 	UBT_GetServoAdjAngle(ptr);
 	V2_SendResult(result);
 
@@ -327,25 +343,26 @@ void V2_GetServoAdjAngle() {
 
 void V2_GetOneAdjAngle(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_GetOneAdjAngle]"));
-	byte result[8];
+	byte result[9];
 	result[2] = 4;
+	result[3] = cmd[3];
 
 	if (cmd[2] == 3) {
 		byte id = cmd[4];
-		result [3] = id;
+		result [4] = id;
 		if (cmd[2] > 2) id = cmd[4];
 		if ((id) && (id <= 16) && (servo.exists(id))) {
 			uint16_t  adjAngle = servo.getAdjAngle(id);
-			result[4] = adjAngle / 256;
-			result[5] = adjAngle % 256;
+			result[5] = adjAngle / 256;
+			result[6] = adjAngle % 256;
 		} else {
-			result[4] = 0x7F;
 			result[5] = 0x7F;
+			result[6] = 0x7F;
 		}
 	} else {
-		result[3] = 0x00;
-		result[4] = 0x7F;
+		result[4] = 0x00;
 		result[5] = 0x7F;
+		result[6] = 0x7F;
 	}
 	V2_SendResult(result);
 }
@@ -462,11 +479,11 @@ void V2_ServoMove(byte *cmd) {
 	}
 
 	int moveCnt = 0;
-	byte result[54]; // max: A9 9A {len} {cnt} (3 * 16) {sum} ED = 48 + 6 = 54
+	byte result[55]; // max: A9 9A {len} {cmd} {cnt} (3 * 16) {sum} ED = 48 + 7 = 55
 	for (int id = 1; id <= 16; id++) {
 		pos = 2 * (id - 1);
 		if (moveParm[pos] != 0xFF) {
-			int resultPos = 4 + 3 * moveCnt;
+			int resultPos = 5 + 3 * moveCnt;
 			result[resultPos] = id;
 			moveAngle = moveParm[pos];
 			moveTime = moveParm[pos+1];
@@ -478,7 +495,8 @@ void V2_ServoMove(byte *cmd) {
 		}
 	}
 	result[2] = 2 + 3 * moveCnt;
-	result[3] = moveCnt;
+	result[3] = cmd[3];
+	result[4] = moveCnt;
 	V2_SendResult(result);
 	
 }
@@ -534,6 +552,7 @@ bool V2_CheckActionId(byte actionId) {
 void V2_GetAdHeader(byte *cmd) {
 	if (debug) DEBUG.println("[V2_GetAdHeader]");
 	byte aId = cmd[4];	
+	actionData.Header()[3] = cmd[3];
 	if (!V2_CheckActionId(aId)) {
 		return;	
 	}
@@ -587,15 +606,26 @@ void V2_SaveAdPose(byte *cmd) {
 
 #pragma region SPIFFS: V2_CMD_READSPIFFS / V2_CMD_WRITESPIFFS
 
-void V2_ReadSPIFFS() {
+void V2_ReadSPIFFS(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_ReadSPIFFS]"));
-	UBT_ReadSPIFFS(V2_CMD_READSPIFFS);
+	byte success = V2_UBT_ReadSPIFFS(cmd);
+	V2_SendSigleByteResult(cmd, success);
 }
 
-void V2_WriteSPIFFS() {
-	if (debug) DEBUG.println(F("[V2_WriteSPIFFS]"));
-	UBT_WriteSPIFFS(V2_CMD_WRITESPIFFS);
+byte V2_UBT_ReadSPIFFS(byte *cmd) {
+	return 0;
 }
+
+void V2_WriteSPIFFS(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_WriteSPIFFS]"));
+	byte success = V2_UBT_WriteSPIFFS(cmd);
+	V2_SendSigleByteResult(cmd, success);
+}
+
+byte V2_UBT_WriteSPIFFS(byte *cmd) {
+	return 0;
+}
+
 #pragma endregion
 
 
