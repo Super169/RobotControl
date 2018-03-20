@@ -183,7 +183,7 @@ void remoteControl() {
 			if ((lastCmdMs)	&& (millis() - lastCmdMs > MAX_WAIT_CMD)) {
 				// Exceed max wait time for a command
 				if (debug) {
-					DEBUG.print(F("Command timeout: "));
+					DEBUG.printf("Command timeout (%d received): ", cmdBuffer.available());
 					DebugShowSkipByte();
 				}
 				cmdBuffer.skip();

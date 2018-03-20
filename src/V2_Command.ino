@@ -57,8 +57,8 @@
 #define V2_CMD_GET_ADPOSE		0x62
 #define V2_CMD_GET_ADDATA		0x63
 
-#define V2_CMD_SAVE_ADHEADER	0x71
-#define V2_CMD_SAVE_ADPOSE		0x72
+#define V2_CMD_UPD_ADHEADER		0x71
+#define V2_CMD_UPD_ADPOSE		0x72
 #define V2_CMD_UPD_ADNAME		0x74
 
 
@@ -181,12 +181,12 @@ bool V2_Command() {
 			V2_GetAdPose(cmd);
 			break;
 		
-		case V2_CMD_SAVE_ADHEADER:
-			V2_SaveAdHeader(cmd);
+		case V2_CMD_UPD_ADHEADER:
+			V2_UpdateAdHeader(cmd);
 			break;
 
-		case V2_CMD_SAVE_ADPOSE:
-			V2_SaveAdPose(cmd);
+		case V2_CMD_UPD_ADPOSE:
+			V2_UpdateAdPose(cmd);
 			break;
 
 		case V2_CMD_UPD_ADNAME:
@@ -324,7 +324,6 @@ void V2_GetOneAngle(byte *cmd) {
 		result[5] = 0xff;
 		result[6] = 0xff;
 	}
-
 	V2_SendResult(result);
 
 }
@@ -512,7 +511,7 @@ void V2_ServoMove(byte *cmd) {
 #pragma region V2_CMD_LED
 
 void V2_SetLED(byte *cmd) {
-	DEBUG.print(F("[V2_SetLED]"));
+	if (debug) DEBUG.println(F("[V2_SetLED]"));
 	byte id, mode;
 	if ((cmd[2] == 4) && (cmd[4] == 0)) {
 		mode = (cmd[5] ? 0 : 1);
@@ -567,7 +566,7 @@ void V2_GetAdHeader(byte *cmd) {
 
 void V2_GetAdData(byte *cmd) {
 	
-	DEBUG.print(F("[V2_GetAdData]"));
+	if (debug) DEBUG.println(F("[V2_GetAdData]"));
 	byte aId = cmd[4];	
 	if (!V2_CheckActionId(aId)) {
 		return;	
@@ -597,7 +596,7 @@ void V2_GetAdData(byte *cmd) {
 
 
 void V2_GetAdPose(byte *cmd) {
-	DEBUG.print(F("[V2_GetAdPose]"));
+	if (debug) DEBUG.println(F("[V2_GetAdPose]"));
 	byte aId = cmd[4];
 	if (!V2_CheckActionId(aId)) {
 		return;	
@@ -616,29 +615,60 @@ void V2_GetAdPose(byte *cmd) {
 	V2_SendResult(result);
 }
 
-void V2_SaveAdHeader(byte *cmd) {
-	DEBUG.print(F("[V2_SaveAdHeader]"));
+void V2_UpdateAdHeader(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_UpdateAdHeader]"));
 	byte aId = cmd[4];	
+
+	// Length should be header size - 4
+	if (cmd[2] != (AD_HEADER_SIZE - 4)) {
+		if (debug) DEBUG.printf("Invalid length: \n", cmd[2]);
+		V2_SendSigleByteResult(cmd[3], 1);
+		return;
+	}
+
+	// Action ID must be matched.  i.e. must GET before UPDATE
+	if (cmd[4] != actionData.Header()[4]) {
+		if (debug) DEBUG.printf("ID not matched: %d (current: %d)\n", cmd[4], actionData.Header()[4]);
+		V2_SendSigleByteResult(cmd[3], 2);
+		return;
+	}
+	for (int i = 0; i < AD_HEADER_SIZE; i++) {
+		actionData.Header()[i] = cmd[i];
+	}
+	
+	if (debug) DEBUG.printf("Action %d header updated\n", aId);
+	V2_SendSigleByteResult(cmd[3], 0);
 }
 
-void V2_SaveAdPose(byte *cmd) {
-	DEBUG.print(F("[V2_SaveAdPose]"));
+void V2_UpdateAdPose(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_UpdateAdPose]"));
 	byte aId = cmd[4];
 	byte aPose = cmd[5];
 }
 
 void V2_UpdateAdName(byte *cmd) {
-	DEBUG.print(F("[V2_SaveAdName]"));
+	if (debug) DEBUG.println(F("[V2_UpdateAdName]"));
 	byte id = cmd[4];
+	if (actionData.id() != id) {
+		V2_SendSigleByteResult(cmd[3], 1);
+		return;
+	}
+	if (cmd[5] > AD_NAME_SIZE) {
+		V2_SendSigleByteResult(cmd[3], 2);
+		return;
+	}
 	byte * startPos = actionData.Header() + AD_OFFSET_NAME;
-	memset(startPos, 0, 30);
+	memset(startPos, 0, AD_NAME_SIZE);
 	byte len = cmd[5];
 
 	byte * copyPos = cmd + 6;
-	for (int i = 0; i < len; i++) {
+	if (debug) DEBUG.print("Action Name: ");
+	for (int i = 0; i < len; i++) { 
+		if (debug) DEBUG.print((char) cmd[6 + i]);
 		actionData.Header()[AD_OFFSET_NAME + i] = cmd[6 + i];
 	}
-	// memcpy(startPos, copyPos, len);
+	if (debug) DEBUG.println();
+	V2_SendSigleByteResult(cmd[3], 0);
 }
 
 #pragma endregion

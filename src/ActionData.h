@@ -4,17 +4,27 @@
 #include <ESP8266WiFi.h>
 #include <FS.h>
 
-#define AD_HEADER_SIZE		128
+#define AD_HEADER_SIZE		60
 #define AD_OFFSET_LEN		2
 #define AD_OFFSET_ID   		4
-#define AD_OFFSET_NAMESIZE	10
-#define AD_OFFSET_NAME  	11
-#define AD_OFFSET_POSECNT 	48
+#define AD_OFFSET_NAME  	6
+#define AD_NAME_SIZE       	20
+#define AD_OFFSET_POSECNT 	28
+
 #define AD_DATA_SIZE		8200
 #define AD_POSE_SIZE		32
+#define AD_MAX_POSE         255
+
+// poseCnt is single byte, so max is 255.
+// AD_POSE_SIZE * AD_MAX_POSE = 8160, just reseve extra 32 byte for ending
+
 
 #define ACTION_FILE "/alpha/action/%03d.dat"
 
+#define AD_POFFSET_STIME	2
+#define AD_POFFSET_WTIME	4
+#define AD_POFFSET_ANGLE	6
+#define AD_POFFSET_LED		22
 
 
 class ActionData {
@@ -32,7 +42,7 @@ class ActionData {
 		byte * Data() { return (byte *) _data; }
 
 		byte PoseCnt() { return _header[AD_OFFSET_POSECNT]; }
-
+		void RefreshPoseCnt();
 
 	private:
 

@@ -16,10 +16,10 @@ void ActionData::InitObject(byte actionId) {
 	memset(_data, 0, AD_DATA_SIZE);
 	_header[0] = 0xA9; // File identifier A9 9A
 	_header[1] = 0x9A;
-	_header[2] = 124;
-	_header[127] = 0xED;
+	_header[2] = AD_HEADER_SIZE - 4;
 	_id = actionId;
 	_header[AD_OFFSET_ID] = _id;
+	_header[AD_HEADER_SIZE] = 0xED;
 }
 
 
@@ -91,7 +91,7 @@ byte ActionData::WriteSPIFFS() {
 	byte result = 0;
 	_header[0] = 0xA9;
 	_header[1] = 0x9A;
-	_header[AD_OFFSET_LEN] = 124;
+	_header[AD_OFFSET_LEN] = AD_HEADER_SIZE - 4;
 	_header[AD_OFFSET_ID] = _id;
 	byte sum = 0;
 	byte sumPos = AD_HEADER_SIZE -2;
@@ -123,4 +123,23 @@ byte ActionData::WriteSPIFFS() {
 	}
 	SPIFFS.end();	
 	return result;
+}
+
+void ActionData::RefreshPoseCnt() {
+	int pCnt = -1;
+	for (int i = 0; i < AD_MAX_POSE; i++) {
+		int pos = i * AD_POSE_SIZE;
+		// Empty criteria:
+		//   - Execution time = 0
+		//   - Wait time = 0
+		if ((_data[pos + AD_POFFSET_STIME] == 0) && (_data[pos + AD_POFFSET_STIME + 1] == 0) && 
+			(_data[pos + AD_POFFSET_WTIME] == 0) && (_data[pos + AD_POFFSET_WTIME + 1] == 0))
+		{
+			pCnt = i;
+			break;	
+		}
+	}
+	// MAX_POSE is 255
+	if (pCnt == -1) pCnt = AD_MAX_POSE;
+    _header[AD_OFFSET_POSECNT] = pCnt;
 }
