@@ -243,6 +243,7 @@ void V2_Reset(byte *cmd) {
 void V2_SetDebug(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_SetDebug]"));
 	byte status = (cmd[4] ? 1 : 0);
+	if (debug && !status) DEBUG.printf("Disable debug mode\n");
 	SetDebug(status);
 	if (debug) DEBUG.printf("Debug mode %s\n", (status ? "enabled" : "disabled"));
 }
@@ -642,8 +643,32 @@ void V2_UpdateAdHeader(byte *cmd) {
 
 void V2_UpdateAdPose(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_UpdateAdPose]"));
+	
+	// Length should be {len} {actionId} {poseId} {data} => pose datasize + 3
+	if (cmd[2] != (AD_POSE_SIZE + 3)) {
+		if (debug) DEBUG.printf("Invalid length: \n", cmd[2]);
+		V2_SendSigleByteResult(cmd[3], 1);
+		return;
+	}	
+
 	byte aId = cmd[4];
-	byte aPose = cmd[5];
+	byte pId = cmd[5];
+
+	// Action ID must be matched.  i.e. must GET before UPDATE
+	if (aId != actionData.Header()[4]) {
+		if (debug) DEBUG.printf("ID not matched: %d (current: %d)\n", aId, actionData.Header()[4]);
+		V2_SendSigleByteResult(cmd[3], 2);
+		return;
+	}
+
+	int startPos = AD_POSE_SIZE * pId;
+	int dataPos = 6;
+	for (int i = 0; i < AD_POSE_SIZE; i++) {
+		actionData.Data()[startPos + i] = cmd[dataPos + i];
+	}
+
+	V2_SendSigleByteResult(cmd[3], 0);
+
 }
 
 void V2_UpdateAdName(byte *cmd) {
