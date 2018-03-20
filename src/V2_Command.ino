@@ -54,11 +54,12 @@
 #define V2_CMD_LED				0x31
 
 #define V2_CMD_GET_ADHEADER		0x61
-#define V2_CMD_GET_ADDATA		0x62
-#define V2_CMD_GET_ADPOSE		0x63
+#define V2_CMD_GET_ADPOSE		0x62
+#define V2_CMD_GET_ADDATA		0x63
 
 #define V2_CMD_SAVE_ADHEADER	0x71
 #define V2_CMD_SAVE_ADPOSE		0x72
+#define V2_CMD_UPD_ADNAME		0x74
 
 
 #define V2_CMD_READSPIFFS   	0xF1
@@ -186,6 +187,10 @@ bool V2_Command() {
 
 		case V2_CMD_SAVE_ADPOSE:
 			V2_SaveAdPose(cmd);
+			break;
+
+		case V2_CMD_UPD_ADNAME:
+			V2_UpdateAdName(cmd);
 			break;
 
 		case V2_CMD_READSPIFFS:
@@ -567,27 +572,48 @@ void V2_GetAdData(byte *cmd) {
 	if (!V2_CheckActionId(aId)) {
 		return;	
 	}
+	// Data size can over 256, single byte of len cannot be used_block
+	// Special handle for this result set or do not allow such retrieval
+	// - add special logic, make len = 0
+	// - then acual len will be stored in [4] [5] with Hing-Low order
+	// - data strt at offset 6 instead of 4
+	//
 	byte poseCnt = actionData.PoseCnt();
-	byte dataSize = poseCnt * AD_POSE_SIZE;
-	byte len = dataSize + 2;
-	byte d1[4] = { 0xA9, 0x9A, len, V2_CMD_GET_ADDATA};
-	byte sum = len + V2_CMD_GET_ADDATA;
+	int dataSize = poseCnt * AD_POSE_SIZE;
+	int len = dataSize + 6;  // {len} {cmd} {len_H} {len_L} {aId} {poseCnt} {data} => datasize + 6
+	byte len_H = (byte) (len / 256);
+	byte len_L = (byte) (len % 256);
+	byte d1[8] = { 0xA9, 0x9A, 0x00, cmd[3], len_H, len_L, aId, poseCnt};
+	byte sum = len + cmd[3] + len_H + len_L + aId + poseCnt;
 	byte *data = actionData.Data();
 	for (int i = 0; i < dataSize; i++) {
 		sum += data[i];
 	}
-	Serial.write(d1, 4);
+	Serial.write(d1, 8);
 	Serial.write(data, dataSize);
 	Serial.write(sum);
 	Serial.write(0xED);
-	
 }
 
 
 void V2_GetAdPose(byte *cmd) {
 	DEBUG.print(F("[V2_GetAdPose]"));
 	byte aId = cmd[4];
-	byte aPose = cmd[5];
+	if (!V2_CheckActionId(aId)) {
+		return;	
+	}
+	byte pId = cmd[5];
+	byte result[40];
+	byte len = AD_POSE_SIZE + 4; // {len} {cmd} {aId} {pId} {poseData} = pose_size + 4
+	result[2] = len;
+	result[3] = cmd[3];
+	result[4] = aId;
+	result[5] = pId;
+
+	byte * toPos = result + 6;
+	byte * fromPos = actionData.Data() + AD_POSE_SIZE * pId;
+	memcpy(toPos, fromPos, AD_POSE_SIZE);
+	V2_SendResult(result);
 }
 
 void V2_SaveAdHeader(byte *cmd) {
@@ -601,6 +627,20 @@ void V2_SaveAdPose(byte *cmd) {
 	byte aPose = cmd[5];
 }
 
+void V2_UpdateAdName(byte *cmd) {
+	DEBUG.print(F("[V2_SaveAdName]"));
+	byte id = cmd[4];
+	byte * startPos = actionData.Header() + AD_OFFSET_NAME;
+	memset(startPos, 0, 30);
+	byte len = cmd[5];
+
+	byte * copyPos = cmd + 6;
+	for (int i = 0; i < len; i++) {
+		actionData.Header()[AD_OFFSET_NAME + i] = cmd[6 + i];
+	}
+	// memcpy(startPos, copyPos, len);
+}
+
 #pragma endregion
 
 
@@ -609,7 +649,7 @@ void V2_SaveAdPose(byte *cmd) {
 void V2_ReadSPIFFS(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_ReadSPIFFS]"));
 	byte success = V2_UBT_ReadSPIFFS(cmd);
-	V2_SendSigleByteResult(cmd, success);
+	V2_SendSigleByteResult(cmd[3], success);
 }
 
 byte V2_UBT_ReadSPIFFS(byte *cmd) {
@@ -619,7 +659,7 @@ byte V2_UBT_ReadSPIFFS(byte *cmd) {
 void V2_WriteSPIFFS(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_WriteSPIFFS]"));
 	byte success = V2_UBT_WriteSPIFFS(cmd);
-	V2_SendSigleByteResult(cmd, success);
+	V2_SendSigleByteResult(cmd[3], success);
 }
 
 byte V2_UBT_WriteSPIFFS(byte *cmd) {
