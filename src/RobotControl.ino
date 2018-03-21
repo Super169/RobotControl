@@ -30,12 +30,12 @@ V2 Control Board Command
 Major change on 2.x:
 - New command set for V2 with start / end cod and checksum for better communization control
 - Use major loop for action playback, so there has no block in playing action, can be stopped anytime
-- Re-design the object model for servo and control board
-- Default reset action with all servo logged, and LED on
-- Use single file to store separate action, action with name, a maximum of 99 action allowed
-- Support unlimited step in action
+- Default reset action with all servo locked, and LED on
+- Use single file to store individual action
+- Define name for action (to be used in PC UI only), and a maximum of 255 actions allowed
+- Support up to 255 steps for each action
 - Support servo LED control
-- Support Robot Head LED control
+- Support Robot Head Light control
 
 
 PIN Assignment:
@@ -72,6 +72,7 @@ void setup() {
 	DEBUG.println(F("Control board ready\n\n"));
 
 
+	RobotMaintenanceMode();
 /*
 	// Testing on ActionData
 	actionData.InitObject(1);

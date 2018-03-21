@@ -4,12 +4,14 @@
 #include <ESP8266WiFi.h>
 #include <FS.h>
 
-#define AD_HEADER_SIZE		60
-#define AD_OFFSET_LEN		2
-#define AD_OFFSET_ID   		4
-#define AD_OFFSET_NAME  	6
-#define AD_NAME_SIZE       	20
-#define AD_OFFSET_POSECNT 	28
+#define AD_HEADER_SIZE			60
+#define AD_OFFSET_LEN			2
+#define AD_OFFSET_ID   			4
+#define AD_OFFSET_NAME  		6
+#define AD_NAME_SIZE       		20
+#define AD_OFFSET_POSECNT 		28
+#define AD_OFFSET_AFFECTSERVO	34
+
 
 #define AD_DATA_SIZE		8200
 #define AD_POSE_SIZE		32
@@ -32,8 +34,12 @@ class ActionData {
         ActionData();
 		~ActionData();
 		void InitObject(byte actionId);
+		bool SetActionName(char *actionName, byte len);
+		bool SetActionName(String actionName);
+		byte UpdatePose(byte actionId, byte poseId, byte *data);
 		bool ReadSPIFFS(byte actionId);
 		byte WriteSPIFFS();
+		byte DeleteSPIFFS(byte actionId);
 		// bool DumpActionHeader(byte actionId);
 		// bool DumpActionData(byte actionId);
 		byte id() { return _id; }
@@ -42,7 +48,7 @@ class ActionData {
 		byte * Data() { return (byte *) _data; }
 
 		byte PoseCnt() { return _header[AD_OFFSET_POSECNT]; }
-		void RefreshPoseCnt();
+		void RefreshActionInfo();
 
 	private:
 

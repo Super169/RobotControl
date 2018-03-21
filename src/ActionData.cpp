@@ -4,7 +4,6 @@ ActionData::ActionData() {
 	_name = (char *) (_header + AD_OFFSET_NAME);
 }
 
-
 ActionData::~ActionData() {
 	_name = NULL;
 }
@@ -18,10 +17,9 @@ void ActionData::InitObject(byte actionId) {
 	_header[1] = 0x9A;
 	_header[2] = AD_HEADER_SIZE - 4;
 	_id = actionId;
-	_header[AD_OFFSET_ID] = _id;
+	SetActionName(NULL, 0);
 	_header[AD_HEADER_SIZE] = 0xED;
 }
-
 
 bool ActionData::ReadSPIFFS(byte actionId) {
 	bool success = false;
@@ -35,19 +33,24 @@ bool ActionData::ReadActionFile(int actionId) {
 	char fileName[25];
 	memset(fileName, 0, 25);
 	sprintf(fileName, ACTION_FILE, actionId);
-Serial1.printf("File name: %s\n", fileName);
+// Serial.printf("File name: %s\n", fileName);
 	if (!SPIFFS.exists(fileName)) {
 		// Start a new action table 
-Serial1.printf("Initialize object\n");
+// Serial.printf("Initialize object\n");
 		InitObject(actionId);
 		return true;
 	}
 	File f = SPIFFS.open(fileName, "r");
 	if (!f) return false;
 
-	if (f.size() <= AD_HEADER_SIZE) return false;
+	if (f.size() < AD_HEADER_SIZE) {
+// Serial.printf("File size %d, less than %d bytes.\n", f.size(), AD_HEADER_SIZE);
+		return false;
+	}
 	int dataSize = f.size() - AD_HEADER_SIZE;
-	if ((dataSize % AD_POSE_SIZE) != 0) return false;
+	if ((dataSize % AD_POSE_SIZE) != 0) {
+		return false;
+	} 
 	int poseCnt = dataSize / AD_POSE_SIZE;
 	
 // Serial.printf("\nFile size: %d, with %d poses\n", f.size(), poseCnt);
@@ -80,11 +83,14 @@ Serial1.printf("Initialize object\n");
 		memcpy(_header, buffer, AD_HEADER_SIZE);
 		// To allow swap action file faster, no checking on ID, and force assign ID here
 		_header[AD_OFFSET_ID] = actionId;
-		bCnt = f.readBytes((char *)_data, dataSize);
+		if (dataSize) bCnt = f.readBytes((char *)_data, dataSize);
 		// As _header already overwrite, no checking on data
 		// Or for safety, it should InitObject again if any error in data.
 	}
+	free(buffer);
 	f.close();
+
+	return valid;
 }
 
 byte ActionData::WriteSPIFFS() {
@@ -101,10 +107,8 @@ byte ActionData::WriteSPIFFS() {
 
 	size_t dataSize = _header[AD_OFFSET_POSECNT] * AD_POSE_SIZE;
 	char fileName[25];
-	Serial.println("Go print file name:\n");
 	memset(fileName, 0, 25);
 	sprintf(fileName, ACTION_FILE, _id);
-	Serial.println(fileName);
 
 	SPIFFS.begin();
 	File f = SPIFFS.open(fileName, "w");
@@ -125,8 +129,69 @@ byte ActionData::WriteSPIFFS() {
 	return result;
 }
 
-void ActionData::RefreshPoseCnt() {
+byte ActionData::DeleteSPIFFS(byte actionId) {
+	char fileName[25];
+	memset(fileName, 0, 25);
+	sprintf(fileName, ACTION_FILE, actionId);
+	byte result = 0xFF;
+	SPIFFS.begin();
+	if (SPIFFS.exists(fileName)) {
+		if (SPIFFS.remove(fileName)) {
+			result = 0;
+		} else {
+			result = 2;
+		}
+	} else {
+		result = 1;
+	}
+	SPIFFS.end();
+	return result;
+}
+
+bool ActionData::SetActionName(char *actionName, byte len) {
+	if (len > 20) return false;
+	byte *ptr = _header + AD_OFFSET_NAME;
+	memset(ptr, 0, 20);
+
+	if ((actionName == NULL) || (len == 0)) {
+		// reset to default name Annn
+		_header[AD_OFFSET_NAME] = 'A';
+		_header[AD_OFFSET_NAME+1] = '0' + (_id / 100);
+		_header[AD_OFFSET_NAME+2] = '0' + ((_id % 100) / 10);
+		_header[AD_OFFSET_NAME+3] = '0' + (_id % 10);
+		return true;
+	}
+	memcpy(ptr, actionName, len);
+	return true;
+}
+
+bool ActionData::SetActionName(String actionName) {
+	byte *ptr = _header + AD_OFFSET_NAME;
+	memset(ptr, 0, 20);
+
+	if (actionName == NULL) {
+		// reset to default name Annn
+		_header[AD_OFFSET_NAME] = 'A';
+		_header[AD_OFFSET_NAME+1] = '0' + (_id / 100);
+		_header[AD_OFFSET_NAME+2] = '0' + ((_id % 100) / 10);
+		_header[AD_OFFSET_NAME+3] = '0' + (_id % 10);
+		return true;
+	}
+	actionName.toCharArray((char *) ptr, 20);
+	return true;
+}
+
+
+byte ActionData::UpdatePose(byte actionId, byte poseId, byte *data) {
+	if (actionId != _id) return 1;
+	byte *ptr = _data + poseId * AD_POSE_SIZE;
+	memcpy(ptr, data, AD_POSE_SIZE);
+	*ptr = poseId;
+}
+
+void ActionData::RefreshActionInfo() {
 	int pCnt = -1;
+	uint16_t servos;
 	for (int i = 0; i < AD_MAX_POSE; i++) {
 		int pos = i * AD_POSE_SIZE;
 		// Empty criteria:
@@ -138,8 +203,20 @@ void ActionData::RefreshPoseCnt() {
 			pCnt = i;
 			break;	
 		}
+		// no need to check if all servo used
+		if (servos != 0xFFFF) {
+			int aPos = pos + AD_POFFSET_ANGLE;
+			for (int i = 0; i < 16; i++) {
+				if (_data[aPos] < 0xF0) {
+					servos |= 1 << i;
+				}
+			}
+		}
 	}
 	// MAX_POSE is 255
 	if (pCnt == -1) pCnt = AD_MAX_POSE;
     _header[AD_OFFSET_POSECNT] = pCnt;
+	_header[AD_OFFSET_AFFECTSERVO] = (byte) (servos / 256);
+	_header[AD_OFFSET_AFFECTSERVO + 1] = (byte) (servos % 256);
 }
+

@@ -220,10 +220,10 @@ void V2_SendResult(byte *result) {
 	Serial.write(result, size);
 }
 
-void V2_SendSigleByteResult(byte cmdCode, byte data) {
+void V2_SendSingleByteResult(byte *cmd, byte data) {
 	byte result[7];
 	result[2] = 3;
-	result[3] = cmdCode;
+	result[3] = cmd[3];
 	result[4] = data;
 	V2_SendResult(result);
 }
@@ -553,12 +553,12 @@ bool V2_CheckActionId(byte actionId) {
 	return true;
 }
 
-
 void V2_GetAdHeader(byte *cmd) {
 	if (debug) DEBUG.println("[V2_GetAdHeader]");
 	byte aId = cmd[4];	
 	actionData.Header()[3] = cmd[3];
 	if (!V2_CheckActionId(aId)) {
+		V2_SendSingleByteResult(cmd, 0x01);
 		return;	
 	}
 	V2_SendResult((byte *) actionData.Header());
@@ -570,6 +570,7 @@ void V2_GetAdData(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_GetAdData]"));
 	byte aId = cmd[4];	
 	if (!V2_CheckActionId(aId)) {
+		V2_SendSingleByteResult(cmd, 0x01);
 		return;	
 	}
 	// Data size can over 256, single byte of len cannot be used_block
@@ -600,6 +601,7 @@ void V2_GetAdPose(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_GetAdPose]"));
 	byte aId = cmd[4];
 	if (!V2_CheckActionId(aId)) {
+		V2_SendSingleByteResult(cmd, 0x01);
 		return;	
 	}
 	byte pId = cmd[5];
@@ -623,14 +625,14 @@ void V2_UpdateAdHeader(byte *cmd) {
 	// Length should be header size - 4
 	if (cmd[2] != (AD_HEADER_SIZE - 4)) {
 		if (debug) DEBUG.printf("Invalid length: \n", cmd[2]);
-		V2_SendSigleByteResult(cmd[3], 1);
+		V2_SendSingleByteResult(cmd, 1);
 		return;
 	}
 
 	// Action ID must be matched.  i.e. must GET before UPDATE
 	if (cmd[4] != actionData.Header()[4]) {
 		if (debug) DEBUG.printf("ID not matched: %d (current: %d)\n", cmd[4], actionData.Header()[4]);
-		V2_SendSigleByteResult(cmd[3], 2);
+		V2_SendSingleByteResult(cmd, 2);
 		return;
 	}
 	for (int i = 0; i < AD_HEADER_SIZE; i++) {
@@ -638,7 +640,7 @@ void V2_UpdateAdHeader(byte *cmd) {
 	}
 	
 	if (debug) DEBUG.printf("Action %d header updated\n", aId);
-	V2_SendSigleByteResult(cmd[3], 0);
+	V2_SendSingleByteResult(cmd, 0);
 }
 
 void V2_UpdateAdPose(byte *cmd) {
@@ -647,7 +649,7 @@ void V2_UpdateAdPose(byte *cmd) {
 	// Length should be {len} {actionId} {poseId} {data} => pose datasize + 3
 	if (cmd[2] != (AD_POSE_SIZE + 3)) {
 		if (debug) DEBUG.printf("Invalid length: \n", cmd[2]);
-		V2_SendSigleByteResult(cmd[3], 1);
+		V2_SendSingleByteResult(cmd, 1);
 		return;
 	}	
 
@@ -657,7 +659,7 @@ void V2_UpdateAdPose(byte *cmd) {
 	// Action ID must be matched.  i.e. must GET before UPDATE
 	if (aId != actionData.Header()[4]) {
 		if (debug) DEBUG.printf("ID not matched: %d (current: %d)\n", aId, actionData.Header()[4]);
-		V2_SendSigleByteResult(cmd[3], 2);
+		V2_SendSingleByteResult(cmd, 2);
 		return;
 	}
 
@@ -667,7 +669,7 @@ void V2_UpdateAdPose(byte *cmd) {
 		actionData.Data()[startPos + i] = cmd[dataPos + i];
 	}
 
-	V2_SendSigleByteResult(cmd[3], 0);
+	V2_SendSingleByteResult(cmd, 0);
 
 }
 
@@ -675,11 +677,11 @@ void V2_UpdateAdName(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_UpdateAdName]"));
 	byte id = cmd[4];
 	if (actionData.id() != id) {
-		V2_SendSigleByteResult(cmd[3], 1);
+		V2_SendSingleByteResult(cmd, 1);
 		return;
 	}
 	if (cmd[5] > AD_NAME_SIZE) {
-		V2_SendSigleByteResult(cmd[3], 2);
+		V2_SendSingleByteResult(cmd, 2);
 		return;
 	}
 	byte * startPos = actionData.Header() + AD_OFFSET_NAME;
@@ -693,7 +695,7 @@ void V2_UpdateAdName(byte *cmd) {
 		actionData.Header()[AD_OFFSET_NAME + i] = cmd[6 + i];
 	}
 	if (debug) DEBUG.println();
-	V2_SendSigleByteResult(cmd[3], 0);
+	V2_SendSingleByteResult(cmd, 0);
 }
 
 #pragma endregion
@@ -704,7 +706,7 @@ void V2_UpdateAdName(byte *cmd) {
 void V2_ReadSPIFFS(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_ReadSPIFFS]"));
 	byte success = V2_UBT_ReadSPIFFS(cmd);
-	V2_SendSigleByteResult(cmd[3], success);
+	V2_SendSingleByteResult(cmd, success);
 }
 
 byte V2_UBT_ReadSPIFFS(byte *cmd) {
@@ -714,7 +716,7 @@ byte V2_UBT_ReadSPIFFS(byte *cmd) {
 void V2_WriteSPIFFS(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_WriteSPIFFS]"));
 	byte success = V2_UBT_WriteSPIFFS(cmd);
-	V2_SendSigleByteResult(cmd[3], success);
+	V2_SendSingleByteResult(cmd, success);
 }
 
 byte V2_UBT_WriteSPIFFS(byte *cmd) {
@@ -722,5 +724,3 @@ byte V2_UBT_WriteSPIFFS(byte *cmd) {
 }
 
 #pragma endregion
-
-
