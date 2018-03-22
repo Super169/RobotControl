@@ -86,9 +86,9 @@ void setup() {
 
 void loop() {
 	CheckSerialInput();
-	playAction();
-	CheckSerialInput();
-	remoteControl();
+	// Check remote contorl before play action to make the STOP command response faster
+	remoteControl();  
+	V2_CheckAction();
 }
 
 // move data from Serial buffer to command buffer
@@ -99,10 +99,6 @@ void CheckSerialInput() {
 			cmdBuffer.write(Serial.read());
 		}
 	}
-}
-
-void playAction() {
-
 }
 
 void remoteControl() {

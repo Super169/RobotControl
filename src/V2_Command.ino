@@ -26,6 +26,9 @@
 //									: A9 9A 08 23 01 5A A0 02 00 A0 C8 ED 
 //	 31 - Set LED (var)				: A9 9A 04 31 00 01 36 ED
 //                                  : A9 9A 06 31 01 00 02 01 3B ED
+//   41 - Play Action               : A9 9A 03 41 00 43 ED
+//   42 - Play Combo                : A9 9A 03 42 00 44 ED
+//   4F - Stop playing              : A9 9A 02 4F 51 ED
 //   61 - Read Action Header (fix) 	: A9 9A 03 61 01 65 ED
 //   62 - Read Action Data (fix)	: A9 9A 03 62 01 65 ED
 //   63 - Read Action Post (fix)	: A9 9A 03 61 01 65 ED
@@ -52,6 +55,10 @@
 #define V2_CMD_SERVOMOVE		0x23
 
 #define V2_CMD_LED				0x31
+
+#define V2_CMD_PLAYACTION		0x41
+#define V2_CMD_PLAYCOMBO		0x42
+#define V2_CMD_STOPPLAY			0x4F
 
 #define V2_CMD_GET_ADHEADER		0x61
 #define V2_CMD_GET_ADPOSE		0x62
@@ -119,6 +126,24 @@ bool V2_Command() {
 		return true;
 	}
 
+	// Special handle for stop play as there has no need to check for action playing
+	if (cmd[3] == V2_CMD_STOPPLAY) {
+		V2_ResetAction();
+		V2_SendSingleByteResult(cmd, 0);
+		return true;
+	}
+
+	// No command except STOP is allowed when action playing
+	// Even some command will not affect the action, but for safety, do not play any of them.
+	// In fact, there shoudl have such command sending from controller when action is playing.
+	// All return the generic result:
+	//   A9 9A 03 {cmd} FF {sum} ED
+	if (V2_ActionPlaying) {
+		V2_SendSingleByteResult(cmd, 0xFF);
+		return true;
+	}
+
+
 	switch (cmd[3]) {
 
 		case V2_CMD_RESET:
@@ -167,6 +192,14 @@ bool V2_Command() {
 
 		case V2_CMD_LED:
 			V2_SetLED(cmd);
+			break;
+
+		case V2_CMD_PLAYACTION:
+			V2_PlayAction(cmd);
+			break;
+
+		case V2_CMD_PLAYCOMBO:
+			V2_PlayCombo(cmd);
 			break;
 
 		case V2_CMD_GET_ADHEADER:
@@ -237,7 +270,11 @@ void V2_Reset(byte *cmd) {
 	servo.begin();
 	byte showAngle = 0;
 	if (cmd[2] > 2) showAngle = cmd[4];
-	if ((showAngle) && (showAngle != '0')) V2_GetServoAngle(cmd);
+	if ((showAngle) && (showAngle != '0')) {
+		V2_GetServoAngle(cmd);
+	} else {
+		V2_SendSingleByteResult(cmd, 0);
+	}
 }
 
 void V2_SetDebug(byte *cmd) {
@@ -246,12 +283,14 @@ void V2_SetDebug(byte *cmd) {
 	if (debug && !status) DEBUG.printf("Disable debug mode\n");
 	SetDebug(status);
 	if (debug) DEBUG.printf("Debug mode %s\n", (status ? "enabled" : "disabled"));
+	V2_SendSingleByteResult(cmd, 0);
 }
 
 void V2_SetDevMode(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_SetDevMode]"));
 	devMode = (cmd[4] ? 1 : 0);
 	if (debug) DEBUG.printf("Developer mode %s\n", (devMode ? "enabled" : "disabled"));
+	V2_SendSingleByteResult(cmd, 0);
 }
 
 void V2_CommandEnable(byte *cmd) {
@@ -534,9 +573,48 @@ void V2_SetLED(byte *cmd) {
 			}
 		}
 	}
+	V2_SendSingleByteResult(cmd, 0);
 }
 
 #pragma endregion
+
+
+#pragma region Play Action / Combo 
+
+void V2_PlayAction(byte *cmd) {
+	V2_ResetAction();
+	if (cmd[2] != 3) {
+		V2_SendSingleByteResult(cmd, 1);
+		return;
+	}
+	byte actionId = cmd[4];
+	if (actionData.id() != actionId) {
+		// need to load actionData
+		if (!actionData.ReadSPIFFS(actionId)) {
+			V2_SendSingleByteResult(cmd, 2);
+			return;
+		}
+	}
+	// Just for safety, check the poseCnt again.  
+	// May skip this step if those information is always updated.
+	actionData.RefreshActionInfo();
+
+	if (actionData.PoseCnt() > 0) {
+		V2_ActionCombo = 0;
+		V2_NextAction = actionId;
+		V2_NextPose = 0;
+		V2_NextPlayMs = millis();
+		V2_ActionPlaying = true;
+	}
+	V2_SendSingleByteResult(cmd, 0);
+}
+
+void V2_PlayCombo(byte *cmd) {
+	
+}
+
+#pragma endregion
+
 
 #pragma region ActionTable
 

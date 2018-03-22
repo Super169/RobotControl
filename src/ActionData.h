@@ -27,6 +27,7 @@
 #define AD_POFFSET_WTIME	4
 #define AD_POFFSET_ANGLE	6
 #define AD_POFFSET_LED		22
+#define AD_POFFSET_HEAD		26
 
 
 class ActionData {

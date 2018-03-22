@@ -142,6 +142,8 @@ void UBT_GetServoAngle(byte *result);
 void UBT_ReadSPIFFS(byte cmdCode);
 void UBT_WriteSPIFFS(byte cmdCode);
 
+void V2_CheckAction();
+
 void RobotMaintenanceMode();
 
 #endif

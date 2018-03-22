@@ -26,6 +26,7 @@ In this version, it will support both V1 & V2 commands.
 - Latest [espsoftwareserial] 
   - After the merge on [Helf duplex serial communization]
 
+Save all above libraries in lib folder.
 
 ## Installation
 
@@ -51,6 +52,6 @@ This is a Visual Studio Code project with PlatformIO IDE.
 
 
 [UBTech]: <https://github.com/Super169/UBTech.git>
-[espsoftwareserial]: <https://github.com/Super169/espsoftwareserial.git>
+[espsoftwareserial]: <https://github.com/plerup/espsoftwareserial.git>
 [Visual Studio Code]: <https://code.visualstudio.com/>
 [Helf duplex serial communization]: <https://github.com/plerup/espsoftwareserial/commit/12664f2355be24b49138a83a76de96803e3040d7>
