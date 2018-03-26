@@ -18,10 +18,15 @@ In this version, it will support both V1 & V2 commands.
 - Support up to 255 steps for each action
 - Support servo LED control
 - Support Robot Head Light control
-
+- Support remote control by
+  - USB direct connect
+  - Bluetooth 
+  - WiFi with router 
+  - WiFi with softAP
 
 ## Dependency
 
+- [Wifi Manager]
 - [UBTech] Library 
 - Latest [espsoftwareserial] 
   - After the merge on [Helf duplex serial communization]
@@ -51,6 +56,7 @@ This is a Visual Studio Code project with PlatformIO IDE.
 | GOPI-2 | Connect to Rx of serial console for debug output 
 
 
+[Wifi Manager]: <https://github.com/tzapu/WiFiManager.git>
 [UBTech]: <https://github.com/Super169/UBTech.git>
 [espsoftwareserial]: <https://github.com/plerup/espsoftwareserial.git>
 [Visual Studio Code]: <https://code.visualstudio.com/>

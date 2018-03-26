@@ -1,10 +1,16 @@
 #ifndef _robot_h_
 #define _robot_h_
 
+#include "ESP8266WiFi.h"
+#include "WiFiClient.h"
+#include "WiFiManager.h"
+
 #include "UBTech.h"
 #include "FS.h"
 #include "Buffer.h"
 #include "ActionData.h"
+
+WiFiManager wifiManager;
 
 #define DEBUG Serial1
 

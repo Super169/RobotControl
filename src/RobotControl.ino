@@ -46,9 +46,19 @@ GPIO-2  : Serial1 - debug console
 
 #include "robot.h"
 
+
+
+// Start a TCP Server on port 6169
+WiFiServer server(6169);
+WiFiClient client;
+
+
 void setup() {
 	// Delay 2s to wait for all servo started
 	delay(2000);
+
+	pinMode(13, OUTPUT);
+	pinMode(15, INPUT);
 
 	// SetDebug(false);  // Disable servo debug first, enable it later if needed
 	SetDebug(true);
@@ -69,10 +79,33 @@ void setup() {
 	// TODO: change to V2 when ready
 	V1_UBT_ReadSPIFFS(0);
 
+	char *AP_Name = (char *) "Alpha 1S";
+	char *AP_Password = (char *) "12345678";
+
+	// Pin15 LOW - Try to connect router
+	// Pin15 HIGH - Use softAP directly
+	bool isConnected = false;
+	
+	if (digitalRead(15) == LOW) {
+		wifiManager.setDebugOutput(false);
+		wifiManager.setAPCallback(configModeCallback);
+		wifiManager.setConfigPortalTimeout(60);
+		wifiManager.setConfigPortalTimeout(60);
+		wifiManager.setTimeout(60);
+		isConnected = wifiManager.autoConnect(AP_Name, AP_Password);
+	}
+
+	if (!isConnected) {
+		WiFi.softAP(AP_Name, AP_Password);
+	}
+
+	//	RobotMaintenanceMode();
+	server.begin();
+
+
 	DEBUG.println(F("Control board ready\n\n"));
+	digitalWrite(13, HIGH);
 
-
-	RobotMaintenanceMode();
 /*
 	// Testing on ActionData
 	actionData.InitObject(1);
@@ -84,11 +117,35 @@ void setup() {
 */
 }
 
+void configModeCallback (WiFiManager *myWiFiManager) {
+	// Try to display here if OLED is ready
+	// Now flash LED to alert user
+	for (int i = 0; i < 10; i++) {
+		digitalWrite(13, LOW);
+		delay(200);
+		digitalWrite(13, HIGH);
+		delay(200);
+	}
+}
+
 void loop() {
+	CheckWiFiInput();		
 	CheckSerialInput();
 	// Check remote contorl before play action to make the STOP command response faster
 	remoteControl();  
 	V2_CheckAction();
+}
+
+void CheckWiFiInput() {
+	// listen for incoming clients
+	client = server.available();
+	if (client){
+		if (client.connected()) {
+			while (client.available()) {
+			cmdBuffer.write(client.read());
+			}
+		}
+  	}	
 }
 
 // move data from Serial buffer to command buffer
