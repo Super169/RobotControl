@@ -54,11 +54,13 @@ WiFiClient client;
 
 
 void setup() {
+	pinMode(13, OUTPUT);
+	pinMode(15, INPUT);
+	digitalWrite(13, LOW);
+
 	// Delay 2s to wait for all servo started
 	delay(2000);
 
-	pinMode(13, OUTPUT);
-	pinMode(15, INPUT);
 
 	// SetDebug(false);  // Disable servo debug first, enable it later if needed
 	SetDebug(true);
