@@ -1,5 +1,5 @@
 /*
-	UBT Blue Toolth Coomunization Command
+	UBT Bluetooth Coomunization Command
 
 */
 #include "robot.h"

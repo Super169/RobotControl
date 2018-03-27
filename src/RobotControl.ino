@@ -53,11 +53,14 @@ uint16_t port = 6169;
 WiFiServer server(port);
 WiFiClient client;
 
+#define PIN_LED		15
+#define PIN_SETUP	13
+
 
 void setup() {
-	pinMode(13, OUTPUT);
-	pinMode(15, INPUT);
-	digitalWrite(13, LOW);
+	pinMode(PIN_LED, OUTPUT);
+	pinMode(PIN_SETUP, INPUT);
+	digitalWrite(PIN_LED, LOW);
 
 	// Delay 2s to wait for all servo started
 	delay(2000);
@@ -84,7 +87,7 @@ void setup() {
 	// Pin15 HIGH - Use softAP directly
 	bool isConnected = false;
 	
-	if (digitalRead(15) == LOW) {
+	if (digitalRead(PIN_SETUP) == LOW) {
 		wifiManager.setDebugOutput(false);
 		wifiManager.setAPCallback(configModeCallback);
 		wifiManager.setConfigPortalTimeout(60);
@@ -120,7 +123,7 @@ void setup() {
 	V1_UBT_ReadSPIFFS(0);
 
 	DEBUG.println(F("Control board ready\n\n"));
-	digitalWrite(13, HIGH);
+	digitalWrite(PIN_LED, HIGH);
 
 /*
 	// Testing on ActionData
@@ -144,12 +147,12 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 	// Try to display here if OLED is ready
 	// Now flash LED to alert user
 	for (int i = 0; i < 10; i++) {
-		digitalWrite(13, LOW);
+		digitalWrite(PIN_LED, LOW);
 		delay(200);
-		digitalWrite(13, HIGH);
+		digitalWrite(PIN_LED, HIGH);
 		delay(200);
 	}
-	digitalWrite(13, LOW);
+	digitalWrite(PIN_LED, LOW);
 	delay(200);
 }
 
