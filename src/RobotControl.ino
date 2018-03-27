@@ -49,7 +49,8 @@ GPIO-2  : Serial1 - debug console
 
 
 // Start a TCP Server on port 6169
-WiFiServer server(6169);
+uint16_t port = 6169;
+WiFiServer server(port);
 WiFiClient client;
 
 
@@ -76,11 +77,6 @@ void setup() {
 	DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
 	unsigned long actionSzie = sizeof(actionTable);
 
-	servo.begin();
-	servo.lockAll();
-	// TODO: change to V2 when ready
-	V1_UBT_ReadSPIFFS(0);
-
 	char *AP_Name = (char *) "Alpha 1S";
 	char *AP_Password = (char *) "12345678";
 
@@ -94,16 +90,34 @@ void setup() {
 		wifiManager.setConfigPortalTimeout(60);
 		wifiManager.setConfigPortalTimeout(60);
 		wifiManager.setTimeout(60);
+		DEBUG.printf("Try to connect router\n");
 		isConnected = wifiManager.autoConnect(AP_Name, AP_Password);
 	}
 
-	if (!isConnected) {
+	String ip;
+
+	if (isConnected) {
+		ip = WiFi.localIP().toString();
+	} else {
+		DEBUG.println(F("Start using softAP"));
+		DEBUG.printf("Please connect to %s\n\n", AP_Name);
 		WiFi.softAP(AP_Name, AP_Password);
+		IPAddress myIP = WiFi.softAPIP();
+		ip = myIP.toString();
 	}
 
+	DEBUG.print("Robot IP: ");
+	DEBUG.println(ip);
+	DEBUG.printf("Port: %d\n\n", port);
+
 	//	RobotMaintenanceMode();
+	DEBUG.print("Starting robot servo: ");
 	server.begin();
 
+	servo.begin();
+	servo.lockAll();
+	// TODO: change to V2 when ready
+	V1_UBT_ReadSPIFFS(0);
 
 	DEBUG.println(F("Control board ready\n\n"));
 	digitalWrite(13, HIGH);
@@ -120,6 +134,13 @@ void setup() {
 }
 
 void configModeCallback (WiFiManager *myWiFiManager) {
+	DEBUG.println("Fail connecting to router");
+	DEBUG.print("WiFi Manager AP Enabled, please connect to ");
+	DEBUG.println(myWiFiManager->getConfigPortalSSID());
+	DEBUG.print("Alpha 1S Host IP: ");
+	DEBUG.println(WiFi.softAPIP().toString());
+	DEBUG.println(F("Will be switched to SoftAP mode if no connection within 60 seconds....."));
+
 	// Try to display here if OLED is ready
 	// Now flash LED to alert user
 	for (int i = 0; i < 10; i++) {
@@ -128,27 +149,71 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 		digitalWrite(13, HIGH);
 		delay(200);
 	}
+	digitalWrite(13, LOW);
+	delay(200);
 }
 
+unsigned long noPrompt = 0;
+
 void loop() {
+	client = server.available();
+	if (client){
+		while (client.connected()) {
+			if (millis() > noPrompt) {
+				DEBUG.println("Client connected");
+				noPrompt = millis() + 1000;
+			}
+			while (client.available()) {
+				cmdBuffer.write(client.read());
+			}
+			// Keep running RobotCommander within the connection.
+			RobotCommander();
+		}
+	}	
+	if (millis() > noPrompt) {
+		DEBUG.println("No Client connected, or connection lost");
+		noPrompt = millis() + 1000;
+	}
+	
+	// Execute even no wifi connection, for USB & Bluetooth connection
+	// Don'e put it into else case, there has no harm executing more than once.
+	// Just for safety if client exists but not connected, RobotCommander can still be executed.
+	RobotCommander();
+
+
+	/*
 	CheckWiFiInput();		
 	CheckSerialInput();
 	// Check remote contorl before play action to make the STOP command response faster
 	remoteControl();  
 	V2_CheckAction();
+	*/
 }
 
+void RobotCommander() {
+	CheckSerialInput();
+	remoteControl();  
+	V2_CheckAction();
+}
+
+
+/*
 void CheckWiFiInput() {
 	// listen for incoming clients
 	client = server.available();
 	if (client){
 		if (client.connected()) {
+			if (millis() > noPrompt) {
+				DEBUG.println("Client connected");
+				noPrompt = millis() + 1000;
+			}
 			while (client.available()) {
-			cmdBuffer.write(client.read());
+				cmdBuffer.write(client.read());
 			}
 		}
   	}	
 }
+*/
 
 // move data from Serial buffer to command buffer
 void CheckSerialInput() {
