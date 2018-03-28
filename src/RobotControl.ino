@@ -62,9 +62,21 @@ void setup() {
 	pinMode(PIN_SETUP, INPUT);
 	digitalWrite(PIN_LED, LOW);
 
+	myOLED.begin();  
+	myOLED.clr();
+	myOLED.show();
+	
+	myOLED.setFont(OLED_font6x8);
+	myOLED.printFlashMsg(0,0, msg_welcomeHeader);
+	myOLED.printFlashMsg(62,1, msg_author);
+	myOLED.printFlashMsg(0,4, msg_welcomeMsg);	
+	myOLED.show();
+
 	// Delay 2s to wait for all servo started
 	delay(2000);
 
+
+	char buf[20];
 
 	// SetDebug(false);  // Disable servo debug first, enable it later if needed
 	SetDebug(true);
@@ -88,6 +100,9 @@ void setup() {
 	bool isConnected = false;
 	
 	if (digitalRead(PIN_SETUP) == LOW) {
+		myOLED.clr(2);
+		myOLED.print(0,2,"Connecting to router");
+		myOLED.show();
 		wifiManager.setDebugOutput(false);
 		wifiManager.setAPCallback(configModeCallback);
 		wifiManager.setConfigPortalTimeout(60);
@@ -101,13 +116,28 @@ void setup() {
 
 	if (isConnected) {
 		ip = WiFi.localIP().toString();
+		myOLED.clr();
+		memset(buf, 0, 20);
+		String ssid = WiFi.SSID();
+		ssid.toCharArray(buf, 20);
+		myOLED.print(0,0, buf);
 	} else {
 		DEBUG.println(F("Start using softAP"));
 		DEBUG.printf("Please connect to %s\n\n", AP_Name);
 		WiFi.softAP(AP_Name, AP_Password);
 		IPAddress myIP = WiFi.softAPIP();
 		ip = myIP.toString();
+		myOLED.clr();
+		myOLED.print(0,0, "AP: ");
+		myOLED.print(AP_Name);
 	}
+
+	memset(buf, 0, 20);
+	ip.toCharArray(buf, 20);
+	myOLED.print(0,1, buf);
+	myOLED.print(":");
+	myOLED.print(port);
+	myOLED.show();
 
 	DEBUG.print("Robot IP: ");
 	DEBUG.println(ip);
@@ -161,6 +191,8 @@ unsigned long noPrompt = 0;
 void loop() {
 	client = server.available();
 	if (client){
+		myOLED.print(122, 1, '*');
+		myOLED.show();
 		while (client.connected()) {
 			if (millis() > noPrompt) {
 				DEBUG.println("Client connected");
@@ -172,6 +204,8 @@ void loop() {
 			// Keep running RobotCommander within the connection.
 			RobotCommander();
 		}
+		myOLED.print(122, 1, ' ');
+		myOLED.show();
 	}	
 	if (millis() > noPrompt) {
 		DEBUG.println("No Client connected, or connection lost");

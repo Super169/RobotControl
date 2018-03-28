@@ -5,18 +5,31 @@
 #include "WiFiClient.h"
 #include "WiFiManager.h"
 
+#include "OLED12864.h"
+
 #include "UBTech.h"
 #include "FS.h"
 #include "Buffer.h"
 #include "ActionData.h"
 
+#include "message.h"
+
 WiFiManager wifiManager;
 
 #define DEBUG Serial1
 
-#define BUFFER_SIZE 64
+#define CMD_BUFFER_SIZE 64
 
-Buffer cmdBuffer(BUFFER_SIZE);
+Buffer cmdBuffer(CMD_BUFFER_SIZE);
+
+// OLED Settings
+
+boolean ENABLE_OLED_BUFFER = true;
+boolean ENABLE_OLED_DIRECTDRAW = false;
+
+//  OLED_1306i2c - 0.96" OLED
+//  OLED_1106i2c - 1.3" OLED
+OLED12864 myOLED(OLED_1306i2c, ENABLE_OLED_BUFFER, ENABLE_OLED_DIRECTDRAW);
 
 bool enable_V1 = true;
 bool enable_V2 = true;
@@ -81,16 +94,6 @@ ActionData actionData;
 
 #pragma region "Global variables"
 
-/*
-byte cmdBuf[BUFFER_SIZE];
-int bufReadPtr = 0;
-int bufWritePtr = 0;
-bool bufOverflow = false;
-// if bufReadPtr = bufWritePtr : no data
-// when bufWritePtr = bufReadPtr - 1; buffer full, don't write to it
-*/
-
-
 byte actionTable[MAX_ACTION][MAX_POSES][MAX_POSES_SIZE];
 byte comboTable[MAX_COMBO][MAX_COMBO_SIZE];
 
@@ -148,6 +151,7 @@ void UBT_GetServoAngle(byte *result);
 void UBT_ReadSPIFFS(byte cmdCode);
 void UBT_WriteSPIFFS(byte cmdCode);
 
+void V1_UBT_ReadSPIFFS(byte cmdCode);
 void V2_CheckAction();
 
 void RobotMaintenanceMode();

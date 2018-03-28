@@ -1,9 +1,11 @@
 
 git clone https://github.com/tzapu/WiFiManager.git 
+git clone https://github.com/Super169/OLED12864.git
 git clone https://github.com/Super169/UBTech.git -b dev
-git clone https://github.com/Super169/espsoftwareserial.git -b dev
 
- 
+
+git clone https://github.com/Super169/espsoftwareserial.git -b dev
+OR
 git clone https://github.com/plerup/espsoftwareserial.git
 ** espsoftwareserial has already merged in official library, 
 ** so there may have no need to overwrite the library later
