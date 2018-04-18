@@ -42,6 +42,9 @@ PIN Assignment:
 GPIO-12 : One-wire software serial - servo contorl
 GPIO-2  : Serial1 - debug console
 
+GPIO-14, GPIO-13 : software serial Rx,Tx connected to MP3 module
+GPIO-15 : Head LED
+
 */
 
 #include "robot.h"
@@ -53,14 +56,15 @@ uint16_t port = 6169;
 WiFiServer server(port);
 WiFiClient client;
 
-#define PIN_LED		15
-#define PIN_SETUP	13
+#define PIN_HEAD_LED	15
+// #define PIN_SETUP	13
 
 
 void setup() {
-	pinMode(PIN_LED, OUTPUT);
-	pinMode(PIN_SETUP, INPUT);
-	digitalWrite(PIN_LED, LOW);
+
+	pinMode(PIN_HEAD_LED, OUTPUT);
+	// pinMode(PIN_SETUP, INPUT);
+	digitalWrite(PIN_HEAD_LED, LOW);
 
 	myOLED.begin();  
 	myOLED.clr();
@@ -95,10 +99,9 @@ void setup() {
 	char *AP_Name = (char *) "Alpha 1S";
 	char *AP_Password = (char *) "12345678";
 
-	// Pin15 LOW - Try to connect router
-	// Pin15 HIGH - Use softAP directly
 	bool isConnected = false;
 	
+	/*
 	if (digitalRead(PIN_SETUP) == LOW) {
 		myOLED.clr(2);
 		myOLED.print(0,2,"Connecting to router");
@@ -111,6 +114,7 @@ void setup() {
 		DEBUG.printf("Try to connect router\n");
 		isConnected = wifiManager.autoConnect(AP_Name, AP_Password);
 	}
+	*/
 
 	String ip;
 
@@ -153,7 +157,12 @@ void setup() {
 	V1_UBT_ReadSPIFFS(0);
 
 	DEBUG.println(F("Control board ready\n\n"));
-	digitalWrite(PIN_LED, HIGH);
+	digitalWrite(PIN_HEAD_LED, HIGH);
+
+	// Play MP3 for testing only
+	mp3.begin();
+	mp3.setVol(15);
+	mp3.playRandom();
 
 /*
 	// Testing on ActionData
@@ -177,18 +186,19 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 	// Try to display here if OLED is ready
 	// Now flash LED to alert user
 	for (int i = 0; i < 10; i++) {
-		digitalWrite(PIN_LED, LOW);
+		digitalWrite(PIN_HEAD_LED, LOW);
 		delay(200);
-		digitalWrite(PIN_LED, HIGH);
+		digitalWrite(PIN_HEAD_LED, HIGH);
 		delay(200);
 	}
-	digitalWrite(PIN_LED, LOW);
+	digitalWrite(PIN_HEAD_LED, LOW);
 	delay(200);
 }
 
 unsigned long noPrompt = 0;
 
 void loop() {
+	// For Wifi checking, once connected, it should use the client object until disconnect, and check within client.connected()
 	client = server.available();
 	if (client){
 		myOLED.print(122, 1, '*');
@@ -208,7 +218,7 @@ void loop() {
 		myOLED.show();
 	}	
 	if (millis() > noPrompt) {
-		DEBUG.println("No Client connected, or connection lost");
+		// DEBUG.println("No Client connected, or connection lost");
 		noPrompt = millis() + 1000;
 	}
 	
@@ -217,14 +227,6 @@ void loop() {
 	// Just for safety if client exists but not connected, RobotCommander can still be executed.
 	RobotCommander();
 
-
-	/*
-	CheckWiFiInput();		
-	CheckSerialInput();
-	// Check remote contorl before play action to make the STOP command response faster
-	remoteControl();  
-	V2_CheckAction();
-	*/
 }
 
 void RobotCommander() {
@@ -233,24 +235,6 @@ void RobotCommander() {
 	V2_CheckAction();
 }
 
-
-/*
-void CheckWiFiInput() {
-	// listen for incoming clients
-	client = server.available();
-	if (client){
-		if (client.connected()) {
-			if (millis() > noPrompt) {
-				DEBUG.println("Client connected");
-				noPrompt = millis() + 1000;
-			}
-			while (client.available()) {
-				cmdBuffer.write(client.read());
-			}
-		}
-  	}	
-}
-*/
 
 // move data from Serial buffer to command buffer
 void CheckSerialInput() {

@@ -11,6 +11,7 @@
 #include "FS.h"
 #include "Buffer.h"
 #include "ActionData.h"
+#include "MP3TF16P.h"
 
 #include "message.h"
 
@@ -99,9 +100,9 @@ byte comboTable[MAX_COMBO][MAX_COMBO_SIZE];
 
 char* actionDataFile = (char *) "/robot.dat";
 
-SoftwareSerial ss(12, 12, false, 256);
+SoftwareSerial ubt_ss(12, 12, false, 256);
 
-UBTech servo(&ss, &DEBUG);  // Debug on Serial1
+UBTech servo(&ubt_ss, &DEBUG);  // Debug on Serial1
 
 int servoCnt = 0;
 byte *retBuffer;
@@ -114,6 +115,10 @@ long lastCmdMs = 0;
 
 bool debug = true;
 bool devMode = false;
+
+SoftwareSerial mp3_ss(14, 13, false, 256);
+MP3TF16P mp3(&mp3_ss, &DEBUG);
+
 
 #pragma endregion
 
