@@ -38,7 +38,7 @@ void MP3TF16P::end() {
 
 void MP3TF16P::showCommand()  {
     if (!_enableDebug) return;
-    _dbg->printf("%06d MP3>>", millis());
+    _dbg->printf("%06d MP3 OUT>>", millis());
     for (int i = 0; i < 10; i++) {
         _dbg->printf(" %02X", _buf[i]);
     }
@@ -56,19 +56,59 @@ bool MP3TF16P::sendCommand(bool expectReturn) {
 
 	if (_enableDebug) showCommand();
 
+	clearRxBuffer();
 	_ss->flush();
-	_ss->enableTx(true);
+	//  _ss->enableTx(true);
 	_ss->write(_buf, 10);
-	_ss->enableTx(false);
+	// _ss->enableTx(false);
 	if (expectReturn) return checkReturn();
-    while (_ss->available() ) {
-        _ss->read();
-        delay(1);
-    }
+	clearRxBuffer();
 	return true;
 }
 
+void MP3TF16P::clearRxBuffer() {
+    while (_ss->available() ) {
+        _ss->read();
+        delay(2);
+    }
+}
+
 bool MP3TF16P::checkReturn() {
+    if (_enableDebug) _dbg->printf("MP3 checkReturn\n");
+    unsigned long startMs = millis();
+    resetReturnBuffer();
+    byte ch;
+    while ( ((millis() - startMs) < MP3_COMMAND_WAIT_TIME) && (!_ss->available()) ) ;
+	unsigned long endMs = millis();
+	if (_enableDebug) {
+		_dbg->printf("MP3 wait return from %d to %d\n", startMs, endMs);
+	}
+    if (!_ss->available()) {
+	    if (_enableDebug) _dbg->printf("MP3 no return after %d ms\n", MP3_COMMAND_WAIT_TIME);
+		return false;
+	}
+    if (_enableDebug) {
+        _dbg->printf("%06d MP3 IN>>>", millis());
+    }
+	// 10 ms is almost good for 10byte data
+	delay(10);
+    while (_ss->available()) {
+        ch =  (byte) _ss->read();
+        _retBuf[_retCnt++] = ch;
+        if (_enableDebug) {
+			_dbg->printf(" %02X", ch);
+			/*
+            _dbg->print((ch < 0x10 ? " 0" : " "));
+            _dbg->print(ch, HEX);
+			*/
+        }
+		// extra delay to make sure transaction completed 
+		// ToDo: check data end?
+		//       But what can i do if not ended, seems not logical as only few bytes returned. 
+		//       1ms is already more than enough.
+		if (!_ss->available()) delay(2);
+    }
+    if (_enableDebug) _dbg->println();
     return true;
 }
 
@@ -113,4 +153,30 @@ void MP3TF16P::playAdFile(byte seq) {
 	_buf[3] = 0x13;
 	_buf[6] = seq;
 	sendCommand();    
+}
+
+uint8_t MP3TF16P::getVol() {
+	resetCommandBuffer();
+	_buf[3] = 0x43;
+	sendCommand(true);
+	if (_retCnt == 10) {
+		if ((_retBuf[0] == 0x7E) && (_retBuf[1] == 0xFF) && (_retBuf[2] == 0x06) && (_retBuf[3] == 0x43) && (_retBuf[9] == 0xEF)) {
+			return _retBuf[6];
+		}
+	}
+	return 0xFF;
+}
+
+void MP3TF16P::adjVol(int diff) {
+	if (diff == 0) return;
+	uint8_t currVol = getVol();
+	if (currVol == 0xFF) return;
+	if ((currVol == 0) && (diff < 0)) return;
+	if ((currVol >= 30) && (diff > 0)) return;
+	int iVol = currVol;
+	iVol += diff;
+	if (iVol < 0) iVol = 0;
+	if (iVol > 30) iVol = 30;
+	currVol = iVol;
+	setVol(currVol);
 }

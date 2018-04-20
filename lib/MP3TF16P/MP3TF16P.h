@@ -6,7 +6,10 @@
 #include "SoftwareSerial.h"
 
 #define MP3_BAUD 9600
-#define COMMAND_BUFFER_SIZE 10
+#define MP3_COMMAND_BUFFER_SIZE 10
+#define MP3_RETURN_BUFFER_SIZE 	20  // Actually, 10 is enough, just for saftey
+
+#define MP3_COMMAND_WAIT_TIME		5000
 
 const byte MP3_CMD[] = {0x7E, 0xFF, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xEF};
 
@@ -33,19 +36,28 @@ class MP3TF16P {
         inline void stopPlayAd()    { sendSingleByteCommand(0x15); }
         inline void stop()          { sendSingleByteCommand(0x16); }
         inline void playRandom()    { sendSingleByteCommand(0x18); }
+        uint8_t getVol();
+        void adjVol(int diff);
+        inline void volUp()         { adjVol(1); }
+        inline void volDown()       { adjVol(-1); }
+
 
 
     private:
         void initObject(SoftwareSerial *ssData, HardwareSerial *hsDebug);
-        inline void resetCommandBuffer() { memcpy(_buf, MP3_CMD, COMMAND_BUFFER_SIZE); }
+        inline void resetCommandBuffer() { memcpy(_buf, MP3_CMD, MP3_COMMAND_BUFFER_SIZE); }
+        inline void resetReturnBuffer() { memset(_retBuf, 0, MP3_RETURN_BUFFER_SIZE); _retCnt = 0; }
         inline bool sendCommand() { sendCommand(false); }
         bool sendCommand(bool expectReturn);
         void showCommand();
+        void clearRxBuffer();
         bool checkReturn();
         SoftwareSerial *_ss;
         HardwareSerial *_dbg;
         bool _enableDebug;
-        byte _buf[COMMAND_BUFFER_SIZE];
+        byte _buf[MP3_COMMAND_BUFFER_SIZE];
+        byte _retBuf[MP3_RETURN_BUFFER_SIZE];  
+        byte _retCnt;
 
 };
 

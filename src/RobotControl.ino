@@ -56,15 +56,13 @@ uint16_t port = 6169;
 WiFiServer server(port);
 WiFiClient client;
 
-#define PIN_HEAD_LED	15
-// #define PIN_SETUP	13
+// #define PIN_SETUP 		13		// for L's PCB
 
 
 void setup() {
 
-	pinMode(PIN_HEAD_LED, OUTPUT);
-	// pinMode(PIN_SETUP, INPUT);
-	digitalWrite(PIN_HEAD_LED, LOW);
+	pinMode(HEAD_LED_GPIO, OUTPUT);
+	digitalWrite(HEAD_LED_GPIO, LOW);
 
 	myOLED.begin();  
 	myOLED.clr();
@@ -157,12 +155,21 @@ void setup() {
 	V1_UBT_ReadSPIFFS(0);
 
 	DEBUG.println(F("Control board ready\n\n"));
-	digitalWrite(PIN_HEAD_LED, HIGH);
+	digitalWrite(HEAD_LED_GPIO, HIGH);
 
 	// Play MP3 for testing only
 	mp3.begin();
+	mp3.stop();
+	delay(10);
 	mp3.setVol(15);
+	delay(10);
 	mp3.playRandom();
+	delay(10);
+
+	uint8_t mp3Vol = mp3.getVol();
+	myOLED.print(0,4,"Vol: ");
+	myOLED.print(mp3Vol);
+	myOLED.show();
 
 /*
 	// Testing on ActionData
@@ -186,12 +193,12 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 	// Try to display here if OLED is ready
 	// Now flash LED to alert user
 	for (int i = 0; i < 10; i++) {
-		digitalWrite(PIN_HEAD_LED, LOW);
+		digitalWrite(HEAD_LED_GPIO, LOW);
 		delay(200);
-		digitalWrite(PIN_HEAD_LED, HIGH);
+		digitalWrite(HEAD_LED_GPIO, HIGH);
 		delay(200);
 	}
-	digitalWrite(PIN_HEAD_LED, LOW);
+	digitalWrite(HEAD_LED_GPIO, LOW);
 	delay(200);
 }
 

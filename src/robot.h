@@ -116,7 +116,21 @@ long lastCmdMs = 0;
 bool debug = true;
 bool devMode = false;
 
-SoftwareSerial mp3_ss(14, 13, false, 256);
+#define MY_PCB
+
+#ifdef MY_PCB
+    // My PCB
+    #define MP3_RXD_GPIO    14
+    #define MP3_TXD_GPIO    13  
+    #define HEAD_LED_GPIO   15
+#else
+    // L's PCB
+    #define MP3_RXD_GPIO    14
+    #define MP3_TXD_GPIO    16  
+    #define HEAD_LED_GPIO   13
+#endif
+
+SoftwareSerial mp3_ss(MP3_RXD_GPIO, MP3_TXD_GPIO, false, 256);
 MP3TF16P mp3(&mp3_ss, &DEBUG);
 
 
