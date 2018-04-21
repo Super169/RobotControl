@@ -1,4 +1,5 @@
 #include "robot.h"
+#include "V2_Command.h"
 
 // Command start with A9 9A
 
@@ -24,8 +25,9 @@
 //	 22 - Unlock servo (var)		: A9 9A 05 22 01 02 03 2D ED
 //	 23 - Servo move (var)			: A9 9A 05 23 00 5A A0 22 ED
 //									: A9 9A 08 23 01 5A A0 02 00 A0 C8 ED 
-//	 31 - Set LED (var)				: A9 9A 04 31 00 01 36 ED
-//                                  : A9 9A 06 31 01 00 02 01 3B ED
+//	 24 - Set LED (var)				: A9 9A 04 24 00 01 29 ED
+//                                  : A9 9A 06 24 01 00 02 01 2E ED
+//   31 - Set Head LED (fix)        : A9 9A 03 31 00 34 ED
 //   41 - Play Action               : A9 9A 03 41 00 43 ED
 //   42 - Play Combo                : A9 9A 03 42 00 44 ED
 //   4F - Stop playing              : A9 9A 02 4F 51 ED
@@ -38,39 +40,6 @@
 //   F2 - Write SPIFFS (fix) 		: A9 9A 02 F2 F4 ED
 
 
-#define V2_CMD_RESET			0x01
-#define V2_CMD_DEBUG			0x02
-#define V2_CMD_DEVMODE      	0x03
-
-#define V2_CMD_ENABLE			0x0A
-
-#define V2_CMD_SERVOANGLE		0x11
-#define V2_CMD_ONEANGLE			0x12
-#define V2_CMD_SERVOADJANGLE	0x13
-#define V2_CMD_ONEADJANGLE		0x14
-
-#define V2_CMD_LOCKSERVO		0x21
-#define V2_CMD_UNLOCKSERVO		0x22
-
-#define V2_CMD_SERVOMOVE		0x23
-
-#define V2_CMD_LED				0x31
-
-#define V2_CMD_PLAYACTION		0x41
-#define V2_CMD_PLAYCOMBO		0x42
-#define V2_CMD_STOPPLAY			0x4F
-
-#define V2_CMD_GET_ADHEADER		0x61
-#define V2_CMD_GET_ADPOSE		0x62
-#define V2_CMD_GET_ADDATA		0x63
-
-#define V2_CMD_UPD_ADHEADER		0x71
-#define V2_CMD_UPD_ADPOSE		0x72
-#define V2_CMD_UPD_ADNAME		0x74
-
-
-#define V2_CMD_READSPIFFS   	0xF1
-#define V2_CMD_WRITESPIFFS  	0xF2
 
 bool V2_Command() {
 
@@ -193,6 +162,32 @@ bool V2_Command() {
 		case V2_CMD_LED:
 			V2_SetLED(cmd);
 			break;
+
+		case V2_CMD_SET_HEADLED:
+			V2_SetHeadLED(cmd);
+			break;
+
+		case V2_CMD_MP3_STOP:
+			V2_Mp3Stop(cmd);
+			break;
+
+		case V2_CMD_MP3_PLAYFILE:
+			V2_Mp3PlayFile(cmd);
+			break;
+
+		case V2_CMD_MP3_PLAYMP3:
+			V2_Mp3PlayMp3(cmd);
+			break;
+
+		case V2_CMD_MP3_PLAYADVERT:
+			V2_Mp3PlayAdvert(cmd);
+			break;
+
+		case V2_CMD_MP3_SETVOLUME:
+			V2_Mp3SetVolume(cmd);
+			break;
+
+
 
 		case V2_CMD_PLAYACTION:
 			V2_PlayAction(cmd);
@@ -577,6 +572,83 @@ void V2_SetLED(byte *cmd) {
 }
 
 #pragma endregion
+
+
+#pragma region Set Head LED
+
+void V2_SetHeadLED(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_SetHeadLED]"));
+	bool status = (cmd[4] == 0x01);
+	SetHeadLed(status);
+	if (debug) DEBUG.printf("Turn Head LED %s\n", (status ? "ON" : "OFF"));
+	V2_SendSingleByteResult(cmd, 0);
+}
+
+#pragma endregion
+
+#pragma region MP3 Player
+
+void V2_Mp3Stop(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_Mp3Stop]"));
+	mp3.stop();
+	V2_SendSingleByteResult(cmd, 0);
+}
+
+void V2_Mp3PlayFile(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_Mp3PlayFile]"));
+	byte folderSeq = cmd[4];
+	byte fileSeq = cmd[5];
+	if (folderSeq == 0xff) {
+		mp3.playFile(fileSeq);
+	} else {
+		mp3.playFolderFile(folderSeq, fileSeq);
+	}
+	V2_SendSingleByteResult(cmd, 0);
+}
+
+void V2_Mp3PlayMp3(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_Mp3PlayMp3]"));
+	byte fileSeq = cmd[4];
+	mp3.playMp3File(fileSeq);
+	V2_SendSingleByteResult(cmd, 0);
+}
+
+void V2_Mp3PlayAdvert(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_Mp3PlayAdvert]"));
+	byte fileSeq = cmd[4];
+	mp3.playAdFile(fileSeq);
+	V2_SendSingleByteResult(cmd, 0);
+}
+
+void V2_Mp3SetVolume(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_Mp3SetVolume]"));
+	byte mode = cmd[4];
+	byte value = cmd[5];	
+	int newVol = mp3_Vol;
+	switch (mode) {
+		case 1:
+			newVol += value;
+			break;
+		case 2:
+			newVol -= value;
+			break;
+		default:
+			newVol = value;
+			break;
+	}
+	if (newVol < 0) {
+		newVol = 0;
+	} else if (newVol > 30) {
+		newVol = 30;
+	} 
+	mp3.setVol((uint8_t) newVol);
+	delay(1);
+	mp3_Vol = mp3.getVol();
+	V2_SendSingleByteResult(cmd, mp3_Vol);
+}
+
+#pragma endregion
+
 
 
 #pragma region Play Action / Combo 

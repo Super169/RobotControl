@@ -1,16 +1,12 @@
 
 git clone https://github.com/tzapu/WiFiManager.git 
+-- WiFiManager can be installed via pio.home
+
+git clone https://github.com/plerup/espsoftwareserial.git
+-- espsoftwareserial can be installed via pio.home
+
+git clone https://github.com/bblanchon/ArduinoJson
+-- ArduinoJson can be installed via pio.home
+
 git clone https://github.com/Super169/OLED12864.git
 git clone https://github.com/Super169/UBTech.git -b dev
-
-
-git clone https://github.com/Super169/espsoftwareserial.git -b dev
-OR
-git clone https://github.com/plerup/espsoftwareserial.git
-** espsoftwareserial has already merged in official library, 
-** so there may have no need to overwrite the library later
-
-https://github.com/plerup/espsoftwareserial.git
-
-Related commit for half duplex serial communization:
-https://github.com/plerup/espsoftwareserial/commit/12664f2355be24b49138a83a76de96803e3040d7

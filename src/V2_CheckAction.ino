@@ -1,12 +1,7 @@
 #include "robot.h"
 #include <math.h>
+#include "V2_Command.h"
 
-bool V2_ActionPlaying = false;
-byte V2_ActionCombo = 0; // combo = 0 reserved for single action play
-byte V2_NextAction = 0;
-byte V2_NextPose = 0;
-unsigned long V2_NextPlayMs = 0;
-int V2_ServoTimeRatio = 20;
 
 void V2_ResetAction() {
 	V2_ActionPlaying = false;

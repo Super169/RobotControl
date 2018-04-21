@@ -12,6 +12,7 @@
 #include "Buffer.h"
 #include "ActionData.h"
 #include "MP3TF16P.h"
+#include "RobotConfig.h"
 
 #include "message.h"
 
@@ -22,6 +23,8 @@ WiFiManager wifiManager;
 #define CMD_BUFFER_SIZE 64
 
 Buffer cmdBuffer(CMD_BUFFER_SIZE);
+
+RobotConfig config(&DEBUG);
 
 // OLED Settings
 
@@ -130,9 +133,12 @@ bool devMode = false;
     #define HEAD_LED_GPIO   13
 #endif
 
+bool headLed = false;
+
 SoftwareSerial mp3_ss(MP3_RXD_GPIO, MP3_TXD_GPIO, false, 256);
 MP3TF16P mp3(&mp3_ss, &DEBUG);
 
+uint8_t mp3_Vol = 0xff;
 
 #pragma endregion
 
@@ -154,6 +160,7 @@ bool V2_Command();
 #pragma region "UTIL.ino"
 
 void SetDebug(bool mode);
+void SetHeadLed(bool status);
 
 byte CheckSum(byte *cmd);
 byte CheckVarSum(byte *cmd);
@@ -166,7 +173,13 @@ void DebugShowSkipByte();
 
 #pragma endregion
 
+// UBT_Command.ino
 void UBT_GetServoAngle(byte *result);
+void UBT_GetServoAdjAngle(byte *result);
+
+// V2_CheckAction.ino
+void V2_ResetAction();
+
 void UBT_ReadSPIFFS(byte cmdCode);
 void UBT_WriteSPIFFS(byte cmdCode);
 

@@ -3,6 +3,18 @@
 void SetDebug(bool mode) {
 	debug = mode;
 	servo.setDebug(mode);
+	mp3.setDebug(mode);
+	config.setDebug(mode);
+}
+
+
+void SetHeadLed(bool status) {
+	headLed = status;
+	if (status) {
+		digitalWrite(HEAD_LED_GPIO, LOW);
+	} else {
+		digitalWrite(HEAD_LED_GPIO, HIGH);
+	}
 }
 
 // XX XX {id} {cmd} xx xx xx xx {sum} ED

@@ -62,8 +62,10 @@ WiFiClient client;
 void setup() {
 
 	pinMode(HEAD_LED_GPIO, OUTPUT);
+	SetHeadLed(false);
 	digitalWrite(HEAD_LED_GPIO, LOW);
 
+	// Start OLED ASAP to display the welcome message
 	myOLED.begin();  
 	myOLED.clr();
 	myOLED.show();
@@ -77,19 +79,20 @@ void setup() {
 	// Delay 2s to wait for all servo started
 	delay(2000);
 
+	// start both serial by default, serial for command input, serial1 for debug console
+	// Note: due to ESP-12 hw setting, serial1 cannot be used for input
+	Serial.begin(115200);
+	Serial1.begin(115200);
+	delay(100);
+	DEBUG.println("\n\n");
 
-	char buf[20];
+	config.readConfig();
 
 	// SetDebug(false);  // Disable servo debug first, enable it later if needed
 	SetDebug(true);
 
 	retBuffer = servo.retBuffer();
 
-	// start both serial by default, serial for command input, serial1 for debug console
-	// Note: due to ESP-12 hw setting, serial1 cannot be used for input
-	Serial.begin(115200);
-	Serial1.begin(115200);
-	delay(100);
 
 	DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
 	unsigned long actionSzie = sizeof(actionTable);
@@ -97,6 +100,7 @@ void setup() {
 	char *AP_Name = (char *) "Alpha 1S";
 	char *AP_Password = (char *) "12345678";
 
+	char buf[20];
 	bool isConnected = false;
 	
 	/*
@@ -146,7 +150,7 @@ void setup() {
 	DEBUG.printf("Port: %d\n\n", port);
 
 	//	RobotMaintenanceMode();
-	DEBUG.print("Starting robot servo: ");
+	DEBUG.println("Starting robot servo: ");
 	server.begin();
 
 	servo.begin();
@@ -161,15 +165,18 @@ void setup() {
 	mp3.begin();
 	mp3.stop();
 	delay(10);
-	mp3.setVol(15);
+	mp3.setVol(config.mp3Volume());
 	delay(10);
-	mp3.playRandom();
+	mp3_Vol = mp3.getVol();
+	
+	mp3.playMp3File(1);
 	delay(10);
 
-	uint8_t mp3Vol = mp3.getVol();
-	myOLED.print(0,4,"Vol: ");
-	myOLED.print(mp3Vol);
+	myOLED.print(0,4,"MP3 Vol: ");
+	myOLED.print(mp3_Vol);
 	myOLED.show();
+
+	servo.setLED(0, 1);
 
 /*
 	// Testing on ActionData
