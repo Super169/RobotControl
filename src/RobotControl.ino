@@ -63,7 +63,7 @@ void setup() {
 
 	pinMode(HEAD_LED_GPIO, OUTPUT);
 	SetHeadLed(false);
-	digitalWrite(HEAD_LED_GPIO, LOW);
+	// digitalWrite(HEAD_LED_GPIO, LOW);
 
 	// Start OLED ASAP to display the welcome message
 	myOLED.begin();  
@@ -148,10 +148,18 @@ void setup() {
 	DEBUG.print("Robot IP: ");
 	DEBUG.println(ip);
 	DEBUG.printf("Port: %d\n\n", port);
-
 	//	RobotMaintenanceMode();
-	DEBUG.println("Starting robot servo: ");
 	server.begin();
+
+
+	DEBUG.println("Starting robot servo: ");
+	
+	// clean up software serial
+	servo.begin();
+	delay(100);
+	servo.end();
+	delay(100);
+	//
 
 	servo.begin();
 	servo.lockAll();
@@ -159,7 +167,8 @@ void setup() {
 	V1_UBT_ReadSPIFFS(0);
 
 	DEBUG.println(F("Control board ready\n\n"));
-	digitalWrite(HEAD_LED_GPIO, HIGH);
+	SetHeadLed(true);
+	// digitalWrite(HEAD_LED_GPIO, HIGH);
 
 	// Play MP3 for testing only
 	mp3.begin();

@@ -549,7 +549,7 @@ void V2_SetLED(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_SetLED]"));
 	byte id, mode;
 	if ((cmd[2] == 4) && (cmd[4] == 0)) {
-		mode = (cmd[5] ? 0 : 1);
+		mode = (cmd[5] ? 1 : 0);
 		for (int id = 1; id <= 16; id++) {
 			if (servo.exists(id)) {
 				if (debug) DEBUG.printf("Turn servo %02d LED %s\n", id, (mode ? "OFF" : "ON"));
@@ -562,7 +562,7 @@ void V2_SetLED(byte *cmd) {
 			int pos = 4 + 2 * i;
 			id = cmd[pos];
 			if (servo.exists(id)) {
-				mode = (cmd[pos+1] ? 0 : 1);
+				mode = (cmd[pos+1] ? 1 : 0);
 				if (debug) DEBUG.printf("Turn servo %02d LED %s\n", id, (mode ? "OFF" : "ON"));
 				servo.setLED(id, mode);
 			}
