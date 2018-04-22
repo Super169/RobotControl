@@ -166,7 +166,7 @@ void setup() {
 	// TODO: change to V2 when ready
 	V1_UBT_ReadSPIFFS(0);
 
-	DEBUG.println(F("Control board ready\n\n"));
+	DEBUG.printf("%6d Control board ready\n\n", millis());
 	SetHeadLed(true);
 	// digitalWrite(HEAD_LED_GPIO, HIGH);
 
@@ -187,15 +187,22 @@ void setup() {
 
 	servo.setLED(0, 1);
 
-/*
+
 	// Testing on ActionData
 	actionData.InitObject(1);
-	actionData.Header()[48] = 1;
-	byte wCnt = actionData.WriteSPIFFS();
-	Serial.printf("\nBytes write: %d\n", wCnt);
+	actionData.GenSample(1);
+	byte bReturn = actionData.WriteSPIFFS();
+	DEBUG.printf("\nWrite action %d: %d\n", actionData.Header()[AD_OFFSET_ID], bReturn);
+	myOLED.print(0,5,"AD Write: ");
+	myOLED.print((bReturn == 0 ? "OK" : "FAIL"));
+
 	bool success = actionData.ReadSPIFFS(1);
-	Serial.printf("\nRead action %d : %s\n", 1, (success ? "Success" : "Failed"));
-*/
+	DEBUG.printf("\nRead action %d : %s\n", actionData.Header()[AD_OFFSET_ID], (success ? "Success" : "Failed"));
+	myOLED.print(0,6,"AD Read: ");
+	myOLED.print((success ? "OK" : "FAIL"));
+
+	myOLED.show();
+
 }
 
 void configModeCallback (WiFiManager *myWiFiManager) {

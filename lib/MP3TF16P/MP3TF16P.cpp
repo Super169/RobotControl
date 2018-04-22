@@ -74,17 +74,17 @@ void MP3TF16P::clearRxBuffer() {
 }
 
 bool MP3TF16P::checkReturn() {
-    if (_enableDebug) _dbg->printf("MP3 checkReturn\n");
+    if (_enableDebug) _dbg->printf("%d6 MP3 checkReturn\n", millis());
     unsigned long startMs = millis();
     resetReturnBuffer();
     byte ch;
     while ( ((millis() - startMs) < MP3_COMMAND_WAIT_TIME) && (!_ss->available()) ) ;
 	unsigned long endMs = millis();
-	if (_enableDebug) {
-		_dbg->printf("MP3 wait return from %d to %d\n", startMs, endMs);
-	}
+
+	// if (_enableDebug) _dbg->printf("MP3 wait return from %d to %d\n", startMs, endMs);
+
     if (!_ss->available()) {
-	    if (_enableDebug) _dbg->printf("MP3 no return after %d ms\n", MP3_COMMAND_WAIT_TIME);
+	    // if (_enableDebug) _dbg->printf("MP3 no return after %d ms\n", MP3_COMMAND_WAIT_TIME);
 		return false;
 	}
     if (_enableDebug) {

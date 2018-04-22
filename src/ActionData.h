@@ -12,23 +12,24 @@
 #define AD_OFFSET_POSECNT 		28
 #define AD_OFFSET_AFFECTSERVO	34
 
+// 
 
-#define AD_DATA_SIZE		8200
-#define AD_POSE_SIZE		32
-#define AD_MAX_POSE         255
+#define AD_POSE_SIZE		60
+#define AD_MAX_POSE         200
+#define AD_DATA_SIZE		12000
+
 
 // poseCnt is single byte, so max is 255.
-// AD_POSE_SIZE * AD_MAX_POSE = 8160, just reseve extra 32 byte for ending
-
+// But for safety, due to memory issue, only 12000 byte is used
 
 #define ACTION_FILE "/alpha/action/%03d.dat"
 
 #define AD_POFFSET_STIME	2
 #define AD_POFFSET_WTIME	4
 #define AD_POFFSET_ANGLE	6
-#define AD_POFFSET_LED		22
-#define AD_POFFSET_HEAD		26
-
+#define AD_POFFSET_LED		38
+#define AD_POFFSET_HEAD		46
+#define AD_POFFSET_MP3		47
 
 class ActionData {
     public:
@@ -50,6 +51,8 @@ class ActionData {
 
 		byte PoseCnt() { return _header[AD_OFFSET_POSECNT]; }
 		void RefreshActionInfo();
+
+		void GenSample(byte actionId);
 
 	private:
 
