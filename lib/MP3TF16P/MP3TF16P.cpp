@@ -74,7 +74,7 @@ void MP3TF16P::clearRxBuffer() {
 }
 
 bool MP3TF16P::checkReturn() {
-    if (_enableDebug) _dbg->printf("%d6 MP3 checkReturn\n", millis());
+    if (_enableDebug) _dbg->printf("%06d MP3 checkReturn\n", millis());
     unsigned long startMs = millis();
     resetReturnBuffer();
     byte ch;

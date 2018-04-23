@@ -17,7 +17,9 @@ void RobotConfig::initObject(HardwareSerial *hsDebug) {
 
 void RobotConfig::initConfig() {
 
+    _mp3_enabled = DEFAULT_MP3_ENABLED;
     _mp3_volume = DEFAULT_MP3_VOLUME;
+
 
 }
 
@@ -45,6 +47,10 @@ bool RobotConfig::readConfig() {
 
     initConfig();
 
+    if (json.containsKey(JSON_MP3_ENABLED)) {
+        _mp3_enabled = json[JSON_MP3_ENABLED];
+    }
+
     if (json.containsKey(JSON_MP3_VOLUME)) {
         _mp3_volume = json[JSON_MP3_VOLUME];
     }
@@ -61,6 +67,7 @@ bool RobotConfig::writeConfig() {
     DynamicJsonBuffer jsonBuffer;
     JsonObject &json = jsonBuffer.createObject();
 
+    json[JSON_MP3_ENABLED] = _mp3_enabled;
     json[JSON_MP3_VOLUME] = _mp3_volume;
 
     bool configSaved = false;
@@ -78,4 +85,8 @@ bool RobotConfig::writeConfig() {
     configFile.close();    
     return configSaved;    
 
+}
+
+bool RobotConfig::setMp3Enabled(bool enabled) {
+    _mp3_enabled = enabled;
 }

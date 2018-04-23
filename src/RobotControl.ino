@@ -87,6 +87,7 @@ void setup() {
 	DEBUG.println("\n\n");
 
 	config.readConfig();
+	// config.setMp3Enabled(false);  // special version only
 
 	// SetDebug(false);  // Disable servo debug first, enable it later if needed
 	SetDebug(true);
@@ -170,23 +171,32 @@ void setup() {
 	SetHeadLed(true);
 	// digitalWrite(HEAD_LED_GPIO, HIGH);
 
-	// Play MP3 for testing only
-	mp3.begin();
-	mp3.stop();
-	delay(10);
-	mp3.setVol(config.mp3Volume());
-	delay(10);
-	mp3_Vol = mp3.getVol();
-	
-	mp3.playMp3File(1);
-	delay(10);
+	if (config.mp3Enabled()) {
+		// Play MP3 for testing only
+		mp3.begin();
+		mp3.stop();
+		delay(10);
+		mp3.setVol(config.mp3Volume());
+		delay(10);
+		mp3_Vol = mp3.getVol();
+		
+		mp3.playMp3File(1);
+		delay(10);
 
+		// software serial is not stable in 9600bps, for safety, disable mp3 connection when not use
+		mp3.end(); 
+
+	}
+	
 	myOLED.print(0,4,"MP3 Vol: ");
 	myOLED.print(mp3_Vol);
 	myOLED.show();
 
 	servo.setLED(0, 1);
 
+	pinMode(10, INPUT_PULLUP);
+	int b = digitalRead(10);
+	DEBUG.printf("Pin 10 is %s\n", (b == HIGH ? "HIGH" : "LOW"));
 
 	// Testing on ActionData
 	actionData.InitObject(1);

@@ -590,38 +590,51 @@ void V2_SetHeadLED(byte *cmd) {
 
 void V2_Mp3Stop(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_Mp3Stop]"));
+	if (!config.mp3Enabled()) return;
+	mp3.begin();
 	mp3.stop();
+	mp3.end();
 	V2_SendSingleByteResult(cmd, 0);
 }
 
 void V2_Mp3PlayFile(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_Mp3PlayFile]"));
+	if (!config.mp3Enabled()) return;
 	byte folderSeq = cmd[4];
 	byte fileSeq = cmd[5];
+	mp3.begin();
 	if (folderSeq == 0xff) {
 		mp3.playFile(fileSeq);
 	} else {
 		mp3.playFolderFile(folderSeq, fileSeq);
 	}
+	mp3.end();
 	V2_SendSingleByteResult(cmd, 0);
 }
 
 void V2_Mp3PlayMp3(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_Mp3PlayMp3]"));
+	if (!config.mp3Enabled()) return;
 	byte fileSeq = cmd[4];
+	mp3.begin();
 	mp3.playMp3File(fileSeq);
+	mp3.end();
 	V2_SendSingleByteResult(cmd, 0);
 }
 
 void V2_Mp3PlayAdvert(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_Mp3PlayAdvert]"));
+	if (!config.mp3Enabled()) return;
 	byte fileSeq = cmd[4];
+	mp3.begin();
 	mp3.playAdFile(fileSeq);
+	mp3.end();
 	V2_SendSingleByteResult(cmd, 0);
 }
 
 void V2_Mp3SetVolume(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_Mp3SetVolume]"));
+	if (!config.mp3Enabled()) return;
 	byte mode = cmd[4];
 	byte value = cmd[5];	
 	int newVol = mp3_Vol;
@@ -641,9 +654,11 @@ void V2_Mp3SetVolume(byte *cmd) {
 	} else if (newVol > 30) {
 		newVol = 30;
 	} 
+	mp3.begin();
 	mp3.setVol((uint8_t) newVol);
 	delay(1);
 	mp3_Vol = mp3.getVol();
+	mp3.end();
 	V2_SendSingleByteResult(cmd, mp3_Vol);
 }
 
