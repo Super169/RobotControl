@@ -4,6 +4,8 @@
 #include <ESP8266WiFi.h>
 #include <FS.h>
 
+#define AD_MAX_SERVO			16
+
 #define AD_HEADER_SIZE			60
 #define AD_OFFSET_LEN			2
 #define AD_OFFSET_ID   			4

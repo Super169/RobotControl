@@ -52,7 +52,7 @@ void V2_CheckAction() {
 
 	// Move servo only if servo time > 0
 	if (servoTime > 0) {
-		for (int id = 1; id <= MAX_SERVO; id++) {
+		for (int id = 1; id <= config.maxServo(); id++) {
 			byte angle = pose[AD_POFFSET_ANGLE + id - 1];
 			// Check for dummy action to reduce commands
 			if ((angle <= 0xF0) && (servo.lastAngle(id) != angle)) {
@@ -65,7 +65,7 @@ void V2_CheckAction() {
 	uint16_t ledChange = (pose[AD_POFFSET_LED] << 8) || pose[AD_POFFSET_LED+1];
 	if (ledChange) {
 		uint16_t ledFlag = (pose[AD_POFFSET_LED+2] << 8) || pose[AD_POFFSET_LED+3];
-		for (int i = 0; i < MAX_SERVO; i++) {
+		for (int i = 0; i < config.maxServo(); i++) {
 			if (ledChange && (1 << i)) {
 				byte status = (byte) (ledFlag && (1 << i));
 				byte id = i + 1;
@@ -101,7 +101,7 @@ void V2_goPlayAction(byte actionCode) {
 		// End with all zero, so wait time will be 0x00, 0x00, and time will be 0x00 also
 		if ((waitTime == 0) && (time == 0)) break;
 		if (time > 0) {
-			for (int id = 1; id <= MAX_SERVO; id++) {
+			for (int id = 1; id <= config.maxServo(); id++) {
 				byte angle = actionTable[actionCode][po][ID_OFFSET + id];
 				// max 240 degree, no action required if angle not changed, except first action
 				if ((angle <= 0xf0) && 

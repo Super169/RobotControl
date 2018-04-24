@@ -43,7 +43,7 @@ bool enable_UBTSV = true;
 
 ActionData actionData;
 
-#define MAX_SERVO		16
+
 #define MAX_ACTION 		26
 #define MAX_POSES 		30 
 // #define MAX_POSES_SIZE 40

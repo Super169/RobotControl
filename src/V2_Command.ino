@@ -320,7 +320,7 @@ void V2_CommandEnable(byte *cmd) {
 void V2_GetServoAngle(byte *cmd) {
 	
 	if (debug) DEBUG.println(F("[V2_GetServoAngle]"));
-	uint16_t len = 34;
+	uint16_t len = 2 * config.maxServo() + 2;
 	byte result[len+4];
 	
 	result[2] = len;
@@ -342,7 +342,7 @@ void V2_GetOneAngle(byte *cmd) {
 	if (cmd[2] == 3) {
 		byte id = cmd[4];
 		result [4] = id;
-		if ((id) && (id <= 16) && (servo.exists(id))) {
+		if ((id) && (id <= config.maxServo()) && (servo.exists(id))) {
 				if (servo.isLocked(id)) {
 					result[5] = servo.lastAngle(id);
 					result[6] = 1;
@@ -370,7 +370,8 @@ void V2_GetOneAngle(byte *cmd) {
 
 void V2_GetServoAdjAngle(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_GetServoAdjAngle]"));
-	uint16_t len = 34;
+	// uint16_t len = 34;
+	uint16_t len = 2 * config.maxServo() + 2;
 	byte result[len+4];
 	result[2] = len;
 	result[3] = cmd[3];
@@ -390,7 +391,7 @@ void V2_GetOneAdjAngle(byte *cmd) {
 		byte id = cmd[4];
 		result [4] = id;
 		if (cmd[2] > 2) id = cmd[4];
-		if ((id) && (id <= 16) && (servo.exists(id))) {
+		if ((id) && (id <= config.maxServo()) && (servo.exists(id))) {
 			uint16_t  adjAngle = servo.getAdjAngle(id);
 			result[5] = adjAngle / 256;
 			result[6] = adjAngle % 256;
@@ -418,7 +419,7 @@ void V2_LockServo(byte *cmd, bool goLock) {
 	byte cnt = 0;
 	if ((cmd[2] == 2) || ((cmd[2] == 3) && (cmd[4] == 0))) {
 		// All servo
-		for (int id = 1; id <= 16; id++)  {
+		for (int id = 1; id <= config.maxServo(); id++)  {
 			byte pos = 5 + 2 * cnt;
 			if (servo.exists(id)) {
 				result[pos] = id;
@@ -478,14 +479,14 @@ void V2_ServoMove(byte *cmd) {
 	byte moveAngle, moveTime;
 	if (debug) DEBUG.println(F("[V2_ServoMove]"));
 	int cnt = (cmd[2] - 2) / 3;
-	byte moveParm[32];
-	memset(moveParm, 0xFF, 32);
+	byte moveParm[2 * config.maxServo()];
+	memset(moveParm, 0xFF, 2 * config.maxServo());
 	int pos;
 
 	if ((cnt == 1) && (cmd[4] == 0)) {
 		moveAngle = cmd[5];
 		moveTime = cmd[6];
-		for (byte id = 1; id <= 16; id++ ) {
+		for (byte id = 1; id <= config.maxServo(); id++ ) {
 			if (servo.exists(id)) {
 				pos = 2 * (id - 1);
 				moveParm[pos] = moveAngle;
@@ -511,15 +512,17 @@ void V2_ServoMove(byte *cmd) {
 	
 	if (debug) {
 		DEBUG.println("move parameters:");
-		for (int i=0; i < 32; i++) {
+		for (int i=0; i < 2 * config.maxServo(); i++) {
 			DEBUG.printf("%02X ", moveParm[i]);
 		}
 		DEBUG.println();
 	}
 
 	int moveCnt = 0;
-	byte result[55]; // max: A9 9A {len} {cmd} {cnt} (3 * 16) {sum} ED = 48 + 7 = 55
-	for (int id = 1; id <= 16; id++) {
+	// byte result[55]; // max: A9 9A {len} {cmd} {cnt} (3 * 16) {sum} ED = 48 + 7 = 55
+	int arraySize = 3 * config.maxServo() + 7;
+	byte result[arraySize]; // max: A9 9A {len} {cmd} {cnt} (3 * 16) {sum} ED = 48 + 7 = 55
+	for (int id = 1; id <= config.maxServo(); id++) {
 		pos = 2 * (id - 1);
 		if (moveParm[pos] != 0xFF) {
 			int resultPos = 5 + 3 * moveCnt;
@@ -550,7 +553,7 @@ void V2_SetLED(byte *cmd) {
 	byte id, mode;
 	if ((cmd[2] == 4) && (cmd[4] == 0)) {
 		mode = (cmd[5] ? 1 : 0);
-		for (int id = 1; id <= 16; id++) {
+		for (int id = 1; id <= config.maxServo(); id++) {
 			if (servo.exists(id)) {
 				if (debug) DEBUG.printf("Turn servo %02d LED %s\n", id, (mode ? "OFF" : "ON"));
 				servo.setLED(id, mode);

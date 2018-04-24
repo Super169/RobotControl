@@ -17,6 +17,9 @@ void RobotConfig::initObject(HardwareSerial *hsDebug) {
 
 void RobotConfig::initConfig() {
 
+    _max_servo = DEFAULT_MAX_SERVO;
+    _max_retry = DEFAULT_MAX_RETRY;
+
     _mp3_enabled = DEFAULT_MP3_ENABLED;
     _mp3_volume = DEFAULT_MP3_VOLUME;
 
@@ -34,10 +37,14 @@ bool RobotConfig::readConfig() {
     if (_enableDebug) _dbg->printf("readConfig");
 
     if (!SPIFFS.begin()) return false;
-    if (!SPIFFS.exists(_configFileName)) return false;
-
+    if (!SPIFFS.exists(_configFileName)) {
+        if (_enableDebug) _dbg->printf("#### config file %s not found\n", _configFileName);
+        return false;
+    }
     File configFile = SPIFFS.open(_configFileName, "r");
     if (!configFile) return false;
+
+    if (_enableDebug) _dbg->printf("#### Read from: %s\n", _configFileName);
 
     DynamicJsonBuffer jsonBuffer;
     JsonObject &json = jsonBuffer.parseObject(configFile);
@@ -46,6 +53,15 @@ bool RobotConfig::readConfig() {
     if (!json.success()) return false;
 
     initConfig();
+
+
+    if (json.containsKey(JSON_MAX_SERVO)) {
+        _max_servo = json[JSON_MAX_SERVO];
+    }
+
+    if (json.containsKey(JSON_MAX_RETRY)) {
+        _max_retry = json[JSON_MAX_RETRY];
+    }
 
     if (json.containsKey(JSON_MP3_ENABLED)) {
         _mp3_enabled = json[JSON_MP3_ENABLED];
@@ -67,6 +83,8 @@ bool RobotConfig::writeConfig() {
     DynamicJsonBuffer jsonBuffer;
     JsonObject &json = jsonBuffer.createObject();
 
+    json[JSON_MAX_SERVO] = _max_servo;
+    json[JSON_MAX_RETRY] = _max_retry;
     json[JSON_MP3_ENABLED] = _mp3_enabled;
     json[JSON_MP3_VOLUME] = _mp3_volume;
 
@@ -74,11 +92,7 @@ bool RobotConfig::writeConfig() {
     File configFile = SPIFFS.open(_configFileName, "w");
     if (configFile) {
 
-        #ifdef _SERIAL_DEBUG_
-            json.printTo(DEBUG);
-            DEBUG.println();
-        #endif        
-            
+        if (_enableDebug) _dbg->printf("#### Write to: %s\n", _configFileName);
         json.printTo(configFile);
         configSaved = true;
     }
@@ -87,6 +101,18 @@ bool RobotConfig::writeConfig() {
 
 }
 
+bool RobotConfig::setMaxServo(uint8_t maxServo) {
+    _max_servo = maxServo;
+}
+
+bool RobotConfig::setMaxRetry(uint8_t maxRetry) {
+    _max_retry = maxRetry;
+}
+
 bool RobotConfig::setMp3Enabled(bool enabled) {
     _mp3_enabled = enabled;
+}
+
+bool RobotConfig::setMp3Volume(uint8_t volume) {
+    _mp3_volume = volume;
 }

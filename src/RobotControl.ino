@@ -49,8 +49,6 @@ GPIO-15 : Head LED
 
 #include "robot.h"
 
-
-
 // Start a TCP Server on port 6169
 uint16_t port = 6169;
 WiFiServer server(port);
@@ -87,6 +85,7 @@ void setup() {
 	DEBUG.println("\n\n");
 
 	config.readConfig();
+	config.setMaxServo(20);
 	// config.setMp3Enabled(false);  // special version only
 
 	// SetDebug(false);  // Disable servo debug first, enable it later if needed
@@ -155,6 +154,8 @@ void setup() {
 
 	DEBUG.println("Starting robot servo: ");
 	
+	servo.init(config.maxServo(), config.maxRetry());
+
 	// clean up software serial
 	servo.begin();
 	delay(100);

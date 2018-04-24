@@ -1,9 +1,10 @@
 // UBT command utility
+#include "robot.h"
 
 void UBT_GetServoAngle(byte *result) {
 	// result must have at least 32 bytes
 
-	for (int id = 1; id <= 16; id++) {
+	for (int id = 1; id <= config.maxServo() ; id++) {
 		int pos = 2 * (id - 1);
 		if (servo.exists(id)) {
 			if (servo.isLocked(id)) {
@@ -20,7 +21,7 @@ void UBT_GetServoAngle(byte *result) {
 	}
 
 	if (debug) {
-		for (int i = 0; i < 32; i++) {
+		for (int i = 0; i < 2 * config.maxServo(); i++) {
 			DEBUG.printf("%02X ", result[i]);
 		}
 		DEBUG.println();
@@ -28,7 +29,7 @@ void UBT_GetServoAngle(byte *result) {
 }
 
 void UBT_GetServoAdjAngle(byte *result) {
-	for (int id = 1; id <= 16; id++) {
+	for (int id = 1; id <= config.maxServo(); id++) {
 		int pos =2 * (id - 1);
 		if (servo.exists(id)) {
 			uint16  adjAngle = servo.getAdjAngle(id);
