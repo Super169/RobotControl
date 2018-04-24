@@ -9,7 +9,7 @@
 #define MP3_COMMAND_BUFFER_SIZE 10
 #define MP3_RETURN_BUFFER_SIZE 	20  // Actually, 10 is enough, just for saftey
 
-#define MP3_COMMAND_WAIT_TIME		5000
+#define MP3_COMMAND_WAIT_TIME	500
 
 const byte MP3_CMD[] = {0x7E, 0xFF, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xEF};
 

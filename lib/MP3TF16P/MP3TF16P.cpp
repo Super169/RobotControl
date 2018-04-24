@@ -78,7 +78,7 @@ bool MP3TF16P::checkReturn() {
     unsigned long startMs = millis();
     resetReturnBuffer();
     byte ch;
-    while ( ((millis() - startMs) < MP3_COMMAND_WAIT_TIME) && (!_ss->available()) ) ;
+    while ( ((millis() - startMs) < MP3_COMMAND_WAIT_TIME) && (!_ss->available()) ) delay(1);
 	unsigned long endMs = millis();
 
 	// if (_enableDebug) _dbg->printf("MP3 wait return from %d to %d\n", startMs, endMs);
