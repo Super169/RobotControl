@@ -797,11 +797,15 @@ void V2_UpdateAdHeader(byte *cmd) {
 		return;
 	}
 
-	// Action ID must be matched.  i.e. must GET before UPDATE
+	// Action ID must be matched.  
+	// i.e. must GET before UPDATE (Why?  user can load action from file, remove this checking)
 	if (cmd[4] != actionData.Header()[4]) {
+		/*
 		if (debug) DEBUG.printf("ID not matched: %d (current: %d)\n", cmd[4], actionData.Header()[4]);
 		V2_SendSingleByteResult(cmd, 2);
 		return;
+		*/
+		actionData.InitObject(cmd[4]);
 	}
 	for (int i = 0; i < AD_HEADER_SIZE; i++) {
 		actionData.Header()[i] = cmd[i];
@@ -815,7 +819,7 @@ void V2_UpdateAdPose(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_UpdateAdPose]"));
 	
 	// Length should be {len} {actionId} {poseId} {data} => pose datasize + 3
-	if (cmd[2] != (AD_POSE_SIZE + 3)) {
+	if (cmd[2] != (AD_POSE_SIZE - 4)) {
 		if (debug) DEBUG.printf("Invalid length: \n", cmd[2]);
 		V2_SendSingleByteResult(cmd, 1);
 		return;
