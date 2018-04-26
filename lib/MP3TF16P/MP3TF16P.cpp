@@ -38,7 +38,7 @@ void MP3TF16P::end() {
 
 void MP3TF16P::showCommand()  {
     if (!_enableDebug) return;
-    _dbg->printf("%06d MP3 OUT>>", millis());
+    _dbg->printf("%08ld MP3 OUT>>", millis());
     for (int i = 0; i < 10; i++) {
         _dbg->printf(" %02X", _buf[i]);
     }
@@ -74,13 +74,12 @@ void MP3TF16P::clearRxBuffer() {
 }
 
 bool MP3TF16P::checkReturn() {
-    if (_enableDebug) _dbg->printf("%06d MP3 checkReturn\n", millis());
+    if (_enableDebug) _dbg->printf("%08ld MP3 checkReturn\n", millis());
     unsigned long startMs = millis();
     resetReturnBuffer();
     byte ch;
     while ( ((millis() - startMs) < MP3_COMMAND_WAIT_TIME) && (!_ss->available()) ) delay(1);
-	unsigned long endMs = millis();
-
+	// unsigned long endMs = millis();
 	// if (_enableDebug) _dbg->printf("MP3 wait return from %d to %d\n", startMs, endMs);
 
     if (!_ss->available()) {
@@ -88,7 +87,7 @@ bool MP3TF16P::checkReturn() {
 		return false;
 	}
     if (_enableDebug) {
-        _dbg->printf("%06d MP3 IN>>>", millis());
+        _dbg->printf("%08ld MP3 IN>>>", millis());
     }
 	// 10 ms is almost good for 10byte data
 	delay(10);

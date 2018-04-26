@@ -78,7 +78,7 @@ void V2_CheckAction() {
 	byte headLight = pose[AD_POFFSET_HEAD];
 	if (headLight == 0x10) {
 		// Trun off the light
-	} else if (headLight = 0x11) {
+	} else if (headLight == 0x11) {
 		// Turn on the light
 	}
 

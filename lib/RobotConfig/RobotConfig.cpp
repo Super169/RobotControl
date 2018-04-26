@@ -101,18 +101,18 @@ bool RobotConfig::writeConfig() {
 
 }
 
-bool RobotConfig::setMaxServo(uint8_t maxServo) {
+void RobotConfig::setMaxServo(uint8_t maxServo) {
     _max_servo = maxServo;
 }
 
-bool RobotConfig::setMaxRetry(uint8_t maxRetry) {
+void RobotConfig::setMaxRetry(uint8_t maxRetry) {
     _max_retry = maxRetry;
 }
 
-bool RobotConfig::setMp3Enabled(bool enabled) {
+void RobotConfig::setMp3Enabled(bool enabled) {
     _mp3_enabled = enabled;
 }
 
-bool RobotConfig::setMp3Volume(uint8_t volume) {
+void RobotConfig::setMp3Volume(uint8_t volume) {
     _mp3_volume = volume;
 }

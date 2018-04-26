@@ -302,8 +302,8 @@ int V1_goMoveServo(byte *result) {
 	result[2] = 0x00;
 	byte inBuffer[51];  // Max 16 servo + end mark: 17 * 3 = 51
 	byte inCount = 0;
-	byte moveData[16][3];
-	byte moveCnt = 0;
+	// byte moveData[16][3];
+	// byte moveCnt = 0;
 	while (cmdBuffer.available()) {
 		if (inCount >= 51) {
 			result[1] = MOVE_ERR_PARM_CNT;
@@ -377,7 +377,7 @@ int V1_goMoveServoText(byte *result)
 			cmdBuffer.read();  
 		} 
 	}
-	V1_moveMultiServo(inCount, inBuffer, result);
+	return V1_moveMultiServo(inCount, inBuffer, result);
 }
 
 int V1_moveMultiServo(int inCount, byte* inBuffer, byte *result) {
@@ -422,7 +422,6 @@ int V1_moveMultiServo(int inCount, byte* inBuffer, byte *result) {
 				result[1] = MOVE_ERR_PARM_ONE_ANGLE;
 				return false;
 			}
-			bool servoFound = false;
 			for (int j = 0; j < moveCnt; j++) {
 				if (moveData[j][0] == id) {
 					result[1] = MOVE_ERR_PARM_DUP_ID;
@@ -538,7 +537,7 @@ void V1_UBT_ReadSPIFFS(byte cmdCode) {
 	}
 }
 
-bool V1_WriteSPIFFS() {
+void V1_WriteSPIFFS() {
 	if (debug) DEBUG.println(F("[V1_WriteSPIFFS]"));
 	V1_UBT_WriteSPIFFS('W');
 }
@@ -676,7 +675,7 @@ void V1_UploadActionData() {
 			
 	ptr = & actionTable[result[1]][result[2]][0];
 	long size = MAX_POSES * MAX_POSES_SIZE;
-	memcpy(ptr, inBuffer, MAX_POSES_SIZE);
+	memcpy(ptr, inBuffer, size);
 	result[3] = UPLOAD_OK;
 	Serial.write(result, 4);
 }

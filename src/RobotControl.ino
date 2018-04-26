@@ -56,7 +56,6 @@ WiFiClient client;
 
 // #define PIN_SETUP 		13		// for L's PCB
 
-
 void setup() {
 
 	pinMode(HEAD_LED_GPIO, OUTPUT);
@@ -95,7 +94,7 @@ void setup() {
 
 
 	DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
-	unsigned long actionSzie = sizeof(actionTable);
+	// unsigned long actionSize = sizeof(actionTable);
 
 	char *AP_Name = (char *) "Alpha 1S";
 	char *AP_Password = (char *) "12345678";
@@ -168,7 +167,7 @@ void setup() {
 	// TODO: change to V2 when ready
 	V1_UBT_ReadSPIFFS(0);
 
-	DEBUG.printf("%6d Control board ready\n\n", millis());
+	DEBUG.printf("%08ld Control board ready\n\n", millis());
 	SetHeadLed(true);
 	// digitalWrite(HEAD_LED_GPIO, HIGH);
 

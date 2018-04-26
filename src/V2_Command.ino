@@ -789,10 +789,10 @@ void V2_GetAdPose(byte *cmd) {
 void V2_UpdateAdHeader(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_UpdateAdHeader]"));
 	byte aId = cmd[4];	
-
+	
 	// Length should be header size - 4
 	if (cmd[2] != (AD_HEADER_SIZE - 4)) {
-		if (debug) DEBUG.printf("Invalid length: \n", cmd[2]);
+		if (debug) DEBUG.printf("Invalid length: %d\n", cmd[2]);
 		V2_SendSingleByteResult(cmd, 1);
 		return;
 	}
@@ -813,18 +813,20 @@ void V2_UpdateAdHeader(byte *cmd) {
 	
 	if (debug) DEBUG.printf("Action %d header updated\n", aId);
 	V2_SendSingleByteResult(cmd, 0);
+	
 }
 
 void V2_UpdateAdPose(byte *cmd) {
+	
 	if (debug) DEBUG.println(F("[V2_UpdateAdPose]"));
 	
 	// Length should be {len} {actionId} {poseId} {data} => pose datasize + 3
 	if (cmd[2] != (AD_POSE_SIZE - 4)) {
-		if (debug) DEBUG.printf("Invalid length: \n", cmd[2]);
+		if (debug) DEBUG.printf("Invalid length: %d\n", cmd[2]);
 		V2_SendSingleByteResult(cmd, 1);
 		return;
 	}	
-
+	
 	byte aId = cmd[4];
 	byte pId = cmd[5];
 
@@ -842,6 +844,7 @@ void V2_UpdateAdPose(byte *cmd) {
 	}
 
 	V2_SendSingleByteResult(cmd, 0);
+	
 
 }
 
@@ -860,7 +863,7 @@ void V2_UpdateAdName(byte *cmd) {
 	memset(startPos, 0, AD_NAME_SIZE);
 	byte len = cmd[5];
 
-	byte * copyPos = cmd + 6;
+	// byte * copyPos = cmd + 6;
 	if (debug) DEBUG.print("Action Name: ");
 	for (int i = 0; i < len; i++) { 
 		if (debug) DEBUG.print((char) cmd[6 + i]);

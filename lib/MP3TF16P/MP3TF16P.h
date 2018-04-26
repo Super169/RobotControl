@@ -47,7 +47,7 @@ class MP3TF16P {
         void initObject(SoftwareSerial *ssData, HardwareSerial *hsDebug);
         inline void resetCommandBuffer() { memcpy(_buf, MP3_CMD, MP3_COMMAND_BUFFER_SIZE); }
         inline void resetReturnBuffer() { memset(_retBuf, 0, MP3_RETURN_BUFFER_SIZE); _retCnt = 0; }
-        inline bool sendCommand() { sendCommand(false); }
+        inline bool sendCommand() { return sendCommand(false); }
         bool sendCommand(bool expectReturn);
         void showCommand();
         void clearRxBuffer();

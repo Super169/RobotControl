@@ -27,10 +27,10 @@ class RobotConfig {
         bool readConfig();
         bool writeConfig();
 
-        bool setMaxServo(uint8_t maxServo);
-        bool setMaxRetry(uint8_t maxRetry);
-        bool setMp3Enabled(bool enabled);
-        bool setMp3Volume(uint8_t volume);
+        void setMaxServo(uint8_t maxServo);
+        void setMaxRetry(uint8_t maxRetry);
+        void setMp3Enabled(bool enabled);
+        void setMp3Volume(uint8_t volume);
 
         uint8_t maxServo() { return _max_servo; }
         uint8_t maxRetry() { return _max_retry; }

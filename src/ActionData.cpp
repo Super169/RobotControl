@@ -18,7 +18,7 @@ void ActionData::InitObject(byte actionId) {
 	_header[2] = AD_HEADER_SIZE - 4;
 	_id = actionId;
 	SetActionName(NULL, 0);
-	_header[AD_HEADER_SIZE] = 0xED;
+	_header[AD_HEADER_SIZE - 1] = 0xED;
 }
 
 bool ActionData::ReadSPIFFS(byte actionId) {
@@ -187,6 +187,8 @@ byte ActionData::UpdatePose(byte actionId, byte poseId, byte *data) {
 	byte *ptr = _data + poseId * AD_POSE_SIZE;
 	memcpy(ptr, data, AD_POSE_SIZE);
 	*ptr = poseId;
+
+	return 0;
 }
 
 void ActionData::RefreshActionInfo() {
