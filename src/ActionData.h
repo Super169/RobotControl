@@ -24,7 +24,9 @@
 // poseCnt is single byte, so max is 255.
 // But for safety, due to memory issue, only 12000 byte is used
 
+#define ACTION_PATH "/alpha/action"
 #define ACTION_FILE "/alpha/action/%03d.dat"
+#define ACTION_POS  14
 
 #define AD_POFFSET_STIME	2
 #define AD_POFFSET_WTIME	4

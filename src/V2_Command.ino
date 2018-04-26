@@ -197,17 +197,22 @@ bool V2_Command() {
 			V2_PlayCombo(cmd);
 			break;
 
-		case V2_CMD_GET_ADHEADER:
-			V2_GetAdHeader(cmd);
+		case V2_CMD_GET_ADLIST:
+			V2_GetAdList(cmd);
 			break;
 
-		case V2_CMD_GET_ADDATA:
-			V2_GetAdData(cmd);
+		case V2_CMD_GET_ADHEADER:
+			V2_GetAdHeader(cmd);
 			break;
 
 		case V2_CMD_GET_ADPOSE:
 			V2_GetAdPose(cmd);
 			break;
+			
+		case V2_CMD_GET_ADDATA:
+			V2_GetAdData(cmd);
+			break;
+
 		
 		case V2_CMD_UPD_ADHEADER:
 			V2_UpdateAdHeader(cmd);
@@ -721,6 +726,61 @@ bool V2_CheckActionId(byte actionId) {
 	return true;
 }
 
+void V2_GetAdList(byte *cmd) {
+	if (debug) DEBUG.println("[V2_GetAdList]");
+	int dataSize = 32;  // 8 * 32 = 256 bit-wise flag
+	byte result[dataSize + 6];
+	memset(result, 0, dataSize + 6);
+	result[2] = dataSize + 2;
+	result[3] = cmd[3];
+
+	SPIFFS.begin();
+	Dir dir;
+	dir = SPIFFS.openDir(ACTION_PATH);
+
+	while (dir.next()) {
+		int id = getActionId(dir);
+		if (id >= 0) {
+			int h, l;
+			h = (id / 8);
+			l = 7 - (id % 8);
+			result[4 + h] |= (1 << l);
+		}
+	}
+	V2_SendResult(result);
+}
+
+int getActionId(Dir dir) {
+
+	String fName = dir.fileName();
+
+
+	if (!fName.endsWith(".dat"))  return -1;
+
+	int seq = 0;
+	for (int i = 0; i < 3; i++) {
+		byte c = fName[ACTION_POS + i];
+		if ((c < '0') || (c > '9')) {
+			seq = -1;
+			break;
+		}
+		seq = seq * 10 + (c - '0');
+	}
+	if ((seq < 0) || (seq > 255)) return -1;
+		
+	File f= dir.openFile("r");
+	int size = f.size();
+	f.close();
+
+	if (size < AD_HEADER_SIZE) return -1;
+
+	size -= AD_HEADER_SIZE;
+	int tail = (size % AD_POSE_SIZE);
+	if (tail) return -1;
+
+	return seq;
+}
+
 void V2_GetAdHeader(byte *cmd) {
 	if (debug) DEBUG.println("[V2_GetAdHeader]");
 	byte aId = cmd[4];	
@@ -773,16 +833,25 @@ void V2_GetAdPose(byte *cmd) {
 		return;	
 	}
 	byte pId = cmd[5];
-	byte result[40];
-	byte len = AD_POSE_SIZE + 4; // {len} {cmd} {aId} {pId} {poseData} = pose_size + 4
-	result[2] = len;
+	byte result[AD_POSE_SIZE];
+	byte * fromPos = actionData.Data();
+	fromPos += AD_POSE_SIZE * pId;
+	memcpy(result, fromPos, AD_POSE_SIZE);
+	result[2] = AD_POSE_SIZE - 4;
 	result[3] = cmd[3];
-	result[4] = aId;
-	result[5] = pId;
 
-	byte * toPos = result + 6;
-	byte * fromPos = actionData.Data() + AD_POSE_SIZE * pId;
-	memcpy(toPos, fromPos, AD_POSE_SIZE);
+	DEBUG.printf("Source Data at 0,0: \n");
+	for (int i = 0; i < AD_POSE_SIZE; i++) {
+		DEBUG.printf("%02X ", actionData.Data()[i]);
+	}
+	DEBUG.println();
+
+	DEBUG.printf("Return Data: \n");
+	for (int i = 0; i < AD_POSE_SIZE; i++) {
+		DEBUG.printf("%02X ", result[i]);
+	}
+	DEBUG.println();
+
 	V2_SendResult(result);
 }
 
@@ -838,14 +907,10 @@ void V2_UpdateAdPose(byte *cmd) {
 	}
 
 	int startPos = AD_POSE_SIZE * pId;
-	int dataPos = 6;
 	for (int i = 0; i < AD_POSE_SIZE; i++) {
-		actionData.Data()[startPos + i] = cmd[dataPos + i];
+		actionData.Data()[startPos + i] = cmd[i];
 	}
-
 	V2_SendSingleByteResult(cmd, 0);
-	
-
 }
 
 void V2_UpdateAdName(byte *cmd) {

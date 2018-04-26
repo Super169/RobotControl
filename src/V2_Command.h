@@ -39,9 +39,11 @@ int V2_ServoTimeRatio = 20;
 #define V2_CMD_PLAYCOMBO		0x42
 #define V2_CMD_STOPPLAY			0x4F
 
+#define V2_CMD_GET_ADLIST		0x60
 #define V2_CMD_GET_ADHEADER		0x61
 #define V2_CMD_GET_ADPOSE		0x62
 #define V2_CMD_GET_ADDATA		0x63
+
 
 #define V2_CMD_UPD_ADHEADER		0x71
 #define V2_CMD_UPD_ADPOSE		0x72
