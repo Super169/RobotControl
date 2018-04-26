@@ -809,16 +809,21 @@ void V2_GetAdData(byte *cmd) {
 	//
 	byte poseCnt = actionData.PoseCnt();
 	int dataSize = poseCnt * AD_POSE_SIZE;
-	int len = dataSize + 6;  // {len} {cmd} {len_H} {len_L} {aId} {poseCnt} {data} => datasize + 6
+	int len = AD_HEADER_SIZE + dataSize + 6;  // {len} {cmd} {len_H} {len_L} {aId} {poseCnt} {data} => datasize + 6
 	byte len_H = (byte) (len / 256);
 	byte len_L = (byte) (len % 256);
 	byte d1[8] = { 0xA9, 0x9A, 0x00, cmd[3], len_H, len_L, aId, poseCnt};
 	byte sum = len + cmd[3] + len_H + len_L + aId + poseCnt;
+	byte *header = actionData.Header();
+	for (int i = 0; i < AD_HEADER_SIZE; i++) {
+		sum += header[i];
+	}
 	byte *data = actionData.Data();
 	for (int i = 0; i < dataSize; i++) {
 		sum += data[i];
 	}
 	Serial.write(d1, 8);
+	Serial.write(header, AD_HEADER_SIZE);
 	Serial.write(data, dataSize);
 	Serial.write(sum);
 	Serial.write(0xED);
@@ -955,12 +960,18 @@ byte V2_UBT_ReadSPIFFS(byte *cmd) {
 
 void V2_WriteSPIFFS(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_WriteSPIFFS]"));
-	byte success = V2_UBT_WriteSPIFFS(cmd);
-	V2_SendSingleByteResult(cmd, success);
+	byte result = actionData.WriteSPIFFS();
+	V2_SendSingleByteResult(cmd, result);
 }
 
-byte V2_UBT_WriteSPIFFS(byte *cmd) {
-	return 0;
+// What a fxxxing bug in vs.code + platformIO, the following is a dummy function copy from V2_WriteSPIFFS.
+// This function has not been fired in the program, it's a dummy function.
+// But it will cause error in software serial communization if it has been deleted or comment out.
+// Who can tell me WHY? WHY? WHY?  anyway, it takes me two days to find out such dummy "solution" for the bug.
+void V3_WriteSPIFFS(byte *cmd) {
+	if (debug) DEBUG.println(F("[V3_WriteSPIFFS]"));
+	byte result = actionData.WriteSPIFFS();
+	V2_SendSingleByteResult(cmd, result);
 }
 
 #pragma endregion
