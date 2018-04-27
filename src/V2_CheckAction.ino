@@ -20,7 +20,7 @@ void V2_CheckAction() {
 	if (!V2_ActionPlaying) return;
 	if (millis() < V2_NextPlayMs) return;
 
-	if (debug) DEBUG.printf("V2_PlayAction: %d - %d - %d\n", V2_ActionCombo, V2_NextAction, V2_NextPose);
+	if (debug) DEBUG.printf("%08ld V2_CheckAction: %d - %d - %d\n", millis(), V2_ActionCombo, V2_NextAction, V2_NextPose);
 
 	if (actionData.id() != V2_NextAction) {
 		if (V2_NextPose) {
@@ -46,44 +46,84 @@ void V2_CheckAction() {
 
 	// Play current pose here
 	// Should use float for rounding here? // or just let it truncated.
-	float fServoTimeMs = (pose[AD_POFFSET_STIME] << 8) || pose[AD_POFFSET_STIME+1];
+	float fServoTimeMs = (pose[AD_POFFSET_STIME] << 8) | pose[AD_POFFSET_STIME+1];
 	int iServoTime = round(fServoTimeMs / V2_ServoTimeRatio);
 	byte servoTime = (byte) iServoTime;
 
+	if (debug) DEBUG.printf("Servo Time: %f -> %d\n", fServoTimeMs, servoTime);
+
+	byte ledChange = 0;
+	for (int i = 0; i < 8; i++) {
+		ledChange |= pose[AD_POFFSET_LED + i];
+	}
+
+	if (debug) DEBUG.printf("LED changed: %s\n", (ledChange ? "YES" : "NO"));
+
 	// Move servo only if servo time > 0
-	if (servoTime > 0) {
+	if ((servoTime > 0) || (ledChange)) {
 		for (int id = 1; id <= config.maxServo(); id++) {
-			byte angle = pose[AD_POFFSET_ANGLE + id - 1];
-			// Check for dummy action to reduce commands
-			if ((angle <= 0xF0) && (servo.lastAngle(id) != angle)) {
-				servo.move(id, angle, servoTime);
+			if (servo.exists(id)) {
+				if (servoTime > 0) {
+					byte angle = pose[AD_POFFSET_ANGLE + id - 1];
+					// Check for dummy action to reduce commands
+					if ((angle <= 0xF0) && (servo.lastAngle(id) != angle)) {
+						servo.move(id, angle, servoTime);
+					}
+				}
+				if (ledChange) {
+					int h = (id - 1) / 4;
+					int l = 2 * ( 3 - ((id -1) % 4));
+					byte led = (pose[AD_POFFSET_LED + h] >> l) & 0b11;
+					if ((led == 0b10) || (led == 0b11)) {
+						byte newMode = (led & 1);
+						if (newMode != servo.getLedMode(id)) {
+							servo.setLED(id, newMode);
+						}
+					}
+				}
 			}
 		}
 	}
 
-	// Check LED change
-	uint16_t ledChange = (pose[AD_POFFSET_LED] << 8) || pose[AD_POFFSET_LED+1];
-	if (ledChange) {
-		uint16_t ledFlag = (pose[AD_POFFSET_LED+2] << 8) || pose[AD_POFFSET_LED+3];
-		for (int i = 0; i < config.maxServo(); i++) {
-			if (ledChange && (1 << i)) {
-				byte status = (byte) (ledFlag && (1 << i));
-				byte id = i + 1;
-				byte mode = (status ? 0 : 1);
-				servo.setLED(id, mode);
-			}
-		}
-	}
-
+	// Check HeadLED
 	byte headLight = pose[AD_POFFSET_HEAD];
 	if (headLight == 0x10) {
-		// Trun off the light
+		if (debug) DEBUG.printf("HeadLED: %d -> %d\n", headLight, 0);
+		if (headLed != 0) SetHeadLed(0);
 	} else if (headLight == 0x11) {
-		// Turn on the light
+		if (debug) DEBUG.printf("HeadLED: %d -> %d\n", headLight, 1);
+		if (headLed != 1) SetHeadLed(1);
 	}
 
-	uint16_t waitTimeMs = (pose[AD_POFFSET_WTIME] << 8) || pose[AD_POFFSET_WTIME+1];
+	// Chagne MP3
+    byte mp3Folder = pose[AD_POFFSET_MP3_FOLDER];
+    byte mp3File = pose[AD_POFFSET_MP3_FILE];
+    byte mp3Vol = pose[AD_POFFSET_MP3_VOL];
+
+	if (debug) DEBUG.printf("MP3: %d %d %d\n", mp3Folder, mp3File, mp3Vol);
+
+	if (mp3Vol == AD_MP3_STOP_VOL) {
+		mp3.begin();
+		mp3.stop();
+		mp3.end();
+	} else {
+		if (mp3File != 0xFF) {
+			mp3.begin();
+			if (mp3Folder == 0xff) {
+				mp3.playFile(mp3File);
+			} else {
+				mp3.playFolderFile(mp3Folder, mp3File);
+			}
+			mp3.end();		
+		}
+	}
+
+	uint16_t waitTimeMs = (pose[AD_POFFSET_WTIME] << 8) | pose[AD_POFFSET_WTIME+1];
+	
 	V2_NextPlayMs = millis() + waitTimeMs;
+
+	if (debug) DEBUG.printf("Wait Time: %d -> %ld\n", waitTimeMs, V2_NextPlayMs);
+
 	V2_NextPose++;
 
 	if (V2_IsEndPose())	 {
@@ -92,7 +132,7 @@ void V2_CheckAction() {
 		return;
 	}
 }
-
+/*
 void V2_goPlayAction(byte actionCode) {
 	if (debug) DEBUG.printf("Start playing action %c\n", (actionCode + 'A'));
 	for (int po = 0; po < MAX_POSES; po++) {
@@ -114,3 +154,4 @@ void V2_goPlayAction(byte actionCode) {
 	}
 	if (debug) DEBUG.printf("Action %c completed\n", (actionCode + 'A'));
 }
+*/

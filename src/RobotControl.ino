@@ -166,7 +166,7 @@ void setup() {
 	servo.begin();
 	servo.lockAll();
 	// TODO: change to V2 when ready
-	V1_UBT_ReadSPIFFS(0);
+	// V1_UBT_ReadSPIFFS(0);
 
 	DEBUG.printf("%08ld Control board ready\n\n", millis());
 	SetHeadLed(true);
@@ -199,9 +199,13 @@ void setup() {
 	int b = digitalRead(10);
 	DEBUG.printf("Pin 10 is %s\n", (b == HIGH ? "HIGH" : "LOW"));
 
+	// Load default action
+	actionData.ReadSPIFFS(0);
+/*
 	// Testing on ActionData
-	actionData.InitObject(1);
-	actionData.GenSample(1);
+	actionData.InitObject(0);
+	//actionData.GenSample(1);
+	
 	byte bReturn = actionData.WriteSPIFFS();
 	DEBUG.printf("\nWrite action %d: %d\n", actionData.Header()[AD_OFFSET_ID], bReturn);
 	myOLED.print(0,5,"AD Write: ");
@@ -211,7 +215,7 @@ void setup() {
 	DEBUG.printf("\nRead action %d : %s\n", actionData.Header()[AD_OFFSET_ID], (success ? "Success" : "Failed"));
 	myOLED.print(0,6,"AD Read: ");
 	myOLED.print((success ? "OK" : "FAIL"));
-
+*/
 	myOLED.show();
 
 }
@@ -321,6 +325,7 @@ void remoteControl() {
 
 			case 'A':
 			case 'a':
+			/*
 			case 'B':
 			case 'b':
 			case 'D':
@@ -331,13 +336,16 @@ void remoteControl() {
 			case 'l':
 			case 'M':
 			case 'm':
+			*/
 			case 'P':
+			/*
 			case 'R':
 			case 'T':
 			case 't':
 			case 'S':
 			case 'U':
 			case 'W':
+			*/
 			case 'Z':
 				goNext = V1_Command();
 				break;

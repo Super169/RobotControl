@@ -33,7 +33,7 @@ bool ActionData::ReadActionFile(int actionId) {
 	char fileName[25];
 	memset(fileName, 0, 25);
 	sprintf(fileName, ACTION_FILE, actionId);
-// Serial.printf("File name: %s\n", fileName);
+// Serial.printf("File name: %s\n", fileName);  
 	if (!SPIFFS.exists(fileName)) {
 		// Start a new action table 
 // Serial.printf("Initialize object\n");

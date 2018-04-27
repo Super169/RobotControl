@@ -677,6 +677,7 @@ void V2_Mp3SetVolume(byte *cmd) {
 #pragma region Play Action / Combo 
 
 void V2_PlayAction(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_PlayAction]"));
 	V2_ResetAction();
 	if (cmd[2] != 3) {
 		V2_SendSingleByteResult(cmd, 1);
@@ -685,6 +686,7 @@ void V2_PlayAction(byte *cmd) {
 	byte actionId = cmd[4];
 	if (actionData.id() != actionId) {
 		// need to load actionData
+		if (debug) DEBUG.printf("Read action %d from SPIFFS\n", actionId);
 		if (!actionData.ReadSPIFFS(actionId)) {
 			V2_SendSingleByteResult(cmd, 2);
 			return;
@@ -692,6 +694,7 @@ void V2_PlayAction(byte *cmd) {
 	}
 	// Just for safety, check the poseCnt again.  
 	// May skip this step if those information is always updated.
+	if (debug) DEBUG.printf("Refresh action %d from SPIFFS\n", actionId);
 	actionData.RefreshActionInfo();
 
 	if (actionData.PoseCnt() > 0) {
@@ -702,6 +705,7 @@ void V2_PlayAction(byte *cmd) {
 		V2_ActionPlaying = true;
 	}
 	V2_SendSingleByteResult(cmd, 0);
+	if (debug) DEBUG.printf("Ready to play action %d with %d steps\n", actionId, actionData.PoseCnt());
 }
 
 void V2_PlayCombo(byte *cmd) {

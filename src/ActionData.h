@@ -14,7 +14,17 @@
 #define AD_OFFSET_POSECNT 		28
 #define AD_OFFSET_AFFECTSERVO	34
 
-// 
+#define AD_POFFSET_STIME	7
+#define AD_POFFSET_WTIME	9
+#define AD_POFFSET_ANGLE	11
+#define AD_POFFSET_LED		43
+#define AD_POFFSET_HEAD		51
+#define AD_POFFSET_MP3_FOLDER 52
+#define AD_POFFSET_MP3_FILE   53
+#define AD_POFFSET_MP3_VOL	  54
+#define AD_MP3_STOP_VOL		  0xFE
+
+
 
 #define AD_POSE_SIZE		60
 #define AD_MAX_POSE         200
@@ -28,12 +38,7 @@
 #define ACTION_FILE "/alpha/action/%03d.dat"
 #define ACTION_POS  14
 
-#define AD_POFFSET_STIME	2
-#define AD_POFFSET_WTIME	4
-#define AD_POFFSET_ANGLE	6
-#define AD_POFFSET_LED		38
-#define AD_POFFSET_HEAD		46
-#define AD_POFFSET_MP3		47
+
 
 class ActionData {
     public:
