@@ -684,11 +684,17 @@ void V2_PlayAction(byte *cmd) {
 		return;
 	}
 	byte actionId = cmd[4];
+	V2_GoAction(actionId, true, cmd);
+}
+
+
+// Function for both V1 and V2 and it need to keep V1 Play command
+void V2_GoAction(byte actionId, bool v2, byte *cmd) {
 	if (actionData.id() != actionId) {
 		// need to load actionData
 		if (debug) DEBUG.printf("Read action %d from SPIFFS\n", actionId);
 		if (!actionData.ReadSPIFFS(actionId)) {
-			V2_SendSingleByteResult(cmd, 2);
+			if (v2) V2_SendSingleByteResult(cmd, 2);
 			return;
 		}
 	}
@@ -704,8 +710,9 @@ void V2_PlayAction(byte *cmd) {
 		V2_NextPlayMs = millis();
 		V2_ActionPlaying = true;
 	}
-	V2_SendSingleByteResult(cmd, 0);
+	if (v2) V2_SendSingleByteResult(cmd, 0);
 	if (debug) DEBUG.printf("Ready to play action %d with %d steps\n", actionId, actionData.PoseCnt());
+
 }
 
 void V2_PlayCombo(byte *cmd) {

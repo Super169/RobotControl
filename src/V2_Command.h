@@ -53,6 +53,7 @@ int V2_ServoTimeRatio = 20;
 #define V2_CMD_READSPIFFS   	0xF1
 #define V2_CMD_WRITESPIFFS  	0xF2
 
+bool deepDebug = true;
 
 
 #endif

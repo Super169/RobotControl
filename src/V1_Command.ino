@@ -452,6 +452,7 @@ int V1_moveMultiServo(int inCount, byte* inBuffer, byte *result) {
 #pragma region "P - Play action"
 
 void V1_PlayAction() {
+	/*
 	if (debug) DEBUG.println(F("[V1_PlayAction]"));
 	byte actionCode = 0;  // action 0, 'A' is standby action
 	if (cmdBuffer.available()) {
@@ -464,6 +465,19 @@ void V1_PlayAction() {
 		}
 	}		
 	V1_goPlayAction(actionCode);
+	*/
+	if (debug) DEBUG.println(F("[V1_PlayAction]"));
+	byte actionId = 0; 
+	if (cmdBuffer.available()) {
+		byte ch = cmdBuffer.read();
+		if ((ch >= 'A') && (ch <= 'Z')) {
+			actionId = ch - 'A';
+		} else {
+			if (debug) DEBUG.printf("Invalid action: %02X\n", ch);
+			return; // Return for invalid action
+		}
+		V2_GoAction(actionId, false, NULL);
+	}		
 }
 
 void V1_goPlayAction(byte actionCode) {

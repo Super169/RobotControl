@@ -186,6 +186,7 @@ void UBT_WriteSPIFFS(byte cmdCode);
 
 void V1_UBT_ReadSPIFFS(byte cmdCode);
 void V2_CheckAction();
+void V2_GoAction(byte actionId, bool v2, byte *cmd);
 
 void RobotMaintenanceMode();
 
