@@ -17,6 +17,8 @@ void RobotConfig::initObject(HardwareSerial *hsDebug) {
 
 void RobotConfig::initConfig() {
 
+    _enableDebug = DEFAULT_ENABLE_DEBUG;
+
     _max_servo = DEFAULT_MAX_SERVO;
     _max_retry = DEFAULT_MAX_RETRY;
 
@@ -24,12 +26,6 @@ void RobotConfig::initConfig() {
     _mp3_volume = DEFAULT_MP3_VOLUME;
 
 
-}
-
-bool RobotConfig::setDebug(bool debug) {
-	if (_dbg == NULL) return false;
-	_enableDebug = debug;
-	return _enableDebug;
 }
 
 bool RobotConfig::readConfig() {
@@ -54,6 +50,10 @@ bool RobotConfig::readConfig() {
 
     initConfig();
 
+
+    if (json.containsKey(JSON_ENABLE_DEBUG)) {
+        _enableDebug = json[JSON_ENABLE_DEBUG];
+    }
 
     if (json.containsKey(JSON_MAX_SERVO)) {
         _max_servo = json[JSON_MAX_SERVO];
@@ -83,6 +83,7 @@ bool RobotConfig::writeConfig() {
     DynamicJsonBuffer jsonBuffer;
     JsonObject &json = jsonBuffer.createObject();
 
+    json[JSON_ENABLE_DEBUG] = _enableDebug;
     json[JSON_MAX_SERVO] = _max_servo;
     json[JSON_MAX_RETRY] = _max_retry;
     json[JSON_MP3_ENABLED] = _mp3_enabled;
@@ -99,6 +100,12 @@ bool RobotConfig::writeConfig() {
     configFile.close();    
     return configSaved;    
 
+}
+
+bool RobotConfig::setDebug(bool debug) {
+	if (_dbg == NULL) return false;
+	_enableDebug = debug;
+	return _enableDebug;
 }
 
 void RobotConfig::setMaxServo(uint8_t maxServo) {

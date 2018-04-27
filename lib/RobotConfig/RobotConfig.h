@@ -5,11 +5,13 @@
 #include <FS.h>
 #include <ArduinoJson.h>
 
-#define DEFAULT_MAX_SERVO   16
-#define DEFAULT_MAX_RETRY   2
-#define DEFAULT_MP3_ENABLED true
-#define DEFAULT_MP3_VOLUME  20
+#define DEFAULT_ENABLE_DEBUG    false
+#define DEFAULT_MAX_SERVO       16
+#define DEFAULT_MAX_RETRY       2
+#define DEFAULT_MP3_ENABLED     true
+#define DEFAULT_MP3_VOLUME      20
 
+#define JSON_ENABLE_DEBUG   "enableDebug"
 #define JSON_MAX_SERVO      "maxServo"
 #define JSON_MAX_RETRY      "maxRetry"
 #define JSON_MP3_ENABLED    "mp3Enabled"
@@ -23,15 +25,16 @@ class RobotConfig {
         RobotConfig();
         RobotConfig(HardwareSerial *hsDebug);
         void initConfig();
-        bool setDebug(bool debug);
         bool readConfig();
         bool writeConfig();
 
+        bool setDebug(bool debug);
         void setMaxServo(uint8_t maxServo);
         void setMaxRetry(uint8_t maxRetry);
         void setMp3Enabled(bool enabled);
         void setMp3Volume(uint8_t volume);
 
+        bool enableDebug() { return _enableDebug; }
         uint8_t maxServo() { return _max_servo; }
         uint8_t maxRetry() { return _max_retry; }
         bool mp3Enabled() { return _mp3_enabled; }
@@ -39,9 +42,9 @@ class RobotConfig {
 
     private:
         void initObject(HardwareSerial *hsDebug);
-        bool _enableDebug;
         HardwareSerial *_dbg;
 
+        bool _enableDebug;
         uint8_t _max_servo;
         uint8_t _max_retry;
         bool _mp3_enabled;

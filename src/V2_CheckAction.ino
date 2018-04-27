@@ -44,7 +44,7 @@ void V2_CheckAction() {
 	byte *pose = actionData.Data();
 	pose = pose + AD_POSE_SIZE * V2_NextPose;
 
-	if (deepDebug) {
+	if (debug && deepDebug) {
 		DEBUG.println("\nPOSE Data: ");
 		for (int i = 0; i < AD_POSE_SIZE; i++) DEBUG.printf("%02X ", pose[i]);
 		DEBUG.println("\n");
@@ -57,14 +57,14 @@ void V2_CheckAction() {
 	int iServoTime = round(fServoTimeMs / V2_ServoTimeRatio);
 	byte servoTime = (byte) iServoTime;
 
-	if (deepDebug) DEBUG.printf("Servo Time: %f -> %d\n", fServoTimeMs, servoTime);
+	if (debug && deepDebug) DEBUG.printf("Servo Time: %f -> %d\n", fServoTimeMs, servoTime);
 
 	byte ledChange = 0;
 	for (int i = 0; i < 8; i++) {
 		ledChange |= pose[AD_POFFSET_LED + i];
 	}
 
-	if (deepDebug) DEBUG.printf("LED changed: %s\n", (ledChange ? "YES" : "NO"));
+	if (debug && deepDebug) DEBUG.printf("LED changed: %s\n", (ledChange ? "YES" : "NO"));
 
 	// Move servo only if servo time > 0
 	if ((servoTime > 0) || (ledChange)) {
@@ -95,11 +95,12 @@ void V2_CheckAction() {
 
 	// Check HeadLED
 	byte headLight = pose[AD_POFFSET_HEAD];
-	if (headLight == 0x10) {
-		if (deepDebug) DEBUG.printf("HeadLED: %d -> %d\n", headLight, 0);
+	if (debug && deepDebug) DEBUG.printf("HeadLED: %d", headLight);
+	if (headLight == 0b10) {
+		if (debug && deepDebug) DEBUG.printf("HeadLED: %d -> %d\n", headLight, 0);
 		if (headLed != 0) SetHeadLed(0);
-	} else if (headLight == 0x11) {
-		if (deepDebug) DEBUG.printf("HeadLED: %d -> %d\n", headLight, 1);
+	} else if (headLight == 0b11) {
+		if (debug && deepDebug) DEBUG.printf("HeadLED: %d -> %d\n", headLight, 1);
 		if (headLed != 1) SetHeadLed(1);
 	}
 
@@ -108,7 +109,7 @@ void V2_CheckAction() {
     byte mp3File = pose[AD_POFFSET_MP3_FILE];
     byte mp3Vol = pose[AD_POFFSET_MP3_VOL];
 
-	if (deepDebug) DEBUG.printf("MP3: %d %d %d\n", mp3Folder, mp3File, mp3Vol);
+	if (debug && deepDebug) DEBUG.printf("MP3: %d %d %d\n", mp3Folder, mp3File, mp3Vol);
 
 	if (mp3Vol == AD_MP3_STOP_VOL) {
 		mp3.begin();

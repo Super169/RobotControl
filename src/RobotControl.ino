@@ -87,13 +87,13 @@ void setup() {
 	config.setMaxServo(20);
 	// config.setMp3Enabled(false);  // special version only
 
-	// SetDebug(false);  // Disable servo debug first, enable it later if needed
-	SetDebug(true);
-
+	// SetDebug(config.enableDebug());
+	SetDebug(false);
+	
 	retBuffer = servo.retBuffer();
 
 
-	DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
+	if (debug) DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
 	// unsigned long actionSize = sizeof(actionTable);
 
 	char *AP_Name = (char *) "Alpha 1S";
