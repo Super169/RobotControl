@@ -88,7 +88,7 @@ void setup() {
 	// config.setMp3Enabled(false);  // special version only
 
 	// SetDebug(config.enableDebug());
-	SetDebug(false);
+	SetDebug(true);
 	
 	retBuffer = servo.retBuffer();
 

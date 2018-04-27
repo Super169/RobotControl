@@ -64,6 +64,8 @@ void V2_CheckAction() {
 		ledChange |= pose[AD_POFFSET_LED + i];
 	}
 
+DEBUG.printf("%08ld -- Start servo command\n", millis());
+
 	if (debug && deepDebug) DEBUG.printf("LED changed: %s\n", (ledChange ? "YES" : "NO"));
 
 	// Move servo only if servo time > 0
@@ -73,7 +75,7 @@ void V2_CheckAction() {
 				if (servoTime > 0) {
 					byte angle = pose[AD_POFFSET_ANGLE + id - 1];
 					// Check for dummy action to reduce commands
-					if ((angle <= 0xF0) && (servo.lastAngle(id) != angle)) {
+					if ((angle <= 0xF0) && ((V2_NextPose) || (servo.lastAngle(id) != angle))) {
 						servo.move(id, angle, servoTime);
 						delay(1);
 					}
@@ -93,15 +95,17 @@ void V2_CheckAction() {
 		}
 	}
 
-	// Check HeadLED
+DEBUG.printf("%08ld -- End servo command\n", millis());
+
+	// Check HeadLED, follow servo status 0 - on, 1 - off
 	byte headLight = pose[AD_POFFSET_HEAD];
 	if (debug && deepDebug) DEBUG.printf("HeadLED: %d", headLight);
 	if (headLight == 0b10) {
-		if (debug && deepDebug) DEBUG.printf("HeadLED: %d -> %d\n", headLight, 0);
-		if (headLed != 0) SetHeadLed(0);
-	} else if (headLight == 0b11) {
 		if (debug && deepDebug) DEBUG.printf("HeadLED: %d -> %d\n", headLight, 1);
 		if (headLed != 1) SetHeadLed(1);
+	} else if (headLight == 0b11) {
+		if (debug && deepDebug) DEBUG.printf("HeadLED: %d -> %d\n", headLight, 0);
+		if (headLed != 0) SetHeadLed(0);
 	}
 
 	// Chagne MP3
