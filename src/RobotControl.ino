@@ -275,11 +275,33 @@ void loop() {
 }
 
 void RobotCommander() {
+	CheckVoltage();
 	CheckSerialInput();
 	remoteControl();  
 	V2_CheckAction();
 }
 
+// ADC_MODE(ADC_VCC);  -- only use if checking input voltage ESP.getVcc() is required.
+unsigned nextVoltageMs = 0;
+
+
+void CheckVoltage() {
+	if (millis() > nextVoltageMs) {
+		float voltage = 0.00f;
+		uint16_t v = analogRead(0);
+		Serial.println(v);
+		Serial.printf("min: %d, max: %d, alarm: %d\n\n", config.minVoltage(), config.maxVoltage(), config.alarmVoltage());
+		float power = ((float) (v - config.minVoltage()) / (config.maxVoltage() - config.minVoltage()) * 100.0f);
+		if (power > 100) power = 100;
+		if (power < 0) power = 0;
+		int iPower = (int) (power + 0.5); // round up
+		myOLED.printNum(104,0,iPower, 10, 3, false);
+		myOLED.print(122,0,"%");
+
+		myOLED.show();
+		nextVoltageMs = millis() + 1000;
+	}
+}
 
 // move data from Serial buffer to command buffer
 void CheckSerialInput() {

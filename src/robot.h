@@ -120,7 +120,7 @@ long lastCmdMs = 0;
 bool debug = true;
 bool devMode = false;
 
-#define MY_PCB
+#define MY_PCB_2
 
 #ifdef MY_PCB
     // My PCB
@@ -128,10 +128,16 @@ bool devMode = false;
     #define MP3_TXD_GPIO    13  
     #define HEAD_LED_GPIO   15
 #else
-    // L's PCB
-    #define MP3_RXD_GPIO    14
-    #define MP3_TXD_GPIO    16  
-    #define HEAD_LED_GPIO   13
+    #ifdef MY_PCB_2
+        #define MP3_RXD_GPIO    14
+        #define MP3_TXD_GPIO    16  
+        #define HEAD_LED_GPIO   15
+    #else 
+        // L's PCB
+        #define MP3_RXD_GPIO    14
+        #define MP3_TXD_GPIO    16  
+        #define HEAD_LED_GPIO   13
+    #endif
 #endif
 
 bool headLed = false;

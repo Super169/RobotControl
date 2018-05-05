@@ -12,114 +12,125 @@ RobotConfig::RobotConfig(HardwareSerial *hsDebug) {
 void RobotConfig::initObject(HardwareSerial *hsDebug) {
     initConfig();
     _dbg = hsDebug;
-    _enableDebug = (_dbg != NULL);
+    setDebug((_dbg != NULL));
 }
 
 void RobotConfig::initConfig() {
 
-    _enableDebug = DEFAULT_ENABLE_DEBUG;
+    memset(_data, 0, RC_DATA_SIZE);
 
-    _max_servo = DEFAULT_MAX_SERVO;
-    _max_retry = DEFAULT_MAX_RETRY;
+    setDebug(DEFAULT_ENABLE_DEBUG);
+    
+    setVoltage(DEFAULT_REF_VOLTAGE, DEFAULT_MIN_VOLTAGE, DEFAULT_MAX_VOLTAGE, DEFAULT_ALARM_VOLTAGE);
 
-    _mp3_enabled = DEFAULT_MP3_ENABLED;
-    _mp3_volume = DEFAULT_MP3_VOLUME;
+    setMaxServo(DEFAULT_MAX_SERVO);
+    setMaxRetry(DEFAULT_MAX_RETRY);
 
+    setMp3Enabled(DEFAULT_MP3_ENABLED);
+    setMp3Volume(DEFAULT_MP3_VOLUME);
 
 }
 
 bool RobotConfig::readConfig() {
 
-    if (_enableDebug) _dbg->printf("readConfig");
+    if (enableDebug()) _dbg->printf("readConfig");
 
     if (!SPIFFS.begin()) return false;
+    
     if (!SPIFFS.exists(_configFileName)) {
-        if (_enableDebug) _dbg->printf("#### config file %s not found\n", _configFileName);
+        if (enableDebug()) _dbg->printf("#### config file %s not found\n", _configFileName);
         return false;
     }
     File configFile = SPIFFS.open(_configFileName, "r");
     if (!configFile) return false;
 
-    if (_enableDebug) _dbg->printf("#### Read from: %s\n", _configFileName);
+    if (enableDebug()) _dbg->printf("#### Read from: %s\n", _configFileName);
 
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject &json = jsonBuffer.parseObject(configFile);
-    configFile.close();
-
-    if (!json.success()) return false;
+    // * partial read is allowed
 
     initConfig();
+	size_t cnt = configFile.readBytes((char *)_data, RC_DATA_SIZE);    
 
-
-    if (json.containsKey(JSON_ENABLE_DEBUG)) {
-        _enableDebug = json[JSON_ENABLE_DEBUG];
-    }
-
-    if (json.containsKey(JSON_MAX_SERVO)) {
-        _max_servo = json[JSON_MAX_SERVO];
-    }
-
-    if (json.containsKey(JSON_MAX_RETRY)) {
-        _max_retry = json[JSON_MAX_RETRY];
-    }
-
-    if (json.containsKey(JSON_MP3_ENABLED)) {
-        _mp3_enabled = json[JSON_MP3_ENABLED];
-    }
-
-    if (json.containsKey(JSON_MP3_VOLUME)) {
-        _mp3_volume = json[JSON_MP3_VOLUME];
-    }
+    configFile.close();
 
     return true;
-
 
 }
 
 bool RobotConfig::writeConfig() {
 
-    if (_enableDebug) _dbg->printf("writeConfig");
+    if (enableDebug()) _dbg->printf("writeConfig");
 
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject &json = jsonBuffer.createObject();
-
-    json[JSON_ENABLE_DEBUG] = _enableDebug;
-    json[JSON_MAX_SERVO] = _max_servo;
-    json[JSON_MAX_RETRY] = _max_retry;
-    json[JSON_MP3_ENABLED] = _mp3_enabled;
-    json[JSON_MP3_VOLUME] = _mp3_volume;
+    if (!SPIFFS.begin()) return false;
 
     bool configSaved = false;
     File configFile = SPIFFS.open(_configFileName, "w");
     if (configFile) {
 
-        if (_enableDebug) _dbg->printf("#### Write to: %s\n", _configFileName);
-        json.printTo(configFile);
-        configSaved = true;
+        if (enableDebug()) _dbg->printf("#### Write to: %s\n", _configFileName);
+        size_t cnt = configFile.write((byte *) _data, RC_DATA_SIZE);
+        configFile.close();
+        configSaved = (cnt == RC_DATA_SIZE);
     }
-    configFile.close();    
+
+    SPIFFS.end();
     return configSaved;    
 
 }
 
 bool RobotConfig::setDebug(bool debug) {
-	if (_dbg == NULL) return false;
-	_enableDebug = debug;
-	return _enableDebug;
+	if (_dbg == NULL) debug = false; 
+    _data[RC_ENABLE_DEBUG] = debug;
+	return debug;
 }
 
+void RobotConfig::setRefVoltage(uint16_t refVoltage) {    
+    setUint16_t(RC_REF_VOLTAGE, refVoltage);
+}
+
+void RobotConfig::setMinVoltage(uint16_t minVoltage) {    
+    setUint16_t(RC_MIN_VOLTAGE, minVoltage);
+}
+
+void RobotConfig::setMaxVoltage(uint16_t maxVoltage) {    
+    setUint16_t(RC_MAX_VOLTAGE, maxVoltage);
+}
+
+void RobotConfig::setAlarmVoltage(uint16_t alarmVoltage) {    
+    setUint16_t(RC_ALARM_VOLTAGE, alarmVoltage);
+}
+
+void RobotConfig::setVoltage(uint16_t refVoltage, uint16_t minVoltage, uint16_t maxVoltage, uint16_t alarmVoltage) { 
+    setRefVoltage(refVoltage); 
+    setMinVoltage(minVoltage); 
+    setMaxVoltage(maxVoltage); 
+    setAlarmVoltage(alarmVoltage);
+};
+
+
 void RobotConfig::setMaxServo(uint8_t maxServo) {
-    _max_servo = maxServo;
+    _data[RC_MAX_SERVO] = maxServo;
 }
 
 void RobotConfig::setMaxRetry(uint8_t maxRetry) {
-    _max_retry = maxRetry;
+    _data[RC_MAX_RETRY] = maxRetry;
 }
 
 void RobotConfig::setMp3Enabled(bool enabled) {
-    _mp3_enabled = enabled;
+    _data[RC_MP3_ENABLED] = enabled;
 }
 
 void RobotConfig::setMp3Volume(uint8_t volume) {
-    _mp3_volume = volume;
+    _data[RC_MP3_VOLUME] = volume;
+}
+
+void RobotConfig::setUint16_t(uint8_t offset, uint16_t value) {
+    _data[offset] = (value >> 8);
+    _data[offset+1] = (value & 0xFF);  // just for safety, it can be assigned directly
+}
+
+uint16_t RobotConfig::getUint16_t(uint8_t offset) {
+    uint16_t value = 0;
+    value = (_data[offset] << 8) | _data[offset+1];
+    return value;
 }
