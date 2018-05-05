@@ -12,7 +12,7 @@ void V2_ResetAction() {
 }
 
 bool V2_IsEndPose() {
-	return (V2_NextPose >= actionData.Header()[AD_OFFSET_POSECNT]);
+	return (V2_NextPose >= actionData.PoseCnt());
 }
 
 void V2_CheckAction() {

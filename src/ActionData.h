@@ -11,24 +11,30 @@
 #define AD_OFFSET_ID   			4
 #define AD_OFFSET_NAME  		6
 #define AD_NAME_SIZE       		20
-#define AD_OFFSET_POSECNT 		28
+#define AD_OFFSET_POSECNT_LOW	28
+#define AD_OFFSET_POSECNT_HIGH	29
 #define AD_OFFSET_AFFECTSERVO	34
 
-#define AD_POFFSET_STIME	7
-#define AD_POFFSET_WTIME	9
-#define AD_POFFSET_ANGLE	11
-#define AD_POFFSET_LED		43
-#define AD_POFFSET_HEAD		51
-#define AD_POFFSET_MP3_FOLDER 52
-#define AD_POFFSET_MP3_FILE   53
-#define AD_POFFSET_MP3_VOL	  54
-#define AD_MP3_STOP_VOL		  0xFE
+#define AD_POFFSET_ACTION		4
+#define AD_POFFSET_SEQ 			5
+#define AD_POFFSET_ENABLE		6
+#define AD_POFFSET_STIME		7
+#define AD_POFFSET_WTIME		9
+#define AD_POFFSET_ANGLE		11
+#define AD_POFFSET_LED			43
+#define AD_POFFSET_HEAD			51
+#define AD_POFFSET_MP3_FOLDER 	52
+#define AD_POFFSET_MP3_FILE   	53
+#define AD_POFFSET_MP3_VOL	  	54
+#define AD_POFFSET_SEQ_HIGH		55
 
+#define AD_MP3_STOP_VOL		  	0xFE
 
+#define AD_POSE_SIZE			60
+#define AD_PBUFFER_COUNT		10
+#define AD_PBUFFER_SIZE			600		// Make sure AD_PBUFFER_SIZE = AD_PBUFFER_COUNT * AD_POSE_SIZE
+#define AD_MAX_POSE         	65535
 
-#define AD_POSE_SIZE		60
-#define AD_MAX_POSE         200
-#define AD_DATA_SIZE		12000
 
 
 // poseCnt is single byte, so max is 255.
@@ -58,22 +64,32 @@ class ActionData {
 		byte * Header() { return (byte *) _header; }
 		byte * Data() { return (byte *) _data; }
 
-		byte PoseCnt() { return _header[AD_OFFSET_POSECNT]; }
+		uint16_t PoseCnt() { return (_header[AD_OFFSET_POSECNT_HIGH] << 8 | _header[AD_OFFSET_POSECNT_LOW]); }
 		void RefreshActionInfo();
+		bool IsPoseReady(uint16_t poseId, uint16_t &offset);
+		bool PoseOffsetInBuffer(uint16_t poseId, uint16_t &offset);
 
 		void GenSample(byte actionId);
+
 
 	private:
 
 		bool ReadActionFile(int actionId);
+		bool SpiffsReadActionFile(int actionId);
+		bool ReadActionHeader(int actionId);
+		bool SpiffsReadActionHeader(int actionId);
+		bool ReadActionPose();
+		bool SpiffsReadActionPose();
 
-		byte _header[AD_HEADER_SIZE];
-		byte _data[AD_DATA_SIZE];
 		byte _id;
 		byte _len;
 		char *_name;
 		byte *_action;
 		char _filename[25];
+		uint16_t _poseOffset;
+		byte _header[AD_HEADER_SIZE];
+		byte _data[AD_PBUFFER_SIZE];
+		
 };
 
 #endif

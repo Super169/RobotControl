@@ -9,26 +9,29 @@ ActionData::~ActionData() {
 }
 
 void ActionData::InitObject(byte actionId) {
+
+Serial1.printf("InitObject(%d)\n\n", actionId);
+
 	// To avoid duplicate memory required when saving record and simplify the action
 	// use the same structe in memory & file
 	memset(_header, 0, AD_HEADER_SIZE);
-	memset(_data, 0, AD_DATA_SIZE);
+	memset(_data, 0, AD_PBUFFER_SIZE);
 	_header[0] = 0xA9; // File identifier A9 9A
 	_header[1] = 0x9A;
 	_header[2] = AD_HEADER_SIZE - 4;
 	_id = actionId;
 	SetActionName(NULL, 0);
 	_header[AD_HEADER_SIZE - 1] = 0xED;
+	_header[AD_OFFSET_POSECNT_LOW] = 0;
+	_header[AD_OFFSET_POSECNT_HIGH] = 0;
+	_poseOffset = 0;
 }
 
 bool ActionData::ReadSPIFFS(byte actionId) {
-	bool success = false;
-	SPIFFS.begin();
-	success = ReadActionFile(actionId);
-	SPIFFS.end();
-	return success;
+	return ReadActionFile(actionId);
 }
 
+/*
 bool ActionData::ReadActionFile(int actionId) {
 	char fileName[25];
 	memset(fileName, 0, 25);
@@ -92,8 +95,144 @@ bool ActionData::ReadActionFile(int actionId) {
 
 	return valid;
 }
+*/
+
+bool ActionData::ReadActionFile(int actionId) {
+
+	if (!SPIFFS.begin()) return false;
+	bool success = SpiffsReadActionFile(actionId);
+	SPIFFS.end();
+	return success;
+}
+
+bool ActionData::SpiffsReadActionFile(int actionId) {
+
+	bool success;
+	char fileName[25];
+	memset(fileName, 0, 25);
+	sprintf(fileName, ACTION_FILE, actionId);
+	if (!SPIFFS.exists(fileName)) {
+		InitObject(actionId);
+		return true;
+	}
+	success = ReadActionHeader(actionId);
+	if (success) success = ReadActionHeader(actionId);
+	return ReadActionPose();
+
+}
+
+bool ActionData::ReadActionHeader(int actionId) {
+
+	if (!SPIFFS.begin()) return false;
+	bool success = SpiffsReadActionHeader(actionId);
+	SPIFFS.end();
+	return success;
+}
+
+bool ActionData::SpiffsReadActionHeader(int actionId) {
+	char fileName[25];
+	memset(fileName, 0, 25);
+	sprintf(fileName, ACTION_FILE, actionId);
+	if (!SPIFFS.exists(fileName)) {
+		return false;		// File must checked before calling the function
+	}
+	File f = SPIFFS.open(fileName, "r");
+	if (!f) return false;
+
+	if (f.size() < AD_HEADER_SIZE) {
+		return false;
+	}
+	int dataSize = f.size() - AD_HEADER_SIZE;
+	if ((dataSize % AD_POSE_SIZE) != 0) {
+		return false;
+	} 
+	uint16_t poseCnt = dataSize / AD_POSE_SIZE;
+	byte poseCntHigh = (poseCnt >> 8);
+	byte poseCntLow = (poseCnt & 0xFF);
+	
+	byte *buffer;
+	buffer = (byte *) malloc(AD_HEADER_SIZE);
+	size_t bCnt = f.readBytes((char *) buffer, AD_HEADER_SIZE);
+	bool valid = (bCnt = AD_HEADER_SIZE);
+	if (valid) {
+		// Check start / end code / pose cnt
+		valid = ((buffer[0] = 0xA9) && (buffer[1] = 0x9A) && 
+		         (buffer[AD_HEADER_SIZE - 1] == 0xED) && 
+				 (buffer[AD_OFFSET_POSECNT_LOW] == poseCntLow) &&
+				 (buffer[AD_OFFSET_POSECNT_HIGH] == poseCntHigh)
+				);
+	}
+	if (valid) {
+		// Check checksum
+		byte sum = 0;
+		byte sumPos = AD_HEADER_SIZE - 2;
+		for (int i = 2; i < sumPos; i++) {
+			sum += buffer[i];
+		}
+		valid = (sum == buffer[sumPos]);
+	}
+	if (valid) {
+		// valid means:
+		//   1) file size = AD_HEADER_SIZE + n * AD_POSE_SIZE 
+		//   2) header has start/end code, header, pose count and checksum matched
+		InitObject(actionId);
+		memcpy(_header, buffer, AD_HEADER_SIZE);
+		// To allow swap action file faster, no checking on ID, and force assign ID here
+		_header[AD_OFFSET_ID] = actionId;
+		
+		// May read first batch of pose here, but for consistence, close the file and read using ReadActionPose.
+
+	}
+	free(buffer);
+	f.close();
+
+	return valid;
+}
+
+bool ActionData::ReadActionPose() {	
+	if (!SPIFFS.begin()) return false;
+	bool success = SpiffsReadActionPose();
+	SPIFFS.end();
+	return success;
+}
+
+
+bool ActionData::SpiffsReadActionPose() {	
+	char fileName[25];
+	memset(fileName, 0, 25);
+	sprintf(fileName, ACTION_FILE, _id);
+	if (!SPIFFS.exists(fileName)) {
+		return false;		// File must checked before calling the function
+	}
+	File f = SPIFFS.open(fileName, "r");
+	if (!f) return false;
+	// no more change on size here, should be confirmed in ReadActionHeader before
+
+	uint32_t fileOffset = AD_HEADER_SIZE + _poseOffset * AD_POSE_SIZE;
+
+	bool success = f.seek(fileOffset, SeekSet);
+	if (!success) return false;
+
+
+
+	uint16_t readPoseCnt = PoseCnt() - _poseOffset;
+	if (readPoseCnt > AD_PBUFFER_COUNT) readPoseCnt = AD_PBUFFER_COUNT;
+
+	memset(_data, 0, AD_PBUFFER_SIZE);
+	size_t readPoseSize = readPoseCnt * AD_POSE_SIZE;
+	size_t bCnt = f.readBytes((char *)_data, readPoseSize);
+
+	f.close();
+	return (bCnt == readPoseSize);
+
+}
+
+
 
 byte ActionData::WriteSPIFFS() {
+
+Serial1.printf("ActionData.WriteSPIFFS: %d\n", _id);
+
 	byte result = 0;
 	_header[0] = 0xA9;
 	_header[1] = 0x9A;
@@ -105,10 +244,12 @@ byte ActionData::WriteSPIFFS() {
 	_header[sumPos] = sum;
 	_header[AD_HEADER_SIZE - 1] = 0xED;
 
-	size_t dataSize = _header[AD_OFFSET_POSECNT] * AD_POSE_SIZE;
+	size_t dataSize = _header[AD_OFFSET_POSECNT_LOW] * AD_POSE_SIZE;
 	char fileName[25];
 	memset(fileName, 0, 25);
 	sprintf(fileName, ACTION_FILE, _id);
+
+Serial1.printf("Save to %s\n", fileName);
 
 	SPIFFS.begin();
 	File f = SPIFFS.open(fileName, "w");
@@ -119,6 +260,8 @@ byte ActionData::WriteSPIFFS() {
 		size_t dCnt = f.write((byte *) _data, dataSize);
 		f.close();
 
+		Serial1.printf("Byte saved: %d : %d : %d\n", hCnt, dCnt, dataSize);
+
 		if ((hCnt == AD_HEADER_SIZE) && (dCnt == dataSize)) {
 			result = 0;
 		} else {
@@ -126,6 +269,8 @@ byte ActionData::WriteSPIFFS() {
 		}
 	}
 	SPIFFS.end();	
+
+
 	return result;
 }
 
@@ -217,11 +362,34 @@ void ActionData::RefreshActionInfo() {
 	}
 	// MAX_POSE is 255
 	if (pCnt == -1) pCnt = AD_MAX_POSE;
-    _header[AD_OFFSET_POSECNT] = pCnt;
+	_header[AD_OFFSET_POSECNT_HIGH] = pCnt >> 8;
+	_header[AD_OFFSET_POSECNT_LOW] = pCnt & 0xFF;
 	_header[AD_OFFSET_AFFECTSERVO] = (byte) (servos / 256);
 	_header[AD_OFFSET_AFFECTSERVO + 1] = (byte) (servos % 256);
 }
 
+// Pose ready means: a valid pose, and pose already in memory, if not load it
+//   - Detect for in memory: related batch in memory, i.e. current _poseOffet is first one in batch
+// Optional: check if pose ready loaded - not implemented
+bool ActionData::IsPoseReady(uint16_t poseId, uint16_t &offset) {
+
+	if (poseId >= PoseCnt()) return false;
+	uint16_t batch = (poseId / AD_PBUFFER_COUNT);
+	uint16_t expOffset = batch * AD_PBUFFER_COUNT;
+	if (_poseOffset != expOffset) {
+		_poseOffset = expOffset;
+		if (!ReadActionPose()) return false;
+	}
+	// Just for safety, should be in range
+	if (poseId < _poseOffset) return false;
+	if (poseId >= (_poseOffset + AD_PBUFFER_COUNT)) return false;
+
+	offset = (poseId - _poseOffset) * AD_POSE_SIZE;
+	return true;
+}
+
+
+/*
 
 // -------------------------------------------------------------------------------------------------
 //
@@ -263,3 +431,6 @@ void ActionData::GenSample(byte actionId)
 	}
 	_id = actionId;
 }
+
+
+*/

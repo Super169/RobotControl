@@ -1,0 +1,25 @@
+Changes in ActionData
+
+    - Define AD_PBUFFER_SIZE (try using 10 first, most action is good enough)
+    - MAX_POSE up to 65535 (use double byte for pose pointer)
+    - AD_DATA_SIZE reduced from 12000 to 600
+    - _data size
+
+    - New variable:    
+        uint16_t _poseOffset
+
+Upload action header - reset pose offset
+	_poseOffset = 0;
+
+Upload Pose <one-by-one>
+	put pose to (poseId - _poseOffset
+	if (poseId = poseCnt - 1) {
+	  save to SPIFFS
+	}
+	if (poseId % pose_buffer_size) == 0 {
+		Save to SPIFFS
+		clear Pose data
+		_poseOffset += pose_buffer_size
+	}
+
+V2

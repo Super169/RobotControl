@@ -201,21 +201,6 @@ void setup() {
 
 	// Load default action
 	actionData.ReadSPIFFS(0);
-/*
-	// Testing on ActionData
-	actionData.InitObject(0);
-	//actionData.GenSample(1);
-	
-	byte bReturn = actionData.WriteSPIFFS();
-	DEBUG.printf("\nWrite action %d: %d\n", actionData.Header()[AD_OFFSET_ID], bReturn);
-	myOLED.print(0,5,"AD Write: ");
-	myOLED.print((bReturn == 0 ? "OK" : "FAIL"));
-
-	bool success = actionData.ReadSPIFFS(1);
-	DEBUG.printf("\nRead action %d : %s\n", actionData.Header()[AD_OFFSET_ID], (success ? "Success" : "Failed"));
-	myOLED.print(0,6,"AD Read: ");
-	myOLED.print((success ? "OK" : "FAIL"));
-*/
 	myOLED.show();
 
 }
@@ -289,8 +274,8 @@ void CheckVoltage() {
 	if (millis() > nextVoltageMs) {
 		float voltage = 0.00f;
 		uint16_t v = analogRead(0);
-		Serial.println(v);
-		Serial.printf("min: %d, max: %d, alarm: %d\n\n", config.minVoltage(), config.maxVoltage(), config.alarmVoltage());
+		//Serial.println(v);
+		//Serial.printf("min: %d, max: %d, alarm: %d\n\n", config.minVoltage(), config.maxVoltage(), config.alarmVoltage());
 		float power = ((float) (v - config.minVoltage()) / (config.maxVoltage() - config.minVoltage()) * 100.0f);
 		if (power > 100) power = 100;
 		if (power < 0) power = 0;

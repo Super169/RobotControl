@@ -15,12 +15,6 @@
 #define DEFAULT_MP3_ENABLED     true
 #define DEFAULT_MP3_VOLUME      20
 
-#define JSON_ENABLE_DEBUG   "enableDebug"
-#define JSON_MAX_SERVO      "maxServo"
-#define JSON_MAX_RETRY      "maxRetry"
-#define JSON_MP3_ENABLED    "mp3Enabled"
-#define JSON_MP3_VOLUME     "mp3Volume"
-
 #define RC_DATA_SIZE        64
 #define RC_VERSION          0
 #define RC_ENABLE_DEBUG     1
