@@ -1,837 +1,413 @@
 /*
-UBTech Alpha 1S Control Board (ESP8266 version) - Version 1.0
+UBTech Alpha 1S Control Board (ESP8266 version) - Version 2.x
 By Super169
 
-Command set for V1
+Command set for V2
 
 UBTech Servo Command
 - FA AF {id} {cmd} xx xx xx xx {sum} ED
 - FC CF {id} {cmd} xx xx xx xx {sum} ED
 
-Control Board Command
+UBTech Controller Command
+- F1 1F 00 00 00 00 00 00 {sum} ED : Get version
+- EF FE 00 00 00 00 00 00 {sum} ED : Servo status
+- F2 2F 00 00 00 00 00 00 {sum} ED : Stop play
+- F5 5F 01 00 00 00 00 00 {sum} ED : Firmware version
+- FB BF - not implemented : will be handled as BT command
+- F4 4F : fine tuning - not implemented
+- F9 9F : Get USB Type - not implemented
+- F3 3F {len} xx - xx {sum} ED : Play action by name
+
+UBTech Alpha 1 BT Protocol
+- FB BF {len} {cmd} xx ... xx {sum} ED
+
+V2 Control Board Command
+- A9 9A {len} {cmd} xx ... xx {sum} ED
+
+** All V1 Control Board Command will be obsolete
 - {cmd} xx ... xx
 
+Major change on 2.x:
+- New command set for V2 with start / end cod and checksum for better communization control
+- Use major loop for action playback, so there has no block in playing action, can be stopped anytime
+- Default reset action with all servo locked, and LED on
+- Use single file to store individual action
+- Define name for action (to be used in PC UI only), and a maximum of 255 actions allowed
+- Support up to 255 steps for each action
+- Support servo LED control
+- Support Robot Head Light control
+
+
 PIN Assignment:
-Rx/Tx   : Defulat debug console
 GPIO-12 : One-wire software serial - servo contorl
-GPIO-13 : PWN led to display status (hardware not available)
+GPIO-2  : Serial1 - debug console
+
+GPIO-14, GPIO-13 : software serial Rx,Tx connected to MP3 module
+GPIO-15 : Head LED
 
 */
 
-#include "UBTech.h"
-#include "FS.h"
+#include "robot.h"
 
-#define MAX_ACTION 26
-#define MAX_POSES 30 
-// #define MAX_POSES_SIZE 40
-#define MAX_POSES_SIZE 20
-// PoseInfo (20 bytes)
-// 0 : enabled
-// 1~16 : 16 servo angle, 0xFF = no change
-// 17 : Time in servo command
-// 18~19 : waiting time in millis
+// Start a TCP Server on port 6169
+uint16_t port = 6169;
+WiFiServer server(port);
+WiFiClient client;
 
-// 26 * 30 * 20 = 15600
-#define ACTION_TABLE_SIZE 15600
-
-#define ENABLE_FLAG    0
-#define ID_OFFSET      0
-#define EXECUTE_TIME   17
-#define WAIT_TIME_HIGH 18
-#define WAIT_TIME_LOW  19
-
-#define MAX_COMBO 10
-#define MAX_COMBO_SIZE 100
-
-byte actionTable[MAX_ACTION][MAX_POSES][MAX_POSES_SIZE];
-byte comboTable[MAX_COMBO][MAX_COMBO_SIZE];
-
-char* actionDataFile = (char *) "/robot.dat";
-
-
-// SoftwareSerial ss14(14, 14, false, 256);
-SoftwareSerial ss12(12, 12, false, 256);
-
-// UBTech servo(&ss14);  // Without debug
-UBTech servo(&ss12, &Serial);  // Debug on Serial
-
-int servoCnt = 0;
-byte *retBuffer;
+// #define PIN_SETUP 		13		// for L's PCB
 
 void setup() {
+
+	pinMode(HEAD_LED_GPIO, OUTPUT);
+	SetHeadLed(false);
+	// digitalWrite(HEAD_LED_GPIO, LOW);
+
+	// Start OLED ASAP to display the welcome message
+	myOLED.begin();  
+	myOLED.clr();
+	myOLED.show();
+	
+	myOLED.setFont(OLED_font6x8);
+	myOLED.printFlashMsg(0,0, msg_welcomeHeader);
+	myOLED.printFlashMsg(62,1, msg_author);
+	myOLED.printFlashMsg(0,4, msg_welcomeMsg);	
+	myOLED.show();
+
 	// Delay 2s to wait for all servo started
-	analogWrite(13, 32);
-	delay(5000);
-	servo.setDebug(false);  // Disable servo debug first, enable it later if needed
-	retBuffer = servo.retBuffer();
+	delay(2000);
+
+	// start both serial by default, serial for command input, serial1 for debug console
+	// Note: due to ESP-12 hw setting, serial1 cannot be used for input
 	Serial.begin(115200);
 	Serial1.begin(115200);
-	Serial.println(F("\n\n\nUBTech Robot Control\n"));
-	unsigned long actionSzie = sizeof(actionTable);
+	delay(100);
+	DEBUG.println("\n\n");
+
+	config.readConfig();
+	config.setMaxServo(20);
+	// config.setMp3Enabled(false);  // special version only
+
+	// SetDebug(config.enableDebug());
+	SetDebug(true);
+	
+	retBuffer = servo.retBuffer();
+
+
+	if (debug) DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
+	// unsigned long actionSize = sizeof(actionTable);
+
+	char *AP_Name = (char *) "Alpha 1S";
+	char *AP_Password = (char *) "12345678";
+
+	char buf[20];
+	bool isConnected = false;
+	
+	/*
+	if (digitalRead(PIN_SETUP) == LOW) {
+		myOLED.clr(2);
+		myOLED.print(0,2,"Connecting to router");
+		myOLED.show();
+		wifiManager.setDebugOutput(false);
+		wifiManager.setAPCallback(configModeCallback);
+		wifiManager.setConfigPortalTimeout(60);
+		wifiManager.setConfigPortalTimeout(60);
+		wifiManager.setTimeout(60);
+		DEBUG.printf("Try to connect router\n");
+		isConnected = wifiManager.autoConnect(AP_Name, AP_Password);
+	}
+	*/
+
+	String ip;
+
+	if (isConnected) {
+		ip = WiFi.localIP().toString();
+		myOLED.clr();
+		memset(buf, 0, 20);
+		String ssid = WiFi.SSID();
+		ssid.toCharArray(buf, 20);
+		myOLED.print(0,0, buf);
+	} else {
+		DEBUG.println(F("Start using softAP"));
+		DEBUG.printf("Please connect to %s\n\n", AP_Name);
+		WiFi.softAP(AP_Name, AP_Password);
+		IPAddress myIP = WiFi.softAPIP();
+		ip = myIP.toString();
+		myOLED.clr();
+		myOLED.print(0,0, "AP: ");
+		myOLED.print(AP_Name);
+	}
+
+	memset(buf, 0, 20);
+	ip.toCharArray(buf, 20);
+	myOLED.print(0,1, buf);
+	myOLED.print(":");
+	myOLED.print(port);
+	myOLED.show();
+
+	DEBUG.print("Robot IP: ");
+	DEBUG.println(ip);
+	DEBUG.printf("Port: %d\n\n", port);
+	//	RobotMaintenanceMode();
+	server.begin();
+
+
+	DEBUG.println("Starting robot servo: ");
+	
+	servo.init(config.maxServo(), config.maxRetry());
+	// servo.init(config.maxServo(), 0);	// No retry for fast testing without all servo
+
+	// clean up software serial
 	servo.begin();
-	// showServoInfo();
-	// servo.setDebug(true);
-	// setupSampleData();
-	ReadSPIFFS(false);
-
-	analogWrite(13, 255);
-	Serial.println("Control board ready");
-}
-
-
-byte ledMode = 0;
-
-byte ch, cmd;
-
-void loop() {
-	fx_remoteControl();
-}
-
-void fx_playDemo() {
-	Serial.println("Go play demo");
-	playAction(0);
-}
-
-// A - Angle 
-// B - Debug
-// C
-// D - Download Action Data (MCU -> PC)
-// E
-// F - Free Servo
-// G 
-// H
-// I
-// J
-// K
-// L - Lock servo
-// M - Move
-// N
-// O
-// P - Play Action/Combo
-// Q
-// R - Read Action Data form SPIFFS
-// S - Stop Action
-// T - Detect Servo
-// U - Upload Action Data (PC -> MCU)
-// V
-// W - Write Action Data to SPIFFS
-// X 
-// Y 
-// Z - Reset Connection
-
-// 0xFA, 0xFC - UBTech command
-
-
-void fx_remoteControl() {
-	while (!Serial.available());
-	cmd = Serial.read();
-	delay(1);
-	switch (cmd) {
-		case 'A': // Get Angle
-			cmd_GetServoAngleHex();
-			break;
-		case 'a': // Get Angle
-			cmd_GetServoAngle();
-			break;
-		case 'B':
-			servo.setDebug(true);
-			break;
-		case 'b':
-			servo.setDebug(false);
-			break;
-
-		case 'J':
-			cmd_GetServoAdjAngleHex();
-			break;
-
-		case 'T': // Detect/Test Servo
-			cmd_DetectServoHex();
-			break;
-		case 't': // Detect/Test servo
-			cmd_DetectServo();
-			break;
-
-		case 'D':
-			cmd_DownloadActionDataHex();
-			break;			
-
-		case 'U':
-			cmd_UploadActionDataHex();
-			break;
-
-		case 'L': // Lock servo
-			cmd_LockServoHex(true);
-			break;
-
-		case 'l': // Lock servo
-			cmd_LockServo(true);
-			break;
-
-		case 'M': // Move single servo
-			cmd_MoveServoHex();
-			break;
-		case 'm': // Move single servo
-			cmd_moveServo();
-			break;
-
-		case 'R': // Read action data from SPIFFS
-		 	cmd_ReadSPIFFS();
-		 	break;
-
-		case 'W': // Write action data to SPIFFS
-		 	cmd_WriteSPIFFS();
-		 	break;
-
-		case 'S': // Stop action (possible? or just go to standby)
-			break;
-
-		case 'F': // Free the servo
-			cmd_LockServoHex(false);
-			break;
-
-		case 'f': // Free the servo
-			cmd_LockServo(false);
-			break;
-
-		case 'P': // Playback action Standard : 'A'-'Z', Combo : '0' - '9'
-			fx_playAction();
-			break;		
-
-		case 'Z': 
-			fx_resetConnection();
-			break;		
-
-		case 0xFA:
-		case 0xFC:
-			cmd_UBTCommand(cmd);
-			break;
-
-	}
-	clearInputBuffer();
-}
-
-void clearInputBuffer() {
-	while (Serial.available()) {
-		Serial.read();
-		delay(1);
-	}
-}
-
-void serialPrintByte(byte data) {
-	if (data < 0x10) Serial.print("0");
-	Serial.print(data, HEX);
-}
-
-int getServoId() {
-	if (!Serial.available()) return -1;
-	int id = (byte) Serial.read();
-	if ((id >= '0') && (id <= '9')) {
-		id -= '0';
-	} else if ((id >= 'A') && (id <= 'G')) {
-		id = 10 + id - 'A';
-	} else if ((id >= 'a') && (id <= 'g')) {
-		id = 10 + id - 'a';
-	} else {
-		return -2;
-	}
-	return id;
-}
-
-#pragma region Get Servo Angle
-
-void cmd_GetServoAngleHex() {
-	byte outBuffer[32];
-	for (int id = 1; id <= 16; id++) {
-		int pos = 2 * (id - 1);
-		if (servo.exists(id)) {
-			if (servo.isLocked(id)) {
-				outBuffer[pos] = servo.lastAngle(id);
-				outBuffer[pos+1] = (servo.isLocked(id) ? 1 : 0);
-			} else {
-				outBuffer[pos] = servo.getPos(id);
-				outBuffer[pos+1] = 0;
-			}
-		} else {
-			outBuffer[pos] = 0xFF;
-			outBuffer[pos+1] = 0;
-		}
-	}
-	Serial.write(outBuffer, 32);
-}
-
-void cmd_GetServoAngle() {
-	Serial.println(F("\nServo Angle:\n"));
-	for (int id = 1; id <= 16; id++) {
-		Serial.print(F("Servo "));
-		Serial.print(id);
-		Serial.print(": ");
-		if (servo.exists(id)) {
-			byte angle = servo.getPos(id);
-			Serial.print(angle, DEC);
-			Serial.print(" [");
-			serialPrintByte(angle);
-			Serial.print("]  ");
-			if (servo.isLocked(id)) {
-				Serial.print(" Locked");
-			}
-			Serial.println();
-		} else {
-			Serial.println("Not Available");
-		}
-	}
-}
-
-#pragma endregion
-
-
-void cmd_GetServoAdjAngleHex() {
-	byte outBuffer[32];
-	for (int id = 1; id <= 16; id++) {
-		int pos = 2 * (id - 1);
-		if (servo.exists(id)) {
-			uint16  adjAngle = servo.getAdjAngle(id);
-			outBuffer[pos] = adjAngle / 256;
-			outBuffer[pos+1] = adjAngle % 256;
-		} else {
-			outBuffer[pos] = 0x7F;
-			outBuffer[pos+1] = 0x7F;
-		}
-	}
-	Serial.write(outBuffer, 32);
-}
-
-
-#pragma region Test/Detect Servo
-
-void cmd_DetectServoHex() {
-	servo.detectServo(1,16);
-	cmd_GetServoAngleHex();
-}
-
-void cmd_DetectServo() {
-	servo.detectServo(1,16);
-}
-
-#pragma endregion
-
-#pragma region Lock/Free Servo
-
-// Return: 
-//   0 - L/U
-//   1 - log count
-//   (2n)   - servo id
-//   (2n+1) - angle / 0xFF for error
-void cmd_LockServoHex(bool goLock) {
-	byte result[40];
-	byte cnt = 0;
-	char mode = (goLock ? 'L' : 'U');
-	result[0] = mode;
-	while (Serial.available()) {
-		byte id = Serial.read();
-		if ((cnt == 0) && (id == 0)) {
-			// Only 1 paramter 0x00 for lock/unlock all
-			if (!Serial.available()) {
-				for (int servoId = 1; servoId <= 16; servoId++)  {
-					result[2*servoId] = servoId;
-					if (servo.exists(servoId)) {
-						result[2*servoId+1] = servo.getPos(servoId, goLock);
-					} else {
-						result[2*servoId+1] = 0xFF;
-					}
-				}
-				cnt = 16;
-			} 
-			break;
-		}
-		cnt++;
-		result[2*cnt] = id;
-		if ((id >= 1) && (id <= 16) && servo.exists(id)) {
-			result[2*cnt+1] = servo.getPos(id, goLock);
-		} else {
-			result[2*cnt+1] = 0xFF;
-		}
-		// For safety, not reasonable to have more than MAC servo
-		if (cnt >= 16) break;
-	}
-	result[1] = cnt;
-	cnt = 2 * (cnt + 1);
-	Serial.write(result, cnt);
-}
-
-void cmd_LockServo(bool goLock) {
-	int id = getServoId();
-	char mode = (goLock ? 'l' : 'u');
-	switch (id) {
-		case -1:
-			Serial.print(mode);
-			Serial.write(0x01);
-			break;
-		case -2:
-			Serial.print(mode);
-			Serial.write(0x02);
-			break;
-		case 0:
-			Serial.print(mode);
-			Serial.write(0x00);
-			Serial.write(0x00);
-			for (int servoId = 1; servoId <= 16; servoId++)  {
-				if (servo.exists(servoId)) servo.getPos(servoId, goLock);
-			}
-			break;
-		default:
-			Serial.print(mode);
-			Serial.write(0x00);
-			Serial.write(id);
-			byte angle;
-			if ((id >= 1) && (id <= 16) && servo.exists(id)) {
-				angle = servo.getPos(id, goLock);
-			} else {
-				angle = 0xFF;
-			}
-			Serial.write(angle);
-			break;
-	}
-}
-
-#pragma endregion
-
-#pragma region Move Servo
-
-#define MOVE_OK 				0x00
-#define MOVE_ERR_PARM_CNT		0x01
-#define MOVE_ERR_PARM_VALUE     0x02
-#define MOVE_ERR_PARM_CONTENT   0x03
-#define MOVE_ERR_PARM_END		0x04
-#define MOVE_ERR_PARM_ALL_CNT	0x11
-#define MOVE_ERR_PARM_ALL_ANGLE	0x12
-#define MOVE_ERR_PARM_ONE_ID	0x21
-#define MOVE_ERR_PARM_ONE_ANGLE	0x22
-#define MOVE_ERR_PARM_DUP_ID	0x23
-
-
-
-// Input id, angle, time
-// Output - action, status, # servo, id
-void cmd_MoveServoHex() {
-	byte result[20];
-	int moveCount = goMoveServoHex(result);
-	Serial.write(result, moveCount + 3);
-}
-
-int goMoveServoHex(byte *result) {
-	result[0] = 'M';
-	result[1] = 0x00;
-	result[2] = 0x00;
-	byte inBuffer[51];  // Max 16 servo + end mark: 17 * 3 = 51
-	byte inCount = 0;
-	byte moveData[16][3];
-	byte moveCnt = 0;
-	while (Serial.available()) {
-		if (inCount >= 51) {
-			result[1] = MOVE_ERR_PARM_CNT;
-			return 0;	
-		}
-		inBuffer[inCount++] = (byte) Serial.read();
-	}
-	return moveMultiServo(inCount, inBuffer, result);
-}
-
-
-void cmd_moveServo() {
-	byte result[20];
-	int moveCount = goMoveServo(result);
-	Serial.print("\nMove - ");
-	if (result[1]) {
-		Serial.print(" Error : ");
-		serialPrintByte(result[1]);
-		Serial.println();
-		return;
-	}
-	Serial.print(moveCount);
-	Serial.print(" servo moved: ");
-	for (int i = 0; i < moveCount; i++) {
-		Serial.print(" ");
-		Serial.print(result[ 3 + i]);
-	}
-	Serial.println();
-}
-
-int SerialParseInt() {
-	if (!Serial.available()) return -1;
-	ch = Serial.peek();
-	if ((ch < '0') || (ch > '9')) return -2;
-	int data = Serial.parseInt();
-	return data;
-}
-
-int goMoveServo(byte *result)
-{
-	result[0] = 'M';
-	result[1] = 0x00;
-	result[2] = 0x00;
-	byte inBuffer[51];  // Max 16 servo + end mark: 17 * 3 = 51
-	byte inCount = 0;
-	byte moveData[16][3];
-	byte moveCnt = 0;
-	while (Serial.available()) {
-		if (inCount >= 51) {
-			result[1] = MOVE_ERR_PARM_CNT;
-			return 0;	
-		}
-		int value = SerialParseInt();
-		if ((value < 0) || (value > 255)) {
-			result[1] = MOVE_ERR_PARM_VALUE;
-			return 0;	
-		}
-		inBuffer[inCount++] = (byte) value;
-
-		if (Serial.available()) {
-			if ((Serial.peek() == 0x0A) || (Serial.peek() == 0x0D)) {
-				break;
-			}
-			if (Serial.peek() != ',') {
-				result[1] = MOVE_ERR_PARM_CONTENT;
-				return 0;	
-			}
-			// Read the ',' separator
-			Serial.read();  
-		} 
-	}
-	moveMultiServo(inCount, inBuffer, result);
-}
-
-int moveMultiServo(int inCount, byte* inBuffer, byte *result) {
-	if ((inCount < 6) || (inCount % 3 != 0)) {
-		result[1] = MOVE_ERR_PARM_CNT;
-		return 0;
-	}
-	if ((inBuffer[inCount-1] != 0x00) || (inBuffer[inCount-2] != 0x00) || (inBuffer[inCount-3] != 0x00)) {
-		result[1] = MOVE_ERR_PARM_END;
-		return 0;
-	}
-
-	byte moveData[16][3];
-	byte moveCnt = 0;
-	if (inBuffer[0] == 0) {
-		if (inCount != 6) {
-			result[1] = MOVE_ERR_PARM_ALL_CNT;
-			return 0;
-		}
-		if (inBuffer[1] > 240) {
-			result[1] = MOVE_ERR_PARM_ALL_ANGLE;
-			return 0;
-		}
-		moveCnt = 0;
-		for (int id = 1; id <= 16; id++) {
-			if (servo.exists(id)) {
-				moveData[moveCnt][0] = id;
-				moveData[moveCnt][1] = inBuffer[1];
-				moveData[moveCnt][2] = inBuffer[2];
-				moveCnt++;
-			}
-		}
-	} else {
-		moveCnt = 0;
-		for (int i = 0; i < inCount - 3; i += 3) {
-			int id = inBuffer[i];
-			if ((id == 0) || (id > 16)) {
-				result[1] = MOVE_ERR_PARM_ONE_ID;
-				return 0;
-			}
-			if (inBuffer[i + 1] > 240) {
-				result[1] = MOVE_ERR_PARM_ONE_ANGLE;
-				return false;
-			}
-			bool servoFound = false;
-			for (int j = 0; j < moveCnt; j++) {
-				if (moveData[j][0] == id) {
-					result[1] = MOVE_ERR_PARM_DUP_ID;
-					return false;
-				}
-			}
-			if (servo.exists(id)) {
-				moveData[moveCnt][0] = id;
-				moveData[moveCnt][1] = inBuffer[i + 1];
-				moveData[moveCnt][2] = inBuffer[i + 2];
-				moveCnt++;
-			}
-		}
-	}
-	result[1] = 0x00;
-	result[2] = moveCnt;
-	if (!moveCnt) return 0;
-
-	for (int i = 0; i < moveCnt; i++) {
-		servo.move(moveData[i][0], moveData[i][1], moveData[i][2]);
-		result[i+3] = moveData[i][0];
-	}
-	return moveCnt;
-}
-
-#pragma endregion
-
-#pragma region Download / Upload Action Data
-
-void cmd_DownloadActionDataHex() {
-	byte *ptr = (byte *)actionTable;
-	long size = MAX_POSES * MAX_POSES_SIZE;
-	for(int action = 0; action < MAX_ACTION; action ++) {
-		Serial.write(ptr, size);
-		ptr += size;
-		delay(1);  // add 1 ms delay for processing the data
-	}
-}
-
-#define UPLOAD_OK 				0x00
-#define UPLOAD_CLEAR_OK			0x00
-#define UPLOAD_ERR_ACTION		0x01
-#define UPLOAD_ERR_POSE         0x02
-#define UPLOAD_ERR_POSE_DATA    0x03
-#define UPLOAD_ERR_CLEAR_POSE   0x04
-
-//  'W' actionId 0xFF				=> clear action
-//  'W' actionId poseId 20xData 	=> upload pose data
-
-void cmd_UploadActionDataHex() {
-	byte inBuffer[MAX_POSES_SIZE];
-	byte result[6];
-	memset(result,0xfe,4);
-	result[0] = 'W';
-	int poseCnt = 0;
-	byte *ptr;
-	if (Serial.available()) {
-		result[1] = Serial.read();
-		if (Serial.available()) {
-			result[2] = Serial.read();
-			poseCnt = 0;
-			while (Serial.available()) {
-				inBuffer[poseCnt++] = Serial.read();
-				if (poseCnt >= MAX_POSES_SIZE) break;
-				delay(1);  // for safety, add 1ms delay here,otherwise it may cause missing data.   It won't cause much delay, as only 20 bytes is sent
-			}
-		}
-	}
-
-	if (result[1] > MAX_ACTION) {
-		result[3] = UPLOAD_ERR_ACTION;
-		Serial.write(result, 4);
-		return;
-	}
-
-	if (result[2] == 0xFF) {
-		if (poseCnt > 0) {
-			result[3] = UPLOAD_ERR_CLEAR_POSE;
-			Serial.write(result, 4);
-			return;
-		}
-		ptr = &actionTable[result[1]][0][0];
-		long size = MAX_POSES * MAX_POSES_SIZE;
-		memset(ptr, 0, size);
-		result[3] = UPLOAD_CLEAR_OK;
-		Serial.write(result, 4);
-		return;
-	}
-	
-	if (result[2] > MAX_POSES_SIZE) {
-		result[3] = UPLOAD_ERR_POSE;
-		Serial.write(result, 4);
-		return;
-	}
-	
-	if (poseCnt != MAX_POSES_SIZE) {
-		result[3] = UPLOAD_ERR_POSE_DATA;
-		result[4] = poseCnt;
-		Serial.write(result, 5);
-		Serial.write(inBuffer, poseCnt);
-		return;
-	}
-			
-	ptr = & actionTable[result[1]][result[2]][0];
-	long size = MAX_POSES * MAX_POSES_SIZE;
-	memcpy(ptr, inBuffer, MAX_POSES_SIZE);
-	result[3] = UPLOAD_OK;
-	Serial.write(result, 4);
-}
-
-#pragma endregion
-
-#pragma region Read/Write SPIFFS
-
-#define READ_OK 			 0x00
-#define READ_ERR_NOT_FOUND   0x01
-#define READ_ERR_OPEN_FILE   0x02
-#define READ_ERR_FILE_SIZE   0x03
-#define READ_ERR_READ_FILE   0x04
-
-void cmd_ReadSPIFFS() {
-	ReadSPIFFS(true);
-}
-
-void ReadSPIFFS(bool sendResult) {
-	byte result[2];
-	result[0] = 'R';
-	SPIFFS.begin();
-	if (SPIFFS.exists(actionDataFile)) {
-		File f = SPIFFS.open(actionDataFile, "r");
-		if (!f) {
-			result[1] = READ_ERR_OPEN_FILE;
-		} else {
-			if (f.size() != sizeof(actionTable)) {
-				result[1] = READ_ERR_FILE_SIZE;
-			} else {
-				memset(actionTable, 0, sizeof(actionTable));
-				size_t wCnt = f.readBytes((char *)actionTable, sizeof(actionTable));
-				f.close();
-				if (wCnt == sizeof(actionTable)) {
-					result[1] = READ_OK;
-				} else {
-					result[1] = READ_ERR_READ_FILE;
-				}
-			}
-		}
-	} else {
-		result[1] = READ_ERR_NOT_FOUND;
-	}
-	SPIFFS.end();	
-	if (sendResult) Serial.write(result, 2);
-}
-
-#define WRITE_OK 			 0x00
-#define WRITE_ERR_OPEN_FILE  0x01
-#define WRITE_ERR_WRITE_FILE 0x02
-
-bool cmd_WriteSPIFFS() {
-	byte result[2];
-	result[0] = 'W';
-	SPIFFS.begin();
-	File f = SPIFFS.open(actionDataFile, "w");
-	if (!f) {
-		result[1] = WRITE_ERR_OPEN_FILE;
-	} else {
-		size_t wCnt = f.write((byte *)actionTable, sizeof(actionTable));
-		f.close();
-		if (wCnt == sizeof(actionTable)) {
-			result[1] = WRITE_OK;
-		} else {
-			result[1] = WRITE_ERR_WRITE_FILE;
-		}
-	}
-	SPIFFS.end();	
-	Serial.write(result, 2);
-}
-
-#pragma endregion
-
-
-void showServoInfoHex() {
-	servoCnt = 0;
-	byte outBuffer[16];
-	for (int id = 1; id <= 16; id++) {
-		if (servo.exists(id)) {
-			outBuffer[id-1] = servo.getPos(id);
-		} else {
-			outBuffer[id-1] = 0xFF;
-		}
-	}
-	Serial.write(outBuffer, 16);
-}
-
-void showServoInfo() {
-	Serial.println(F("\n\nAvailable servo:"));
-	servoCnt = 0;
-	for (int id = 1; id <= 16; id++) {
-		if (id < 10) Serial.print('0');
-		Serial.print(id);
-		Serial.print(F(": "));
-		if (servo.exists(id)) {
-			byte angle = servo.getPos(id);
-			for (int i = 4; i <8; i++) {
-				Serial.print(retBuffer[i] < 0x10 ? " 0" : " ");
-				Serial.print(retBuffer[i], HEX);
-			}
-			Serial.print("  [");
-			Serial.print(angle, DEC);
-			Serial.println("]");
-			servoCnt++;
-		} else {
-			Serial.println("Missing");
-		}
-
-	}
-	Serial.println();
-	if (servoCnt > 0) {
-		Serial.print(servoCnt);
-	} else {
-		Serial.print(F("No "));
-	}
-	Serial.print(F(" servo detected."));
-}
-
-void fx_playAction() {
-	byte actionCode = 0;  // action 0, 'A' is standby action
-	if (Serial.available()) {
-		byte ch = Serial.read();
-		if ((ch >= 'A') && (ch <= 'Z')) {
-			actionCode = ch - 'A';
-		} else {
-			return; // Return for invalid action
-		}
-	}		
-	playAction(actionCode);
-}
-
-void playAction(byte actionCode) {
-	Serial.println("Play Action");
-	servo.setDebug(true);
-	for (int po = 0; po < MAX_POSES; po++) {
-		int waitTime = actionTable[actionCode][po][WAIT_TIME_HIGH] * 256 + actionTable[actionCode][po][WAIT_TIME_LOW];
-		byte time = actionTable[actionCode][po][EXECUTE_TIME];
-		// End with all zero, so wait time will be 0x00, 0x00, and time will be 0x00 also
-		if ((waitTime == 0) && (time == 0)) break;
-		if (time > 0) {
-			for (int id = 1; id <= 16; id++) {
-				byte angle = actionTable[actionCode][po][ID_OFFSET + id];
-				// max 240 degree, no action required if angle not changed, except first action
-				if ((angle <= 0xf0) && 
-					((po == 0) || (angle != actionTable[actionCode][po-1][ID_OFFSET + id]))) {
-					servo.move(id, angle, time);
-				}
-			}
-		}
-		delay(waitTime);
-	}
-	servo.setDebug(false);
-}
-
-void fx_resetConnection() {
-	Serial.println("Reset servo connection");
+	delay(100);
 	servo.end();
 	delay(100);
+	//
+
 	servo.begin();
+	servo.lockAll();
+	// TODO: change to V2 when ready
+	// V1_UBT_ReadSPIFFS(0);
+
+	DEBUG.printf("%08ld Control board ready\n\n", millis());
+	SetHeadLed(true);
+	// digitalWrite(HEAD_LED_GPIO, HIGH);
+
+	if (config.mp3Enabled()) {
+		// Play MP3 for testing only
+		mp3.begin();
+		mp3.stop();
+		delay(10);
+		mp3.setVol(config.mp3Volume());
+		delay(10);
+		mp3_Vol = mp3.getVol();
+		
+		mp3.playMp3File(1);
+		delay(10);
+
+		// software serial is not stable in 9600bps, for safety, disable mp3 connection when not use
+		mp3.end(); 
+
+	}
+	
+	myOLED.print(0,4,"MP3 Vol: ");
+	myOLED.print(mp3_Vol);
+	myOLED.show();
+
+	servo.setLED(0, 1);
+
+	pinMode(10, INPUT_PULLUP);
+	int b = digitalRead(10);
+	DEBUG.printf("Pin 10 is %s\n", (b == HIGH ? "HIGH" : "LOW"));
+
+	// Load default action
+	actionData.ReadSPIFFS(0);
+/*
+	// Testing on ActionData
+	actionData.InitObject(0);
+	//actionData.GenSample(1);
+	
+	byte bReturn = actionData.WriteSPIFFS();
+	DEBUG.printf("\nWrite action %d: %d\n", actionData.Header()[AD_OFFSET_ID], bReturn);
+	myOLED.print(0,5,"AD Write: ");
+	myOLED.print((bReturn == 0 ? "OK" : "FAIL"));
+
+	bool success = actionData.ReadSPIFFS(1);
+	DEBUG.printf("\nRead action %d : %s\n", actionData.Header()[AD_OFFSET_ID], (success ? "Success" : "Failed"));
+	myOLED.print(0,6,"AD Read: ");
+	myOLED.print((success ? "OK" : "FAIL"));
+*/
+	myOLED.show();
+
 }
 
-#pragma region "UBTech Command"
+void configModeCallback (WiFiManager *myWiFiManager) {
+	DEBUG.println("Fail connecting to router");
+	DEBUG.print("WiFi Manager AP Enabled, please connect to ");
+	DEBUG.println(myWiFiManager->getConfigPortalSSID());
+	DEBUG.print("Alpha 1S Host IP: ");
+	DEBUG.println(WiFi.softAPIP().toString());
+	DEBUG.println(F("Will be switched to SoftAP mode if no connection within 60 seconds....."));
 
-void cmd_UBTCommand(byte b1) {
-	delay(1);  // just for safety
-	byte cmd[10];
-	byte result[10];
-	cmd[0] = b1;
-	for (int i = 1; i < 10; i++) {
-		if (!Serial.available()) return;  // skip for incomplete command, it should be ready after delay(1);
-		cmd[i] = Serial.read();
+	// Try to display here if OLED is ready
+	// Now flash LED to alert user
+	for (int i = 0; i < 10; i++) {
+		digitalWrite(HEAD_LED_GPIO, LOW);
+		delay(200);
+		digitalWrite(HEAD_LED_GPIO, HIGH);
+		delay(200);
 	}
-	if (cmd[9] != 0xED) return;  // invalid end code
-	if (((cmd[0] == 0xFA) && (cmd[1] != 0xAF)) || ((cmd[0] == 0xFC) && (cmd[1] != 0xCF))) return;  // invalid start code
-	byte sum = 0;
-	for (int i = 2; i < 8; i++) {
-		sum += cmd[i];
+	digitalWrite(HEAD_LED_GPIO, LOW);
+	delay(200);
+}
+
+unsigned long noPrompt = 0;
+
+void loop() {
+	// For Wifi checking, once connected, it should use the client object until disconnect, and check within client.connected()
+	client = server.available();
+	if (client){
+		myOLED.print(122, 1, '*');
+		myOLED.show();
+		while (client.connected()) {
+			if (millis() > noPrompt) {
+				DEBUG.println("Client connected");
+				noPrompt = millis() + 1000;
+			}
+			while (client.available()) {
+				cmdBuffer.write(client.read());
+			}
+			// Keep running RobotCommander within the connection.
+			RobotCommander();
+		}
+		myOLED.print(122, 1, ' ');
+		myOLED.show();
+	}	
+	if (millis() > noPrompt) {
+		// DEBUG.println("No Client connected, or connection lost");
+		noPrompt = millis() + 1000;
 	}
-	if (cmd[8] != sum) return;  // invalid checksum
-	int cnt =  (servo.execute(cmd, result));
-	if (cnt > 0) {
-		Serial.write(result, cnt);
+	
+	// Execute even no wifi connection, for USB & Bluetooth connection
+	// Don'e put it into else case, there has no harm executing more than once.
+	// Just for safety if client exists but not connected, RobotCommander can still be executed.
+	RobotCommander();
+
+}
+
+void RobotCommander() {
+	CheckVoltage();
+	CheckSerialInput();
+	remoteControl();  
+	V2_CheckAction();
+}
+
+// ADC_MODE(ADC_VCC);  -- only use if checking input voltage ESP.getVcc() is required.
+unsigned nextVoltageMs = 0;
+
+
+void CheckVoltage() {
+	if (millis() > nextVoltageMs) {
+		float voltage = 0.00f;
+		uint16_t v = analogRead(0);
+		Serial.println(v);
+		Serial.printf("min: %d, max: %d, alarm: %d\n\n", config.minVoltage(), config.maxVoltage(), config.alarmVoltage());
+		float power = ((float) (v - config.minVoltage()) / (config.maxVoltage() - config.minVoltage()) * 100.0f);
+		if (power > 100) power = 100;
+		if (power < 0) power = 0;
+		int iPower = (int) (power + 0.5); // round up
+		myOLED.printNum(104,0,iPower, 10, 3, false);
+		myOLED.print(122,0,"%");
+
+		myOLED.show();
+		nextVoltageMs = millis() + 1000;
 	}
 }
 
-#pragma endregion
+// move data from Serial buffer to command buffer
+void CheckSerialInput() {
+	if (Serial.available()) {
+		delay(1); // make sure one command is completed
+		while (Serial.available()) {
+			cmdBuffer.write(Serial.read());
+		}
+	}
+}
+
+void remoteControl() {
+	bool goNext = true;
+	int preCount;
+	while (cmdBuffer.available()) {
+		preCount = cmdBuffer.available();
+		cmd = cmdBuffer.peek();
+		switch (cmd) {
+
+			case 0xFB:
+				goNext = UBTBT_Command();
+				break;
+
+			case 0xF1:
+			case 0xF2:
+			case 0xF3:
+			case 0xF4:
+			case 0xF5:
+			case 0xF9:
+			case 0xEF:
+				goNext = UBTCB_Command();
+				break;
+
+			case 0xFA:
+			case 0xFC:
+				goNext = UBTSV_Command();
+				break;
+
+			case 0xA9:
+				goNext = V2_Command();
+				break;
+
+
+			case 'A':
+			case 'a':
+			/*
+			case 'B':
+			case 'b':
+			case 'D':
+			case 'F':
+			case 'f':
+			case 'J':
+			case 'L':
+			case 'l':
+			case 'M':
+			case 'm':
+			*/
+			case 'P':
+			/*
+			case 'R':
+			case 'T':
+			case 't':
+			case 'S':
+			case 'U':
+			case 'W':
+			*/
+			case 'Z':
+				goNext = V1_Command();
+				break;
+
+			default:
+				cmdSkip(true);
+				break;
+
+		}
+		// for some situation, command data not yet competed.
+		// need to study if it should wait for full data inside the handler
+		if (goNext) {
+			if (preCount == cmdBuffer.available()) {
+				// Program bug, no data handled, but not ask for wait
+				if (debug) {
+					DEBUG.print(F("preCount: "));
+					DEBUG.print(preCount);
+					DEBUG.print(F(" => "));
+					DEBUG.println(cmdBuffer.available());
+					DEBUG.print(F("****** Missing handler: "));
+					DebugShowSkipByte();
+				}
+				cmdBuffer.skip();
+			}
+			lastCmdMs = 0;
+		} else {
+			if ((lastCmdMs)	&& (millis() - lastCmdMs > MAX_WAIT_CMD)) {
+				// Exceed max wait time for a command
+				if (debug) {
+					DEBUG.printf("Command timeout (%d received): ", cmdBuffer.available());
+					DebugShowSkipByte();
+				}
+				cmdBuffer.skip();
+				lastCmdMs = 0;
+			} else {
+				if (!lastCmdMs) lastCmdMs = millis();
+				break;
+			}
+		}
+	}
+}
+
+
