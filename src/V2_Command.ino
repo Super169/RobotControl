@@ -716,7 +716,8 @@ void V2_GoAction(byte actionId, bool v2, byte *cmd) {
 		V2_ActionCombo = 0;
 		V2_NextAction = actionId;
 		V2_NextPose = 0;
-		V2_NextPlayMs = millis();
+		V2_GlobalTimeMs = millis();
+		V2_NextPlayMs = V2_GlobalTimeMs;
 		V2_ActionPlaying = true;
 	}
 	if (v2) V2_SendSingleByteResult(cmd, 0);

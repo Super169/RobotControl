@@ -8,8 +8,11 @@ bool V2_ActionPlaying = false;
 byte V2_ActionCombo = 0; // combo = 0 reserved for single action play
 byte V2_NextAction = 0;
 uint16_t V2_NextPose = 0;
+unsigned long V2_GlobalTimeMs = 0;
 unsigned long V2_NextPlayMs = 0;
 int V2_ServoTimeRatio = 20;
+bool V2_UseGlobalTime = true;
+
 
 #define V2_CMD_RESET			0x01
 #define V2_CMD_DEBUG			0x02

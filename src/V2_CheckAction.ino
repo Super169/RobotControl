@@ -8,6 +8,7 @@ void V2_ResetAction() {
 	V2_ActionCombo = 0;
 	V2_NextAction = 0;
 	V2_NextPose = 0;
+	V2_GlobalTimeMs = 0;
 	V2_NextPlayMs = 0;
 }
 
@@ -153,7 +154,13 @@ if (debug) DEBUG.printf("%08ld -- End servo command\n", millis());
 
 	uint16_t waitTimeMs = (pose[AD_POFFSET_WTIME] << 8) | pose[AD_POFFSET_WTIME+1];
 	
-	V2_NextPlayMs = millis() + waitTimeMs;
+	if (V2_UseGlobalTime) {
+		V2_GlobalTimeMs += waitTimeMs;
+		V2_NextPlayMs = V2_GlobalTimeMs;			
+	} else {
+		V2_NextPlayMs = millis() + waitTimeMs;
+	}
+
 
 	if (debug) DEBUG.printf("Wait Time: %d -> %ld\n", waitTimeMs, V2_NextPlayMs);
 
