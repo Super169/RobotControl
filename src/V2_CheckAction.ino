@@ -22,6 +22,7 @@ void V2_CheckAction() {
 
 	if (debug) DEBUG.printf("%08ld V2_CheckAction: %d - %d - %d\n", millis(), V2_ActionCombo, V2_NextAction, V2_NextPose);
 
+
 	if (actionData.id() != V2_NextAction) {
 		if (V2_NextPose) {
 			// For new action, should always be started at 0
@@ -41,8 +42,18 @@ void V2_CheckAction() {
 		return;
 	}
 
+	uint16_t offset = 0;
+	if (!actionData.IsPoseReady(V2_NextPose, offset)) {
+		// Fail loading pose data
+		if (debug) DEBUG.printf("Fail loading pose data: %d - %d\n", actionData.id(), V2_NextAction);
+		V2_ResetAction();
+		return;
+	}
+
+
 	byte *pose = actionData.Data();
-	pose = pose + AD_POSE_SIZE * V2_NextPose;
+	// pose = pose + AD_POSE_SIZE * V2_NextPose;
+	pose = pose + offset;
 
 	if (debug && deepDebug) {
 		DEBUG.println("\nPOSE Data: ");
@@ -50,6 +61,14 @@ void V2_CheckAction() {
 		DEBUG.println("\n");
 	}
 
+
+	// safetu check: running corrupted data may damage the servo
+	if ((pose[0] != 0xA9) || (pose[1] != 0x9A) || (pose[AD_POSE_SIZE - 1] != 0xED)) {
+		if (debug) DEBUG.printf("Data file corrupted, action STOP!\n");
+		V2_ResetAction();
+		return;
+	}
+	    
 
 	// Play current pose here
 	// Should use float for rounding here? // or just let it truncated.
@@ -67,6 +86,7 @@ void V2_CheckAction() {
 DEBUG.printf("%08ld -- Start servo command\n", millis());
 
 	if (debug && deepDebug) DEBUG.printf("LED changed: %s\n", (ledChange ? "YES" : "NO"));
+
 
 	// Move servo only if servo time > 0
 	if ((servoTime > 0) || (ledChange)) {
@@ -144,27 +164,8 @@ DEBUG.printf("%08ld -- End servo command\n", millis());
 		V2_ResetAction();
 		return;
 	}
+
+	// Try to preLoad next pose by checking is
+	actionData.IsPoseReady(V2_NextPose);
+
 }
-/*
-void V2_goPlayAction(byte actionCode) {
-	if (debug) DEBUG.printf("Start playing action %c\n", (actionCode + 'A'));
-	for (int po = 0; po < MAX_POSES; po++) {
-		int waitTime = actionTable[actionCode][po][WAIT_TIME_HIGH] * 256 + actionTable[actionCode][po][WAIT_TIME_LOW];
-		byte time = actionTable[actionCode][po][EXECUTE_TIME];
-		// End with all zero, so wait time will be 0x00, 0x00, and time will be 0x00 also
-		if ((waitTime == 0) && (time == 0)) break;
-		if (time > 0) {
-			for (int id = 1; id <= config.maxServo(); id++) {
-				byte angle = actionTable[actionCode][po][ID_OFFSET + id];
-				// max 240 degree, no action required if angle not changed, except first action
-				if ((angle <= 0xf0) && 
-					((po == 0) || (angle != actionTable[actionCode][po-1][ID_OFFSET + id]))) {
-					servo.move(id, angle, time);
-				}
-			}
-		}
-		delay(waitTime);
-	}
-	if (debug) DEBUG.printf("Action %c completed\n", (actionCode + 'A'));
-}
-*/

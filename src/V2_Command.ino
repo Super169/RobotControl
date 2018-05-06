@@ -33,8 +33,6 @@
 //   4F - Stop playing              : A9 9A 02 4F 51 ED
 //   61 - Read Action Header (fix) 	: A9 9A 03 61 01 65 ED
 //   62 - Read Action Data (fix)	: A9 9A 03 62 01 65 ED
-//   63 - Read Action Pose (fix)	: A9 9A 03 61 01 65 ED
-
 
 //   F1 - Read SPIFFS (fix) 		: A9 9A 02 F1 F3 ED
 //   F2 - Write SPIFFS (fix) 		: A9 9A 02 F2 F4 ED
@@ -209,11 +207,7 @@ bool V2_Command() {
 			V2_GetAdPose(cmd);
 			break;
 			
-		case V2_CMD_GET_ADDATA:
-			// V2_GetAdData(cmd);
-			break;
-
-		
+	
 		case V2_CMD_UPD_ADHEADER:
 			V2_UpdateAdHeader(cmd);
 			break;
@@ -695,14 +689,26 @@ void V2_GoAction(byte actionId, bool v2, byte *cmd) {
 		if (debug) DEBUG.printf("Read action %d from SPIFFS\n", actionId);
 		if (int error = actionData.ReadSPIFFS(actionId)) {
 			if (debug) DEBUG.printf("Fail to get Id matched - %d\n", error);
-			V2_SendSingleByteResult(cmd, 2);
+			if (v2) V2_SendSingleByteResult(cmd, 2);
 			return;
 		}
 	}
+
+	// Load starting with pId = 0
+	uint16_t pId = 0;
+	if (!actionData.IsPoseReady(pId)) {
+		if (v2) V2_SendSingleByteResult(cmd, 3);
+		return;	
+	}
+	
+
 	// Just for safety, check the poseCnt again.  
 	// May skip this step if those information is always updated.
-	if (debug) DEBUG.printf("Refresh action %d from SPIFFS\n", actionId);
-	actionData.RefreshActionInfo();
+	//
+	// -- In new version, it cannot be checked as only partial action is loaded in memory
+	//
+	// if (debug) DEBUG.printf("Refresh action %d from SPIFFS\n", actionId);
+	// actionData.RefreshActionInfo();
 
 	if (actionData.PoseCnt() > 0) {
 		V2_ActionCombo = 0;
@@ -803,44 +809,6 @@ void V2_GetAdHeader(byte *cmd) {
 	}
 	actionData.Header()[3] = cmd[3];
 	V2_SendResult((byte *) actionData.Header());
-}
-
-void V2_GetAdData(byte *cmd) {
-// No longer available due to file size is unpredicable 	
-/*	
-	if (debug) DEBUG.println(F("[V2_GetAdData]"));
-	byte aId = cmd[4];	
-	if (!V2_CheckActionId(aId)) {
-		V2_SendSingleByteResult(cmd, 0x01);
-		return;	
-	}
-	// Data size can over 256, single byte of len cannot be used_block
-	// Special handle for this result set or do not allow such retrieval
-	// - add special logic, make len = 0
-	// - then acual len will be stored in [4] [5] with Hing-Low order
-	// - data strt at offset 6 instead of 4
-	//
-	byte poseCnt = actionData.PoseCnt();
-	int dataSize = poseCnt * AD_POSE_SIZE;
-	int len = AD_HEADER_SIZE + dataSize + 6;  // {len} {cmd} {len_H} {len_L} {aId} {poseCnt} {data} => datasize + 6
-	byte len_H = (byte) (len / 256);
-	byte len_L = (byte) (len % 256);
-	byte d1[8] = { 0xA9, 0x9A, 0x00, cmd[3], len_H, len_L, aId, poseCnt};
-	byte sum = len + cmd[3] + len_H + len_L + aId + poseCnt;
-	byte *header = actionData.Header();
-	for (int i = 0; i < AD_HEADER_SIZE; i++) {
-		sum += header[i];
-	}
-	byte *data = actionData.Data();
-	for (int i = 0; i < dataSize; i++) {
-		sum += data[i];
-	}
-	Serial.write(d1, 8);
-	Serial.write(header, AD_HEADER_SIZE);
-	Serial.write(data, dataSize);
-	Serial.write(sum);
-	Serial.write(0xED);
-*/	
 }
 
 
@@ -954,7 +922,11 @@ void V2_UpdateAdPose(byte *cmd) {
 	}
 
 	int poseOffset = actionData.PoseOffset();
-	if ((pId >= actionData.PoseCnt()) || (pId < poseOffset) || (pId - poseOffset > AD_PBUFFER_COUNT)) {
+	int bufferEndPose = actionData.BufferEndPose();
+
+	if (debug) DEBUG.printf("[V2_UpdateAdPose] - pId: %d, pCnt: %d, poffset: %d, AD_PBUFFER_COUNT %d, End: %d\n", pId, actionData.PoseCnt(), poseOffset, AD_PBUFFER_COUNT, bufferEndPose);
+
+	if ((pId >= actionData.PoseCnt()) || (pId < poseOffset) || (pId > bufferEndPose)) {
 		V2_SendSingleByteResult(cmd, ERR_PARM_PID_OUT_RANGE);
 		return;
 	}
@@ -966,7 +938,10 @@ void V2_UpdateAdPose(byte *cmd) {
 
 	byte result = SUCCESS;
 
-	if ((pId = (actionData.PoseCnt() - 1)) || (pId - poseOffset == AD_PBUFFER_COUNT)) {
+	if (debug) DEBUG.printf("[V2_UpdateAdPose] - Saved\n");
+
+
+	if ((pId == (actionData.PoseCnt() - 1)) || (pId == bufferEndPose)) {
 		result = actionData.WritePoseData();
 	}
 

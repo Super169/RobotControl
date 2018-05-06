@@ -483,8 +483,14 @@ void V1_PlayAction() {
 			if (debug) DEBUG.printf("Invalid action: %02X\n", ch);
 			return; // Return for invalid action
 		}
-		V2_GoAction(actionId, false, NULL);
+
+		// Convert V1 Play Action to V2 Play Action
+		byte cmd[] = {0x9A, 0x9A, 0x03, 0x41, actionId , 0x00 ,0xED};
+
+		V2_GoAction(actionId, false, cmd);
 	}		
+
+
 }
 
 void V1_goPlayAction(byte actionCode) {

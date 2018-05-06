@@ -95,7 +95,9 @@ class ActionData {
 
 		uint16_t PoseCnt() { return (_header[AD_OFFSET_POSECNT_HIGH] << 8 | _header[AD_OFFSET_POSECNT_LOW]); }
 		uint16_t PoseOffset() { return _poseOffset; }
+		uint16_t BufferEndPose() { return (_poseOffset + AD_PBUFFER_COUNT - 1);}
 		void RefreshActionInfo();
+		bool IsPoseReady(uint16_t poseId);
 		bool IsPoseReady(uint16_t poseId, uint16_t &offset);
 		bool PoseOffsetInBuffer(uint16_t poseId, uint16_t &offset);
 

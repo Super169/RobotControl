@@ -422,8 +422,11 @@ byte ActionData::UpdatePose(byte actionId, byte poseId, byte *data) {
 }
 
 void ActionData::RefreshActionInfo() {
+	// Nothing can do as only partial action is loaded
+	/*
 	int pCnt = -1;
 	uint16_t servos;
+	
 	for (int i = 0; i < AD_MAX_POSE; i++) {
 		int pos = i * AD_POSE_SIZE;
 		// Empty criteria:
@@ -445,12 +448,13 @@ void ActionData::RefreshActionInfo() {
 			}
 		}
 	}
-	// MAX_POSE is 255
+	
 	if (pCnt == -1) pCnt = AD_MAX_POSE;
 	_header[AD_OFFSET_POSECNT_HIGH] = pCnt >> 8;
 	_header[AD_OFFSET_POSECNT_LOW] = pCnt & 0xFF;
 	_header[AD_OFFSET_AFFECTSERVO] = (byte) (servos / 256);
 	_header[AD_OFFSET_AFFECTSERVO + 1] = (byte) (servos % 256);
+	*/
 }
 
 // Pose ready means: a valid pose, and pose already in memory, if not load it
@@ -484,6 +488,11 @@ bool ActionData::IsPoseReady(uint16_t poseId, uint16_t &offset) {
 	return true;
 }
 
+
+bool ActionData::IsPoseReady(uint16_t poseId) {
+	uint16_t dummy;
+	return IsPoseReady(poseId, dummy);
+}
 
 /*
 
