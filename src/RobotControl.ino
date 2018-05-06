@@ -274,8 +274,6 @@ void CheckVoltage() {
 	if (millis() > nextVoltageMs) {
 		float voltage = 0.00f;
 		uint16_t v = analogRead(0);
-		//Serial.println(v);
-		//Serial.printf("min: %d, max: %d, alarm: %d\n\n", config.minVoltage(), config.maxVoltage(), config.alarmVoltage());
 		float power = ((float) (v - config.minVoltage()) / (config.maxVoltage() - config.minVoltage()) * 100.0f);
 		if (power > 100) power = 100;
 		if (power < 0) power = 0;
@@ -284,6 +282,9 @@ void CheckVoltage() {
 		myOLED.print(122,0,"%");
 
 		myOLED.show();
+
+		// DEBUG.printf("v: %d, min: %d, max: %d, alarm: %d, power: %d%%\n\n", v, config.minVoltage(), config.maxVoltage(), config.alarmVoltage(), iPower);
+
 		nextVoltageMs = millis() + 1000;
 	}
 }
@@ -353,6 +354,8 @@ void remoteControl() {
 			case 'U':
 			case 'W':
 			*/
+			case 'i':  // special for debug
+			case 'I':  // special for debug
 			case 'Z':
 				goNext = V1_Command();
 				break;

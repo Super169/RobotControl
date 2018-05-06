@@ -8,12 +8,15 @@
 
 #define AD_HEADER_SIZE			60
 #define AD_OFFSET_LEN			2
+#define AD_OFFSET_COMMAND       3
 #define AD_OFFSET_ID   			4
 #define AD_OFFSET_NAME  		6
 #define AD_NAME_SIZE       		20
 #define AD_OFFSET_POSECNT_LOW	28
 #define AD_OFFSET_POSECNT_HIGH	29
 #define AD_OFFSET_AFFECTSERVO	34
+
+#define AD_COMMAND 				0x61
 
 #define AD_POFFSET_ACTION		4
 #define AD_POFFSET_SEQ 			5
@@ -44,6 +47,29 @@
 #define ACTION_FILE "/alpha/action/%03d.dat"
 #define ACTION_POS  14
 
+#define SUCCESS					0
+#define ERR_PARM_SIZE			1
+#define ERR_PARM_AID_NOT_MATCH	2
+#define ERR_PARM_AD_NAME_SIZE	3
+#define ERR_PARM_PID_OUT_RANGE	4
+#define ERR_CHECKSUM			9
+
+#define ERR_FILE_SPIFFS			11
+#define ERR_FILE_NOT_FOUND		12
+#define ERR_FILE_OPEN_READ		13
+#define ERR_FILE_OPEN_WRITE		14
+#define ERR_FILE_OPEN_APPEND	15
+#define ERR_FILE_SIZE			16
+#define ERR_FILE_READ_COUNT		17
+#define ERR_FILE_WRITE_COUNT	18
+#define ERR_FILE_SEEK			19
+
+
+#define ERR_AD_HEADER_CONTENT	21
+#define ERR_AD_HEADER_CHECKSUM	22
+#define ERR_AD_POSE_NOT_READY	25
+#define ERR_AD_POSE_CHECKSUM	26
+
 
 
 class ActionData {
@@ -54,8 +80,11 @@ class ActionData {
 		bool SetActionName(char *actionName, byte len);
 		bool SetActionName(String actionName);
 		byte UpdatePose(byte actionId, byte poseId, byte *data);
-		bool ReadSPIFFS(byte actionId);
+		byte ReadSPIFFS(byte actionId);
 		byte WriteSPIFFS();
+		byte WriteHeader();
+		byte WritePoseData();
+		byte SpiffsWritePoseData();
 		byte DeleteSPIFFS(byte actionId);
 		// bool DumpActionHeader(byte actionId);
 		// bool DumpActionData(byte actionId);
@@ -65,6 +94,7 @@ class ActionData {
 		byte * Data() { return (byte *) _data; }
 
 		uint16_t PoseCnt() { return (_header[AD_OFFSET_POSECNT_HIGH] << 8 | _header[AD_OFFSET_POSECNT_LOW]); }
+		uint16_t PoseOffset() { return _poseOffset; }
 		void RefreshActionInfo();
 		bool IsPoseReady(uint16_t poseId, uint16_t &offset);
 		bool PoseOffsetInBuffer(uint16_t poseId, uint16_t &offset);
@@ -74,12 +104,12 @@ class ActionData {
 
 	private:
 
-		bool ReadActionFile(int actionId);
-		bool SpiffsReadActionFile(int actionId);
-		bool ReadActionHeader(int actionId);
-		bool SpiffsReadActionHeader(int actionId);
-		bool ReadActionPose();
-		bool SpiffsReadActionPose();
+		byte ReadActionFile(int actionId);
+		byte SpiffsReadActionFile(int actionId);
+		byte ReadActionHeader(int actionId);
+		byte SpiffsReadActionHeader(int actionId);
+		byte ReadActionPose();
+		byte SpiffsReadActionPose();
 
 		byte _id;
 		byte _len;

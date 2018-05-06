@@ -69,6 +69,13 @@ bool V1_Command() {
 				V1_LockServoText(false);
 				break;
 
+			case 'i':
+				V1_CheckSD(&Serial);
+				break;
+			case 'I':
+				V1_CheckSD(&Serial1);
+				break;
+
 			case 'J':
 				V1_GetServoAdjAngle();
 				break;
@@ -711,3 +718,20 @@ void V1_ResetConnection() {
 
 #pragma endregion
 
+void V1_CheckSD(HardwareSerial *ss) {
+	if (debug) DEBUG.println(F("[V1_CheckSD]"));
+
+	ss->println("**** SPIFFS List");
+	SPIFFS.begin();
+	Dir dir;
+	ss->println("\nFiles in root: ");
+	dir = SPIFFS.openDir("");
+	while (dir.next()) {
+		ss->print(dir.fileName());
+		ss->print("  ");
+		File f = dir.openFile("r");
+		ss->println(f.size());
+	}
+
+	SPIFFS.end();;
+}

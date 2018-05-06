@@ -693,8 +693,9 @@ void V2_GoAction(byte actionId, bool v2, byte *cmd) {
 	if (actionData.id() != actionId) {
 		// need to load actionData
 		if (debug) DEBUG.printf("Read action %d from SPIFFS\n", actionId);
-		if (!actionData.ReadSPIFFS(actionId)) {
-			if (v2) V2_SendSingleByteResult(cmd, 2);
+		if (int error = actionData.ReadSPIFFS(actionId)) {
+			if (debug) DEBUG.printf("Fail to get Id matched - %d\n", error);
+			V2_SendSingleByteResult(cmd, 2);
 			return;
 		}
 	}
@@ -726,13 +727,14 @@ void V2_PlayCombo(byte *cmd) {
 
 bool V2_CheckActionId(byte actionId) {
 
-	if (debug) DEBUG.printf("Current Id: %d (%d); requested Id: %d\n", actionData.id(), actionData.Header()[4], actionId);
+	if (debug) DEBUG.printf("V2_CheckActionId - Current Id: %d (%d); requested Id: %d\n", actionData.id(), actionData.Header()[4], actionId);
 	if (actionId != actionData.id() ) {
-		if (!actionData.ReadSPIFFS(actionId)) {
+		if (int error = actionData.ReadSPIFFS(actionId)) {
 			// anything to do if still fail to read
-			if (debug) DEBUG.println("Fail to get Id matched.");
+			if (debug) DEBUG.printf("Fail to get Id matched - %d\n", error);
 			return false;
 		}
+		if (debug) DEBUG.printf("V2_CheckActionId - Current Id changed to %d (%d)\n", actionData.id(), actionData.Header()[4]);
 	} 
 	return true;
 }
@@ -801,7 +803,6 @@ void V2_GetAdHeader(byte *cmd) {
 	}
 	actionData.Header()[3] = cmd[3];
 	V2_SendResult((byte *) actionData.Header());
-
 }
 
 void V2_GetAdData(byte *cmd) {
@@ -846,11 +847,13 @@ void V2_GetAdData(byte *cmd) {
 void V2_GetAdPose(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_GetAdPose]"));
 
-DEBUG.printf("\n\nV2_GetAdPose - A - Serial dump - first 60:\n");
-for (int i = 0; i < 60; i++) {
-	DEBUG.printf("%02X ", actionData.Data()[i]);
-}
-DEBUG.printf("\n\n\n");
+	#ifdef UBT_DUMP
+		DEBUG.printf("\n\nV2_GetAdPose - A - Serial dump - first 60:\n");
+		for (int i = 0; i < 60; i++) {
+			DEBUG.printf("%02X ", actionData.Data()[i]);
+		}
+		DEBUG.printf("\n\n\n");
+	#endif
 
 	byte aId = cmd[4];
 	if (!V2_CheckActionId(aId)) {
@@ -863,12 +866,14 @@ DEBUG.printf("\n\n\n");
 		V2_SendSingleByteResult(cmd, 0x02);
 		return;	
 	}
-DEBUG.printf("\n\nV2_GetAdPose - B - Serial dump - first 60:\n");
-for (int i = 0; i < 60; i++) {
-	DEBUG.printf("%02X ", actionData.Data()[i]);
-}
-DEBUG.printf("\n\n\n");
 
+	#ifdef UBT_DUMP
+		DEBUG.printf("\n\nV2_GetAdPose - B - Serial dump - first 60:\n");
+		for (int i = 0; i < 60; i++) {
+			DEBUG.printf("%02X ", actionData.Data()[i]);
+		}
+		DEBUG.printf("\n\n\n");
+	#endif
 
 	byte result[AD_POSE_SIZE];
 	byte * fromPos = actionData.Data();
@@ -884,7 +889,7 @@ DEBUG.printf("\n\n\n");
 	}
 	DEBUG.println();
 
-	DEBUG.printf("Return Data: \n");
+	DEBUG.printf("V2_GetAdPose - Return Data: \n");
 	for (int i = 0; i < AD_POSE_SIZE; i++) {
 		DEBUG.printf("%02X ", result[i]);
 	}
@@ -900,7 +905,7 @@ void V2_UpdateAdHeader(byte *cmd) {
 	// Length should be header size - 4
 	if (cmd[2] != (AD_HEADER_SIZE - 4)) {
 		if (debug) DEBUG.printf("Invalid length: %d\n", cmd[2]);
-		V2_SendSingleByteResult(cmd, 1);
+		V2_SendSingleByteResult(cmd, ERR_PARM_SIZE);
 		return;
 	}
 
@@ -919,10 +924,13 @@ void V2_UpdateAdHeader(byte *cmd) {
 		actionData.Header()[i] = cmd[i];
 	}
 	
-	if (debug) DEBUG.printf("Action %d header updated\n", aId);
-	V2_SendSingleByteResult(cmd, 0);
+	byte result = actionData.WriteHeader();
+
+	if (debug) DEBUG.printf("Action %d header updated - %d\n", aId, result);
+	V2_SendSingleByteResult(cmd, result);
 	
 }
+
 
 void V2_UpdateAdPose(byte *cmd) {
 	
@@ -931,43 +939,59 @@ void V2_UpdateAdPose(byte *cmd) {
 	// Length should be {len} {actionId} {poseId} {data} => pose datasize + 3
 	if (cmd[2] != (AD_POSE_SIZE - 4)) {
 		if (debug) DEBUG.printf("Invalid length: %d\n", cmd[2]);
-		V2_SendSingleByteResult(cmd, 1);
+		V2_SendSingleByteResult(cmd, ERR_PARM_SIZE);
 		return;
 	}	
 	
 	byte aId = cmd[4];
-	byte pId = cmd[5];
+	uint16_t pId = (cmd[AD_POFFSET_SEQ_HIGH] << 8) | cmd[AD_POFFSET_SEQ];
 
 	// Action ID must be matched.  i.e. must GET before UPDATE
 	if (aId != actionData.Header()[4]) {
 		if (debug) DEBUG.printf("ID not matched: %d (current: %d)\n", aId, actionData.Header()[4]);
-		V2_SendSingleByteResult(cmd, 2);
+		V2_SendSingleByteResult(cmd, ERR_PARM_AID_NOT_MATCH);
 		return;
 	}
 
-	int startPos = AD_POSE_SIZE * pId;
+	int poseOffset = actionData.PoseOffset();
+	if ((pId >= actionData.PoseCnt()) || (pId < poseOffset) || (pId - poseOffset > AD_PBUFFER_COUNT)) {
+		V2_SendSingleByteResult(cmd, ERR_PARM_PID_OUT_RANGE);
+		return;
+	}
+
+	int startPos = AD_POSE_SIZE * (pId - poseOffset);
 	for (int i = 0; i < AD_POSE_SIZE; i++) {
 		actionData.Data()[startPos + i] = cmd[i];
 	}
-	V2_SendSingleByteResult(cmd, 0);
 
-DEBUG.printf("\n\nV2_UpdateAdPose - Serial dump - first 60:\n");
-for (int i = 0; i < 60; i++) {
-	DEBUG.printf("%02X ", actionData.Data()[i]);
-}
-DEBUG.printf("\n\n\n");
+	byte result = SUCCESS;
 
+	if ((pId = (actionData.PoseCnt() - 1)) || (pId - poseOffset == AD_PBUFFER_COUNT)) {
+		result = actionData.WritePoseData();
+	}
+
+	V2_SendSingleByteResult(cmd, result);
+
+	#ifdef UBT_DUMP
+		DEBUG.printf("\n\nV2_UpdateAdPose - Serial dump - first 60:\n");
+		for (int i = 0; i < 60; i++) {
+			DEBUG.printf("%02X ", actionData.Data()[i]);
+		}
+		DEBUG.printf("\n\n\n");
+	#endif
 }
+
+
 
 void V2_UpdateAdName(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_UpdateAdName]"));
 	byte id = cmd[4];
 	if (actionData.id() != id) {
-		V2_SendSingleByteResult(cmd, 1);
+		V2_SendSingleByteResult(cmd, ERR_PARM_AID_NOT_MATCH);
 		return;
 	}
 	if (cmd[5] > AD_NAME_SIZE) {
-		V2_SendSingleByteResult(cmd, 2);
+		V2_SendSingleByteResult(cmd, ERR_PARM_AD_NAME_SIZE);
 		return;
 	}
 	byte * startPos = actionData.Header() + AD_OFFSET_NAME;
@@ -981,7 +1005,7 @@ void V2_UpdateAdName(byte *cmd) {
 		actionData.Header()[AD_OFFSET_NAME + i] = cmd[6 + i];
 	}
 	if (debug) DEBUG.println();
-	V2_SendSingleByteResult(cmd, 0);
+	V2_SendSingleByteResult(cmd, SUCCESS);
 }
 
 #pragma endregion
@@ -991,8 +1015,8 @@ void V2_UpdateAdName(byte *cmd) {
 
 void V2_ReadSPIFFS(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_ReadSPIFFS]"));
-	byte success = V2_UBT_ReadSPIFFS(cmd);
-	V2_SendSingleByteResult(cmd, success);
+	byte result = V2_UBT_ReadSPIFFS(cmd);
+	V2_SendSingleByteResult(cmd, result);
 }
 
 byte V2_UBT_ReadSPIFFS(byte *cmd) {
@@ -1002,18 +1026,20 @@ byte V2_UBT_ReadSPIFFS(byte *cmd) {
 void V2_WriteSPIFFS(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_WriteSPIFFS]"));
 
-DEBUG.printf("\n\nV2_WriteSPIFFS - first 60:\n");
-DEBUG.printf("Action Id: %d\n", actionData.id());
-for (int i = 0; i < 60; i++) {
-	DEBUG.printf("%02X ", actionData.Data()[i]);
-}
-DEBUG.printf("\n\n\n");
-
+	#ifdef UBT_DUMP
+		DEBUG.printf("\n\nV2_WriteSPIFFS - first 60:\n");
+		DEBUG.printf("Action Id: %d\n", actionData.id());
+		for (int i = 0; i < 60; i++) {
+			DEBUG.printf("%02X ", actionData.Data()[i]);
+		}
+		DEBUG.printf("\n\n\n");
+	#endif
 
 	byte result = actionData.WriteSPIFFS();
 	V2_SendSingleByteResult(cmd, result);
 }
 
+/*
 // What a fxxxing bug in vs.code + platformIO, the following is a dummy function copy from V2_WriteSPIFFS.
 // This function has not been fired in the program, it's a dummy function.
 // But it will cause error in software serial communization if it has been deleted or comment out.
@@ -1023,5 +1049,6 @@ void V3_WriteSPIFFS(byte *cmd) {
 	byte result = actionData.WriteSPIFFS();
 	V2_SendSingleByteResult(cmd, result);
 }
+*/
 
 #pragma endregion
