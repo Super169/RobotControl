@@ -87,8 +87,8 @@ void setup() {
 	config.setMaxServo(20);
 	// config.setMp3Enabled(false);  // special version only
 
-	// SetDebug(config.enableDebug());
-	SetDebug(true);
+	SetDebug(config.enableDebug());
+	// SetDebug(true);
 	
 	retBuffer = servo.retBuffer();
 

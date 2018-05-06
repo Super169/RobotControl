@@ -1,6 +1,6 @@
 #include "ActionData.h"
 
-#define DEBUG_ActionData
+// #define DEBUG_ActionData
 
 ActionData::ActionData() {
 	_name = (char *) (_header + AD_OFFSET_NAME);

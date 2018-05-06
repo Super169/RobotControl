@@ -276,6 +276,8 @@ void V2_SetDebug(byte *cmd) {
 	byte status = (cmd[4] ? 1 : 0);
 	if (debug && !status) DEBUG.printf("Disable debug mode\n");
 	SetDebug(status);
+	config.setDebug(status);
+	config.writeConfig();
 	if (debug) DEBUG.printf("Debug mode %s\n", (status ? "enabled" : "disabled"));
 	V2_SendSingleByteResult(cmd, 0);
 }

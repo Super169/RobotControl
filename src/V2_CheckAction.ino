@@ -83,7 +83,7 @@ void V2_CheckAction() {
 		ledChange |= pose[AD_POFFSET_LED + i];
 	}
 
-DEBUG.printf("%08ld -- Start servo command\n", millis());
+if (debug) DEBUG.printf("%08ld -- Start servo command\n", millis());
 
 	if (debug && deepDebug) DEBUG.printf("LED changed: %s\n", (ledChange ? "YES" : "NO"));
 
@@ -115,7 +115,7 @@ DEBUG.printf("%08ld -- Start servo command\n", millis());
 		}
 	}
 
-DEBUG.printf("%08ld -- End servo command\n", millis());
+if (debug) DEBUG.printf("%08ld -- End servo command\n", millis());
 
 	// Check HeadLED, follow servo status 0 - on, 1 - off
 	byte headLight = pose[AD_POFFSET_HEAD];
