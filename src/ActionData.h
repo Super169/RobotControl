@@ -63,6 +63,7 @@
 #define ERR_FILE_READ_COUNT		17
 #define ERR_FILE_WRITE_COUNT	18
 #define ERR_FILE_SEEK			19
+#define ERR_FILE_REMOVE         20
 
 
 #define ERR_AD_HEADER_CONTENT	21
@@ -85,7 +86,7 @@ class ActionData {
 		byte WriteHeader();
 		byte WritePoseData();
 		byte SpiffsWritePoseData();
-		byte DeleteSPIFFS(byte actionId);
+		byte DeleteActionFile(byte actionId);
 		// bool DumpActionHeader(byte actionId);
 		// bool DumpActionData(byte actionId);
 		byte id() { return _id; }

@@ -46,6 +46,10 @@
 //   61 - Read Action Header (fix) 	: A9 9A 03 61 01 65 ED
 //   62 - Read Action Data (fix)	: A9 9A 03 62 01 65 ED
 
+//   71 - Update action header      : {Refer to ActionInfo}
+//   72 - Update action pose        : {refer to PoseInfo}	
+//   74 - Update action name	    : A9 9A 0B 74 01 07  44 65 66 61 75 6C 74 D7 ED
+//   75 - Delete action file	    : A9 9A 03 75 00 78 ED
 
 
 
@@ -233,6 +237,9 @@ bool V2_Command() {
 			V2_UpdateAdName(cmd);
 			break;
 
+		case V2_CMD_DEL_ACTION:
+			V2_DeleteActionFile(cmd);
+			break;
 /*
 		case V2_CMD_READSPIFFS:
 			V2_ReadSPIFFS(cmd);
@@ -1016,6 +1023,13 @@ void V2_UpdateAdName(byte *cmd) {
 	}
 	if (debug) DEBUG.println();
 	V2_SendSingleByteResult(cmd, SUCCESS);
+}
+
+void V2_DeleteActionFile(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_DeleteActionFile]"));
+	byte id = cmd[4];
+	byte result = actionData.DeleteActionFile(id);
+	V2_SendSingleByteResult(cmd, result);
 }
 
 #pragma endregion

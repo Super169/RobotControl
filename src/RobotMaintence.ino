@@ -125,7 +125,7 @@ void RM_DelAction() {
 			break;
 		}
 	}
-	byte result = actionData.DeleteSPIFFS((byte) aId);
+	byte result = actionData.DeleteActionFile((byte) aId);
 
 	char fileName[25];
 	memset(fileName, 0, 25);

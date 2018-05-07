@@ -359,25 +359,6 @@ Serial1.printf("Save to %s\n", fileName);
 	return result;
 }
 
-byte ActionData::DeleteSPIFFS(byte actionId) {
-	char fileName[25];
-	memset(fileName, 0, 25);
-	sprintf(fileName, ACTION_FILE, actionId);
-	byte result = 0xFF;
-	SPIFFS.begin();
-	if (SPIFFS.exists(fileName)) {
-		if (SPIFFS.remove(fileName)) {
-			result = 0;
-		} else {
-			result = 2;
-		}
-	} else {
-		result = 1;
-	}
-	SPIFFS.end();
-	return result;
-}
-
 bool ActionData::SetActionName(char *actionName, byte len) {
 	if (len > 20) return false;
 	byte *ptr = _header + AD_OFFSET_NAME;
@@ -421,42 +402,6 @@ byte ActionData::UpdatePose(byte actionId, byte poseId, byte *data) {
 	return 0;
 }
 
-void ActionData::RefreshActionInfo() {
-	// Nothing can do as only partial action is loaded
-	/*
-	int pCnt = -1;
-	uint16_t servos;
-	
-	for (int i = 0; i < AD_MAX_POSE; i++) {
-		int pos = i * AD_POSE_SIZE;
-		// Empty criteria:
-		//   - Execution time = 0
-		//   - Wait time = 0
-		if ((_data[pos + AD_POFFSET_STIME] == 0) && (_data[pos + AD_POFFSET_STIME + 1] == 0) && 
-			(_data[pos + AD_POFFSET_WTIME] == 0) && (_data[pos + AD_POFFSET_WTIME + 1] == 0))
-		{
-			pCnt = i;
-			break;	
-		}
-		// no need to check if all servo used
-		if (servos != 0xFFFF) {
-			int aPos = pos + AD_POFFSET_ANGLE;
-			for (int i = 0; i < 16; i++) {
-				if (_data[aPos] < 0xF0) {
-					servos |= 1 << i;
-				}
-			}
-		}
-	}
-	
-	if (pCnt == -1) pCnt = AD_MAX_POSE;
-	_header[AD_OFFSET_POSECNT_HIGH] = pCnt >> 8;
-	_header[AD_OFFSET_POSECNT_LOW] = pCnt & 0xFF;
-	_header[AD_OFFSET_AFFECTSERVO] = (byte) (servos / 256);
-	_header[AD_OFFSET_AFFECTSERVO + 1] = (byte) (servos % 256);
-	*/
-}
-
 // Pose ready means: a valid pose, and pose already in memory, if not load it
 //   - Detect for in memory: related batch in memory, i.e. current _poseOffet is first one in batch
 // Optional: check if pose ready loaded - not implemented
@@ -488,10 +433,38 @@ bool ActionData::IsPoseReady(uint16_t poseId, uint16_t &offset) {
 	return true;
 }
 
-
 bool ActionData::IsPoseReady(uint16_t poseId) {
 	uint16_t dummy;
 	return IsPoseReady(poseId, dummy);
+}
+
+byte ActionData::DeleteActionFile(byte actionId) {
+#ifdef DEBUG_ActionData
+	Serial1.printf("ActionData.DeleteActionFile(%d)\n", actionId);
+#endif		
+	char fileName[25];
+	memset(fileName, 0, 25);
+	sprintf(fileName, ACTION_FILE, actionId);
+	byte result = 0xFF;
+	SPIFFS.begin();
+	if (SPIFFS.exists(fileName)) {
+		if (SPIFFS.remove(fileName)) {
+			result = SUCCESS;
+		} else {
+			result = ERR_FILE_REMOVE;
+		}
+	} else {
+		result = ERR_FILE_NOT_FOUND;
+	}
+	SPIFFS.end();
+	if ( (result == SUCCESS) && (_id == actionId)) {
+		InitObject(0);
+	}
+
+#ifdef DEBUG_ActionData
+	Serial1.printf("ActionData.DeleteActionFile(%d) -> %d\n", actionId, result);
+#endif	
+	return result;	
 }
 
 /*
