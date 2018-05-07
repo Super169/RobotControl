@@ -151,6 +151,7 @@ uint8_t mp3_Vol = 0xff;
 
 #pragma region "Local Functions"
 
+byte GetPower(uint16_t v);
 void cmd_ReadSPIFFS();
 void ReadSPIFFS(bool sendResult);
 

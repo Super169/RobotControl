@@ -19,7 +19,7 @@ bool V2_UseGlobalTime = true;
 #define V2_CMD_DEVMODE      	0x03
 
 #define V2_CMD_ENABLE			0x0A
-
+#define V2_CMD_CHECK_BATTERY	0x0B
 #define V2_CMD_SERVOANGLE		0x11
 #define V2_CMD_ONEANGLE			0x12
 #define V2_CMD_SERVOADJANGLE	0x13
@@ -50,9 +50,10 @@ bool V2_UseGlobalTime = true;
 #define V2_CMD_UPD_ADPOSE		0x72
 #define V2_CMD_UPD_ADNAME		0x74
 
-
+/*
 #define V2_CMD_READSPIFFS   	0xF1
 #define V2_CMD_WRITESPIFFS  	0xF2
+*/
 
 bool deepDebug = true;
 

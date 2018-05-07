@@ -17,6 +17,7 @@
 //									  A9 9A 03 03 01 07 ED
 //   0A - Command Enable (fix)		: A9 9A 02 0A 0C ED
 //                                    A9 9A 07 0A 00 01 01 01 01 15 ED
+//   0B - Check battery (fix)       : A9 9A 02 0B 0D ED
 //   11 - Get Angle (fix) 			: A9 9A 02 11 13 ED
 //   12 - Get One Angle (fix)		: A9 9A 03 12 01 16 ED
 //   13 - Get Adj Angle (fix)		: A9 9A 02 13 15 ED
@@ -28,14 +29,23 @@
 //	 24 - Set LED (var)				: A9 9A 04 24 00 01 29 ED
 //                                  : A9 9A 06 24 01 00 02 01 2E ED
 //   31 - Set Head LED (fix)        : A9 9A 03 31 00 34 ED
+//                                    A9 9A 03 31 01 35 ED
+//	 32	- Stop MP3 (fix)			: A9 9A 02 32 34 ED
+//   33 - Play File (fix)			: A9 9A 04 33 00 01 38 ED
+//                                    A9 9A 04 33 FF 02 38 ED
+//   34 - Play MP3 File (fix)		: A9 9A 03 34 01 38 ED
+//   35 - Play Avert File (fix)		: A9 9A 03 35 01 39 ED
+//   36 - MP3 Set Volume (fix)		: A9 9A 04 36 00 0F 49 ED
+//                                    A9 9A 04 36 01 01 3C ED
+
+
+
 //   41 - Play Action               : A9 9A 03 41 00 43 ED
 //   42 - Play Combo                : A9 9A 03 42 00 44 ED
 //   4F - Stop playing              : A9 9A 02 4F 51 ED
 //   61 - Read Action Header (fix) 	: A9 9A 03 61 01 65 ED
 //   62 - Read Action Data (fix)	: A9 9A 03 62 01 65 ED
 
-//   F1 - Read SPIFFS (fix) 		: A9 9A 02 F1 F3 ED
-//   F2 - Write SPIFFS (fix) 		: A9 9A 02 F2 F4 ED
 
 
 
@@ -129,6 +139,10 @@ bool V2_Command() {
 			V2_CommandEnable(cmd);
 			break;
 
+		case V2_CMD_CHECK_BATTERY:
+			V2_CheckBattery(cmd);
+			break;
+
 		case V2_CMD_SERVOANGLE:
 			V2_GetServoAngle(cmd);
 			break;
@@ -207,7 +221,6 @@ bool V2_Command() {
 			V2_GetAdPose(cmd);
 			break;
 			
-	
 		case V2_CMD_UPD_ADHEADER:
 			V2_UpdateAdHeader(cmd);
 			break;
@@ -220,6 +233,7 @@ bool V2_Command() {
 			V2_UpdateAdName(cmd);
 			break;
 
+/*
 		case V2_CMD_READSPIFFS:
 			V2_ReadSPIFFS(cmd);
 			break;
@@ -227,7 +241,7 @@ bool V2_Command() {
 		case V2_CMD_WRITESPIFFS:
 			V2_WriteSPIFFS(cmd);
 			break;
-
+*/
 		default:
 			if (debug) {
 				DEBUG.printf("Undefined command: %02X\n", cmd[3]);
@@ -311,10 +325,28 @@ void V2_CommandEnable(byte *cmd) {
 	result[8] = (enable_UBTSV ? 1 : 0);
 
 	V2_SendResult(result);
-	// Serial.write(result, 5);
 }
 
 #pragma endregion
+
+
+void V2_CheckBattery(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_CheckBattery]"));
+	byte result[9];
+	result[2] = 5;
+	result[3] = cmd[3];
+	uint16_t v = analogRead(0);
+	byte iPower = GetPower(v);
+	result[4] = iPower;
+	result[5] = v >> 8;
+	result[6] = v & 0xFF;
+
+	if (debug) DEBUG.printf("[V2_CheckBattery] - %d -> %d%%\n", v, iPower);
+
+	V2_SendResult(result);
+}
+
+
 
 #pragma region V2_CMD_SERVOANGLE / V2_CMD_ONEANGLE
 
@@ -990,7 +1022,7 @@ void V2_UpdateAdName(byte *cmd) {
 
 
 #pragma region SPIFFS: V2_CMD_READSPIFFS / V2_CMD_WRITESPIFFS
-
+/*
 void V2_ReadSPIFFS(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_ReadSPIFFS]"));
 	byte result = V2_UBT_ReadSPIFFS(cmd);
@@ -1013,17 +1045,6 @@ void V2_WriteSPIFFS(byte *cmd) {
 		DEBUG.printf("\n\n\n");
 	#endif
 
-	byte result = actionData.WriteSPIFFS();
-	V2_SendSingleByteResult(cmd, result);
-}
-
-/*
-// What a fxxxing bug in vs.code + platformIO, the following is a dummy function copy from V2_WriteSPIFFS.
-// This function has not been fired in the program, it's a dummy function.
-// But it will cause error in software serial communization if it has been deleted or comment out.
-// Who can tell me WHY? WHY? WHY?  anyway, it takes me two days to find out such dummy "solution" for the bug.
-void V3_WriteSPIFFS(byte *cmd) {
-	if (debug) DEBUG.println(F("[V3_WriteSPIFFS]"));
 	byte result = actionData.WriteSPIFFS();
 	V2_SendSingleByteResult(cmd, result);
 }

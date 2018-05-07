@@ -272,21 +272,24 @@ unsigned nextVoltageMs = 0;
 
 void CheckVoltage() {
 	if (millis() > nextVoltageMs) {
-		float voltage = 0.00f;
 		uint16_t v = analogRead(0);
-		float power = ((float) (v - config.minVoltage()) / (config.maxVoltage() - config.minVoltage()) * 100.0f);
-		if (power > 100) power = 100;
-		if (power < 0) power = 0;
-		int iPower = (int) (power + 0.5); // round up
+		int iPower = GetPower(v);
 		myOLED.printNum(104,0,iPower, 10, 3, false);
 		myOLED.print(122,0,"%");
-
 		myOLED.show();
-
+		nextVoltageMs = millis() + 1000;
 		// DEBUG.printf("v: %d, min: %d, max: %d, alarm: %d, power: %d%%\n\n", v, config.minVoltage(), config.maxVoltage(), config.alarmVoltage(), iPower);
 
-		nextVoltageMs = millis() + 1000;
 	}
+}
+
+// For consistence, build common function to convert A0 value to Power rate
+byte GetPower(uint16_t v) {
+	float power = ((float) (v - config.minVoltage()) / (config.maxVoltage() - config.minVoltage()) * 100.0f);
+	int iPower = (int) (power + 0.5); // round up
+	if (iPower > 100) iPower = 100;
+	if (iPower < 0) iPower = 0;
+	return (byte) iPower;
 }
 
 // move data from Serial buffer to command buffer
