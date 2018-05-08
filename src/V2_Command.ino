@@ -107,12 +107,42 @@ bool V2_Command() {
 		return true;
 	}
 
-	// Special handle for stop play as there has no need to check for action playing
-	if (cmd[3] == V2_CMD_STOPPLAY) {
-		V2_ResetAction();
-		V2_SendSingleByteResult(cmd, 0);
-		return true;
+	switch (cmd[3]) {
+		case V2_CMD_DEBUG:
+			V2_SetDebug(cmd);
+			return true;
+			break;
+		
+		case V2_CMD_DEVMODE:			
+			V2_SetDevMode(cmd);
+			return true;
+			break;
+
+		case V2_CMD_CHECK_BATTERY:
+			V2_CheckBattery(cmd);
+			break;
+
+		case V2_CMD_MP3_STOP:
+			V2_Mp3Stop(cmd);
+			break;
+
+		case V2_CMD_MP3_SETVOLUME:
+			V2_Mp3SetVolume(cmd);
+			break;
+
+		case V2_CMD_STOPPLAY:
+			V2_ResetAction();
+			if (config.mp3Enabled()) {
+				mp3.begin();
+				mp3.stop();
+				mp3.end();
+			}
+			V2_SendSingleByteResult(cmd, 0);
+			return true;
+			break;
+
 	}
+
 
 	// No command except STOP is allowed when action playing
 	// Even some command will not affect the action, but for safety, do not play any of them.
@@ -131,20 +161,8 @@ bool V2_Command() {
 			V2_Reset(cmd);
 			break;
 
-		case V2_CMD_DEBUG:
-			V2_SetDebug(cmd);
-			break;
-
-		case V2_CMD_DEVMODE:			
-			V2_SetDevMode(cmd);
-			break;
-
 		case V2_CMD_ENABLE:
 			V2_CommandEnable(cmd);
-			break;
-
-		case V2_CMD_CHECK_BATTERY:
-			V2_CheckBattery(cmd);
 			break;
 
 		case V2_CMD_SERVOANGLE:
@@ -183,10 +201,6 @@ bool V2_Command() {
 			V2_SetHeadLED(cmd);
 			break;
 
-		case V2_CMD_MP3_STOP:
-			V2_Mp3Stop(cmd);
-			break;
-
 		case V2_CMD_MP3_PLAYFILE:
 			V2_Mp3PlayFile(cmd);
 			break;
@@ -197,10 +211,6 @@ bool V2_Command() {
 
 		case V2_CMD_MP3_PLAYADVERT:
 			V2_Mp3PlayAdvert(cmd);
-			break;
-
-		case V2_CMD_MP3_SETVOLUME:
-			V2_Mp3SetVolume(cmd);
 			break;
 
 
