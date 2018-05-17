@@ -333,6 +333,9 @@ void remoteControl() {
 				goNext = V2_Command();
 				break;
 
+			case '#':
+				goNext = HILZD_Command();
+				break;
 
 			case 'A':
 			case 'a':

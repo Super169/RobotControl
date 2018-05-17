@@ -40,6 +40,7 @@ bool enable_V2 = true;
 bool enable_UBTBT = true;
 bool enable_UBTCB = true;
 bool enable_UBTSV = true;
+bool enable_HILZD = false;
 
 ActionData actionData;
 
@@ -196,5 +197,9 @@ void V2_CheckAction();
 void V2_GoAction(byte actionId, bool v2, byte *cmd);
 
 void RobotMaintenanceMode();
+
+
+// HILZD
+bool HILZD_Command();
 
 #endif
