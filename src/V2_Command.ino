@@ -120,14 +120,17 @@ bool V2_Command() {
 
 		case V2_CMD_CHECK_BATTERY:
 			V2_CheckBattery(cmd);
+			return true;
 			break;
 
 		case V2_CMD_MP3_STOP:
 			V2_Mp3Stop(cmd);
+			return true;
 			break;
 
 		case V2_CMD_MP3_SETVOLUME:
 			V2_Mp3SetVolume(cmd);
+			return true;
 			break;
 
 		case V2_CMD_STOPPLAY:

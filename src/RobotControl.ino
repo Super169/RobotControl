@@ -153,7 +153,8 @@ void setup() {
 
 	DEBUG.println("Starting robot servo: ");
 	
-	servo.init(config.maxServo(), config.maxRetry());
+	// servo.init(config.maxServo(), config.maxCommandWaitMs(), config.maxCommandRetry(), config.maxDetectRetry());
+	servo.init(config.maxServo(), 2,10,10);
 	// servo.init(config.maxServo(), 0);	// No retry for fast testing without all servo
 
 	// clean up software serial

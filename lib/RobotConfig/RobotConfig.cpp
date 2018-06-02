@@ -24,7 +24,9 @@ void RobotConfig::initConfig() {
     setVoltage(DEFAULT_REF_VOLTAGE, DEFAULT_MIN_VOLTAGE, DEFAULT_MAX_VOLTAGE, DEFAULT_ALARM_VOLTAGE);
 
     setMaxServo(DEFAULT_MAX_SERVO);
-    setMaxRetry(DEFAULT_MAX_RETRY);
+    setMaxDetectRetry(DEFAULT_MAX_DETECT_RETRY);
+    setMaxCommandWaitMs(DEFAULT_MAX_COMMAND_WAIT_MS);
+    setMaxCommandRetry(DEFAULT_MAX_COMMAND_RETRY);
 
     setMp3Enabled(DEFAULT_MP3_ENABLED);
     setMp3Volume(DEFAULT_MP3_VOLUME);
@@ -112,8 +114,16 @@ void RobotConfig::setMaxServo(uint8_t maxServo) {
     _data[RC_MAX_SERVO] = maxServo;
 }
 
-void RobotConfig::setMaxRetry(uint8_t maxRetry) {
-    _data[RC_MAX_RETRY] = maxRetry;
+void RobotConfig::setMaxDetectRetry(uint8_t maxDetectRetry) {
+    _data[RC_MAX_DETECT_RETRY] = maxDetectRetry;
+}
+
+void RobotConfig::setMaxCommandWaitMs(uint8_t maxCommandWaitMs) {
+    _data[RC_MAX_COMMAND_WAIT_MS] = maxCommandWaitMs;
+}
+
+void RobotConfig::setMaxCommandRetry(uint8_t maxCommandRetry) {
+    _data[RC_MAX_COMMAND_RETRY] = maxCommandRetry;
 }
 
 void RobotConfig::setMp3Enabled(bool enabled) {
