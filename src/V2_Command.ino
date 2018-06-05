@@ -389,7 +389,7 @@ void V2_GetOneAngle(byte *cmd) {
 
 	if (debug) DEBUG.println(F("[V2_GetOneAngle]"));
 	byte result[9];
-	result[2] = 4;
+	result[2] = 5;
 	result[3] = cmd[3];
 
 	if (cmd[2] == 3) {
@@ -434,10 +434,12 @@ void V2_GetServoAdjAngle(byte *cmd) {
 
 }
 
+// A9 9A 04 {cmd} {id} {high} {low} {sum} ED
+
 void V2_GetOneAdjAngle(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_GetOneAdjAngle]"));
 	byte result[9];
-	result[2] = 4;
+	result[2] = 5;
 	result[3] = cmd[3];
 
 	if (cmd[2] == 3) {

@@ -120,7 +120,6 @@ if (debug) DEBUG.printf("%08ld -- End servo command\n", millis());
 
 	// Check HeadLED, follow servo status 0 - on, 1 - off
 	byte headLight = pose[AD_POFFSET_HEAD];
-	if (debug && deepDebug) DEBUG.printf("HeadLED: %d", headLight);
 	if (headLight == 0b10) {
 		if (debug && deepDebug) DEBUG.printf("HeadLED: %d -> %d\n", headLight, 1);
 		if (headLed != 1) SetHeadLed(1);
