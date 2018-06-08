@@ -184,6 +184,10 @@ bool V2_Command() {
 			V2_GetOneAdjAngle(cmd);
 			break;
 
+		case V2_CMD_SETADJANGLE:
+			V2_SetAdjAngle(cmd);
+			break;
+
 		case V2_CMD_LOCKSERVO:
 			V2_LockServo(cmd, true);
 			break;
@@ -461,6 +465,22 @@ void V2_GetOneAdjAngle(byte *cmd) {
 	}
 	V2_SendResult(result);
 }
+
+void V2_SetAdjAngle(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_SetAdjAngle]"));
+	byte id = cmd[4];
+	if (cmd[2] == 5) {
+		byte id = cmd[4];
+		uint16_t adjSet = (cmd[5] << 8) | cmd[6];
+		DEBUG.printf("Set angle: %d\n", adjSet);
+		uint16_t adjResult = servo.setAdjAngle(id, adjSet);
+		DEBUG.printf("Result angle: %d\n", adjResult);
+		V2_SendSingleByteResult(cmd, (adjSet == adjResult ? 0 : 2));
+	} else {
+		V2_SendSingleByteResult(cmd, 1);
+	}
+}
+
 
 #pragma endregion
 
