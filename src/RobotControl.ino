@@ -94,8 +94,7 @@ void setup() {
 
 
 	if (debug) DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
-	// unsigned long actionSize = sizeof(actionTable);
-
+	
 	char *AP_Name = (char *) "Alpha 1S";
 	char *AP_Password = (char *) "12345678";
 
@@ -201,6 +200,7 @@ void setup() {
 	DEBUG.printf("Pin 10 is %s\n", (b == HIGH ? "HIGH" : "LOW"));
 
 	// Load default action
+	for (byte seq = 0; seq < CD_MAX_COMBO; seq++) comboTable[seq].ReadSPIFFS(seq);
 	actionData.ReadSPIFFS(0);
 	myOLED.show();
 
