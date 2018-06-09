@@ -10,6 +10,7 @@
 #include "UBTech.h"
 #include "FS.h"
 #include "Buffer.h"
+#include "ComboData.h"
 #include "ActionData.h"
 #include "MP3TF16P.h"
 #include "RobotConfig.h"
@@ -42,8 +43,8 @@ bool enable_UBTCB = true;
 bool enable_UBTSV = true;
 bool enable_HILZD = false;
 
+ComboData comboTable[CD_MAX_COMBO];
 ActionData actionData;
-
 
 #define MAX_ACTION 		26
 #define MAX_POSES 		30 
@@ -99,9 +100,6 @@ ActionData actionData;
 #define MAX_WAIT_CMD 			100
 
 #pragma region "Global variables"
-
-byte actionTable[MAX_ACTION][MAX_POSES][MAX_POSES_SIZE];
-byte comboTable[MAX_COMBO][MAX_COMBO_SIZE];
 
 char* actionDataFile = (char *) "/robot.dat";
 
