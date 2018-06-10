@@ -406,7 +406,7 @@ void remoteControl() {
 			}
 			lastCmdMs = 0;
 		} else {
-			if ((lastCmdMs)	&& (millis() - lastCmdMs > MAX_WAIT_CMD)) {
+			if ((lastCmdMs)	&& (millis() - lastCmdMs > config.maxCommandWaitMs())) {
 				// Exceed max wait time for a command
 				if (debug) {
 					DEBUG.printf("Command timeout (%d received): ", cmdBuffer.available());

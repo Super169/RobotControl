@@ -62,7 +62,7 @@ byte ActionData::SpiffsReadActionFile(int actionId) {
 		return true;
 	}
 	result = ReadActionHeader(actionId);
-	if (result == SUCCESS) result = ReadActionPose();
+	if (result == RESULT::SUCCESS) result = ReadActionPose();
 	return result;
 
 }
@@ -88,17 +88,17 @@ byte ActionData::SpiffsReadActionHeader(int actionId) {
 	memset(fileName, 0, 25);
 	sprintf(fileName, ACTION_FILE, actionId);
 	if (!SPIFFS.exists(fileName)) {
-		return ERR_FILE_NOT_FOUND;		// File must checked before calling the function
+		return RESULT::ERR::FILE_NOT_FOUND;		// File must checked before calling the function
 	}
 	File f = SPIFFS.open(fileName, "r");
-	if (!f) return ERR_FILE_OPEN_READ;
+	if (!f) return RESULT::ERR::FILE_OPEN_READ;
 
 	if (f.size() < AD_HEADER_SIZE) {
-		return ERR_FILE_SIZE;
+		return RESULT::ERR::FILE_SIZE;
 	}
 	int dataSize = f.size() - AD_HEADER_SIZE;
 	if ((dataSize % AD_POSE_SIZE) != 0) {
-		return ERR_FILE_SIZE;
+		return RESULT::ERR::FILE_SIZE;
 	} 
 	uint16_t poseCnt = dataSize / AD_POSE_SIZE;
 	byte poseCntHigh = (poseCnt >> 8);
@@ -108,7 +108,7 @@ byte ActionData::SpiffsReadActionHeader(int actionId) {
 	buffer = (byte *) malloc(AD_HEADER_SIZE);
 	size_t bCnt = f.readBytes((char *) buffer, AD_HEADER_SIZE);
 	bool valid = (bCnt = AD_HEADER_SIZE);
-	byte result = (valid ? SUCCESS : ERR_FILE_READ_COUNT);
+	byte result = (valid ? RESULT::SUCCESS : RESULT::ERR::FILE_READ_COUNT);
 	if (valid) {
 		// Check start / end code / pose cnt
 		valid = ((buffer[0] = 0xA9) && (buffer[1] = 0x9A) && 
@@ -117,7 +117,7 @@ byte ActionData::SpiffsReadActionHeader(int actionId) {
 				 (buffer[AD_OFFSET_POSECNT_HIGH] == poseCntHigh)
 				);
 		if (!valid) {
-			result = ERR_AD_HEADER_CONTENT;
+			result = RESULT::ERR::AD_HEADER_CONTENT;
 		
 #ifdef DEBUG_ActionData
 	Serial1.printf("\n*** Header content not matched:\n");
@@ -138,7 +138,7 @@ byte ActionData::SpiffsReadActionHeader(int actionId) {
 			sum += buffer[i];
 		}
 		valid = (sum == buffer[sumPos]);
-		if (!valid) result = ERR_AD_HEADER_CHECKSUM;
+		if (!valid) result = RESULT::ERR::AD_HEADER_CHECKSUM;
 	}
 	if (valid) {
 		// valid means:
@@ -180,16 +180,16 @@ byte ActionData::SpiffsReadActionPose() {
 	memset(fileName, 0, 25);
 	sprintf(fileName, ACTION_FILE, _id);
 	if (!SPIFFS.exists(fileName)) {
-		return ERR_FILE_NOT_FOUND;		// File must checked before calling the function
+		return RESULT::ERR::FILE_NOT_FOUND;		// File must checked before calling the function
 	}
 	File f = SPIFFS.open(fileName, "r");
-	if (!f) return ERR_FILE_OPEN_READ;
+	if (!f) return RESULT::ERR::FILE_OPEN_READ;
 	// no more change on size here, should be confirmed in ReadActionHeader before
 
 	uint32_t fileOffset = AD_HEADER_SIZE + _poseOffset * AD_POSE_SIZE;
 
 	bool success = f.seek(fileOffset, SeekSet);
-	if (!success) return ERR_FILE_SEEK;
+	if (!success) return RESULT::ERR::FILE_SEEK;
 
 
 	uint16_t readPoseCnt = PoseCnt() - _poseOffset;
@@ -200,7 +200,7 @@ byte ActionData::SpiffsReadActionPose() {
 	size_t bCnt = f.readBytes((char *)_data, readPoseSize);
 
 	f.close();
-	return (bCnt == readPoseSize ? SUCCESS : ERR_FILE_READ_COUNT);
+	return (bCnt == readPoseSize ? RESULT::SUCCESS : RESULT::ERR::FILE_READ_COUNT);
 
 }
 
@@ -208,7 +208,7 @@ byte ActionData::WriteHeader() {
 #ifdef DEBUG_ActionData
 	Serial1.printf("ActionData::WriteHeader\n");
 #endif		
-	byte result = SUCCESS;
+	byte result = RESULT::SUCCESS;
 	_header[0] = 0xA9;
 	_header[1] = 0x9A;
 	_header[AD_OFFSET_LEN] = AD_HEADER_SIZE - 4;
@@ -229,10 +229,10 @@ byte ActionData::WriteHeader() {
 	Serial1.printf("Save to %s\n", fileName);
 #endif	
 
-	if (!SPIFFS.begin()) return ERR_FILE_SPIFFS;
+	if (!SPIFFS.begin()) return RESULT::ERR::FILE_SPIFFS;
 	File f = SPIFFS.open(fileName, "w");
 	if (!f) {
-		result = ERR_FILE_OPEN_WRITE;
+		result = RESULT::ERR::FILE_OPEN_WRITE;
 	} else {
 		size_t hCnt = f.write((byte *) _header, AD_HEADER_SIZE);
 		f.close();
@@ -241,7 +241,7 @@ byte ActionData::WriteHeader() {
 		Serial1.printf("Byte saved: %d (expected : %d)\n", hCnt, AD_HEADER_SIZE);
 #endif	
 
-		result = (hCnt == AD_HEADER_SIZE ? 0 : ERR_FILE_WRITE_COUNT);
+		result = (hCnt == AD_HEADER_SIZE ? 0 : RESULT::ERR::FILE_WRITE_COUNT);
 	}
 	SPIFFS.end();	
 	return result;
@@ -259,7 +259,7 @@ byte ActionData::WritePoseData() {
 #ifdef DEBUG_ActionData
 	Serial1.printf("ActionData::WritePoseData: aId: %d ; pCnt: %d ; pOffset: %d\n", _id, PoseCnt(), _poseOffset);
 #endif		
-	if (!SPIFFS.begin()) return ERR_FILE_SPIFFS;
+	if (!SPIFFS.begin()) return RESULT::ERR::FILE_SPIFFS;
 	byte result = SpiffsWritePoseData();
 	SPIFFS.end();
 #ifdef DEBUG_ActionData
@@ -274,7 +274,7 @@ byte ActionData::SpiffsWritePoseData() {
 #endif		
 	// Check if all pose ready
 	int writePoseCnt = PoseCnt() - _poseOffset;
-	if (writePoseCnt <= 0) return SUCCESS;	
+	if (writePoseCnt <= 0) return RESULT::SUCCESS;	
 	if (writePoseCnt > AD_PBUFFER_COUNT) writePoseCnt = AD_PBUFFER_COUNT;
 
 	// check if related pose is ready
@@ -283,23 +283,23 @@ byte ActionData::SpiffsWritePoseData() {
 		int offset = i * AD_POSE_SIZE;
 		if ((poseEmpty = (_data[offset] != 0xA9) || (_data[offset+1] != 0x9A) || (_data[offset+59] != 0xED))) break;
 	}
-	if (poseEmpty) return ERR_AD_POSE_NOT_READY;
+	if (poseEmpty) return RESULT::ERR::AD_POSE_NOT_READY;
 
 	char fileName[25];
 	memset(fileName, 0, 25);
 	sprintf(fileName, ACTION_FILE, _id);
 
-	if (!SPIFFS.exists(fileName)) return ERR_FILE_NOT_FOUND;
+	if (!SPIFFS.exists(fileName)) return RESULT::ERR::FILE_NOT_FOUND;
 
 	File f = SPIFFS.open(fileName, "r");
-	if (!f) return ERR_FILE_OPEN_READ;
+	if (!f) return RESULT::ERR::FILE_OPEN_READ;
 	int size = f.size();
 	f.close();
 	int expSize = AD_HEADER_SIZE + _poseOffset * AD_POSE_SIZE;
-	if (size != expSize) return ERR_FILE_SIZE;
+	if (size != expSize) return RESULT::ERR::FILE_SIZE;
 
 	f = SPIFFS.open(fileName, "a");
-	if (!f) return ERR_FILE_OPEN_APPEND;
+	if (!f) return RESULT::ERR::FILE_OPEN_APPEND;
 
 	int dataSize = writePoseCnt * AD_POSE_SIZE;
 	int wCnt = f.write((byte *) _data, dataSize);
@@ -309,7 +309,7 @@ byte ActionData::SpiffsWritePoseData() {
 	// don't worrry even _poseOffset > PoseCnt, it just force to read poseData when use as required pose is not in range
 	_poseOffset += AD_PBUFFER_COUNT;
 
-	return (wCnt == dataSize ? SUCCESS : ERR_FILE_WRITE_COUNT);
+	return (wCnt == dataSize ? RESULT::SUCCESS : RESULT::ERR::FILE_WRITE_COUNT);
 }
 
 byte ActionData::WriteSPIFFS() {
@@ -449,15 +449,15 @@ byte ActionData::DeleteActionFile(byte actionId) {
 	SPIFFS.begin();
 	if (SPIFFS.exists(fileName)) {
 		if (SPIFFS.remove(fileName)) {
-			result = SUCCESS;
+			result = RESULT::SUCCESS;
 		} else {
-			result = ERR_FILE_REMOVE;
+			result = RESULT::ERR::FILE_REMOVE;
 		}
 	} else {
-		result = ERR_FILE_NOT_FOUND;
+		result = RESULT::ERR::FILE_NOT_FOUND;
 	}
 	SPIFFS.end();
-	if ( (result == SUCCESS) && (_id == actionId)) {
+	if ( (result == RESULT::SUCCESS) && (_id == actionId)) {
 		InitObject(0);
 	}
 

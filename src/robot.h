@@ -16,6 +16,7 @@
 #include "RobotConfig.h"
 
 #include "message.h"
+#include "RESULT.h"
 
 WiFiManager wifiManager;
 
@@ -67,37 +68,6 @@ ActionData actionData;
 
 #define MAX_COMBO 10
 #define MAX_COMBO_SIZE 100
-
-#define READ_OK 			 0x00
-#define READ_ERR_NOT_FOUND   0x01
-#define READ_ERR_OPEN_FILE   0x02
-#define READ_ERR_FILE_SIZE   0x03
-#define READ_ERR_READ_FILE   0x04
-
-#define WRITE_OK 			 0x00
-#define WRITE_ERR_OPEN_FILE  0x01
-#define WRITE_ERR_WRITE_FILE 0x02
-
-#define MOVE_OK 				0x00
-#define MOVE_ERR_PARM_CNT		0x01
-#define MOVE_ERR_PARM_VALUE     0x02
-#define MOVE_ERR_PARM_CONTENT   0x03
-#define MOVE_ERR_PARM_END		0x04
-#define MOVE_ERR_PARM_ALL_CNT	0x11
-#define MOVE_ERR_PARM_ALL_ANGLE	0x12
-#define MOVE_ERR_PARM_ONE_ID	0x21
-#define MOVE_ERR_PARM_ONE_ANGLE	0x22
-#define MOVE_ERR_PARM_DUP_ID	0x23
-
-#define UPLOAD_OK 				0x00
-#define UPLOAD_CLEAR_OK			0x00
-#define UPLOAD_ERR_HEADER		0x01
-#define UPLOAD_ERR_ACTION		0x02
-#define UPLOAD_ERR_POSE         0x03
-#define UPLOAD_ERR_POSE_DATA    0x04
-#define UPLOAD_ERR_CLEAR_POSE   0x05
-
-#define MAX_WAIT_CMD 			100
 
 #pragma region "Global variables"
 

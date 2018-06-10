@@ -314,7 +314,7 @@ void V2_Reset(byte *cmd) {
 	if ((showAngle) && (showAngle != '0')) {
 		V2_GetServoAngle(cmd);
 	} else {
-		V2_SendSingleByteResult(cmd, RESULT::SUCCSSS);
+		V2_SendSingleByteResult(cmd, RESULT::SUCCESS);
 	}
 }
 
@@ -326,14 +326,14 @@ void V2_SetDebug(byte *cmd) {
 	config.setDebug(status);
 	config.writeConfig();
 	if (debug) DEBUG.printf("Debug mode %s\n", (status ? "enabled" : "disabled"));
-	V2_SendSingleByteResult(cmd, RESULT::SUCCSSS);
+	V2_SendSingleByteResult(cmd, RESULT::SUCCESS);
 }
 
 void V2_SetDevMode(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_SetDevMode]"));
 	devMode = (cmd[4] ? 1 : 0);
 	if (debug) DEBUG.printf("Developer mode %s\n", (devMode ? "enabled" : "disabled"));
-	V2_SendSingleByteResult(cmd, RESULT::SUCCSSS);
+	V2_SendSingleByteResult(cmd, RESULT::SUCCESS);
 }
 
 void V2_CommandEnable(byte *cmd) {
@@ -978,7 +978,7 @@ void V2_UpdateAdHeader(byte *cmd) {
 	// Length should be header size - 4
 	if (cmd[2] != (AD_HEADER_SIZE - 4)) {
 		if (debug) DEBUG.printf("Invalid length: %d\n", cmd[2]);
-		V2_SendSingleByteResult(cmd, ERR_PARM_SIZE);
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_SIZE);
 		return;
 	}
 
@@ -1012,7 +1012,7 @@ void V2_UpdateAdPose(byte *cmd) {
 	// Length should be {len} {actionId} {poseId} {data} => pose datasize + 3
 	if (cmd[2] != (AD_POSE_SIZE - 4)) {
 		if (debug) DEBUG.printf("Invalid length: %d\n", cmd[2]);
-		V2_SendSingleByteResult(cmd, ERR_PARM_SIZE);
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_SIZE);
 		return;
 	}	
 	
@@ -1022,7 +1022,7 @@ void V2_UpdateAdPose(byte *cmd) {
 	// Action ID must be matched.  i.e. must GET before UPDATE
 	if (aId != actionData.Header()[4]) {
 		if (debug) DEBUG.printf("ID not matched: %d (current: %d)\n", aId, actionData.Header()[4]);
-		V2_SendSingleByteResult(cmd, ERR_PARM_AID_NOT_MATCH);
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_AID_NOT_MATCH);
 		return;
 	}
 
@@ -1032,7 +1032,7 @@ void V2_UpdateAdPose(byte *cmd) {
 	if (debug) DEBUG.printf("[V2_UpdateAdPose] - pId: %d, pCnt: %d, poffset: %d, AD_PBUFFER_COUNT %d, End: %d\n", pId, actionData.PoseCnt(), poseOffset, AD_PBUFFER_COUNT, bufferEndPose);
 
 	if ((pId >= actionData.PoseCnt()) || (pId < poseOffset) || (pId > bufferEndPose)) {
-		V2_SendSingleByteResult(cmd, ERR_PARM_PID_OUT_RANGE);
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_PID_OUT_RANGE);
 		return;
 	}
 
@@ -1041,7 +1041,7 @@ void V2_UpdateAdPose(byte *cmd) {
 		actionData.Data()[startPos + i] = cmd[i];
 	}
 
-	byte result = SUCCESS;
+	byte result = RESULT::SUCCESS;
 
 	if (debug) DEBUG.printf("[V2_UpdateAdPose] - Saved\n");
 
@@ -1067,11 +1067,11 @@ void V2_UpdateAdName(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_UpdateAdName]"));
 	byte id = cmd[4];
 	if (actionData.id() != id) {
-		V2_SendSingleByteResult(cmd, ERR_PARM_AID_NOT_MATCH);
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_AID_NOT_MATCH);
 		return;
 	}
 	if (cmd[5] > AD_NAME_SIZE) {
-		V2_SendSingleByteResult(cmd, ERR_PARM_AD_NAME_SIZE);
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_AD_NAME_SIZE);
 		return;
 	}
 	byte * startPos = actionData.Header() + AD_OFFSET_NAME;
@@ -1085,7 +1085,7 @@ void V2_UpdateAdName(byte *cmd) {
 		actionData.Header()[AD_OFFSET_NAME + i] = cmd[6 + i];
 	}
 	if (debug) DEBUG.println();
-	V2_SendSingleByteResult(cmd, SUCCESS);
+	V2_SendSingleByteResult(cmd, RESULT::SUCCESS);
 }
 
 void V2_DeleteActionFile(byte *cmd) {

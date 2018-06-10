@@ -99,7 +99,7 @@ byte RobotConfig::writeConfig() {
         if (enableDebug()) _dbg->printf("#### Write to: %s\n", _configFileName);
         size_t cnt = configFile.write((uint8_t *) _data, RC_RECORD_SIZE);
         configFile.close();
-        configSaved = (cnt == RC_RECORD_SIZE ? RESULT::SUCCSSS : RESULT::ERR::FILE_WRITE_COUNT);
+        configSaved = (cnt == RC_RECORD_SIZE ? RESULT::SUCCESS : RESULT::ERR::FILE_WRITE_COUNT);
     }
 
     SPIFFS.end();

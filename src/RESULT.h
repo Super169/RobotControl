@@ -4,7 +4,7 @@
 
 class RESULT {
     public:
-        static const byte SUCCSSS                       = 0;
+        static const byte SUCCESS                       = 0;
 		
 		class ERR {
 			public:

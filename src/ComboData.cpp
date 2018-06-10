@@ -60,7 +60,7 @@ byte ComboData::SpiffsReadComboFile(byte seq) {
 
 	if (bCnt == CD_COMBO_DATA_SIZE) {
 		memcpy(_data, buffer, CD_COMBO_DATA_SIZE);
-		result = RESULT::SUCCSSS;
+		result = RESULT::SUCCESS;
 	}
 
 	free(buffer);

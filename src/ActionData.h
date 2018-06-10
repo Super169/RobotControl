@@ -3,6 +3,7 @@
 
 #include <ESP8266WiFi.h>
 #include <FS.h>
+#include "RESULT.h"
 
 #define AD_HEADER_SIZE			60
 #define AD_OFFSET_LEN			2
@@ -44,32 +45,6 @@
 #define ACTION_PATH "/alpha/action"
 #define ACTION_FILE "/alpha/action/%03d.dat"
 #define ACTION_POS  14
-
-#define SUCCESS					0
-#define ERR_PARM_SIZE			1
-#define ERR_PARM_AID_NOT_MATCH	2
-#define ERR_PARM_AD_NAME_SIZE	3
-#define ERR_PARM_PID_OUT_RANGE	4
-#define ERR_CHECKSUM			9
-
-#define ERR_FILE_SPIFFS			11
-#define ERR_FILE_NOT_FOUND		12
-#define ERR_FILE_OPEN_READ		13
-#define ERR_FILE_OPEN_WRITE		14
-#define ERR_FILE_OPEN_APPEND	15
-#define ERR_FILE_SIZE			16
-#define ERR_FILE_READ_COUNT		17
-#define ERR_FILE_WRITE_COUNT	18
-#define ERR_FILE_SEEK			19
-#define ERR_FILE_REMOVE         20
-
-
-#define ERR_AD_HEADER_CONTENT	21
-#define ERR_AD_HEADER_CHECKSUM	22
-#define ERR_AD_POSE_NOT_READY	25
-#define ERR_AD_POSE_CHECKSUM	26
-
-
 
 class ActionData {
     public:
