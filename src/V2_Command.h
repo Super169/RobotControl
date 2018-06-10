@@ -49,6 +49,10 @@ bool V2_UseGlobalTime = true;
 #define V2_CMD_GET_ADHEADER		0x61
 #define V2_CMD_GET_ADPOSE		0x62
 
+#define V2_CMD_GET_COMBO		0x68
+#define V2_CMD_UPD_COMBO		0x69
+
+
 #define V2_CMD_UPD_ADHEADER		0x71
 #define V2_CMD_UPD_ADPOSE		0x72
 #define V2_CMD_UPD_ADNAME		0x74

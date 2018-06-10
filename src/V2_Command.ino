@@ -251,6 +251,14 @@ bool V2_Command() {
 			V2_GetAdPose(cmd);
 			break;
 			
+		case V2_CMD_GET_COMBO:
+			V2_GetCombo(cmd);
+			break;
+
+		case V2_CMD_UPD_COMBO:
+			V2_UpdateCombo(cmd);
+			break;
+
 		case V2_CMD_UPD_ADHEADER:
 			V2_UpdateAdHeader(cmd);
 			break;
@@ -1097,6 +1105,28 @@ void V2_DeleteActionFile(byte *cmd) {
 
 #pragma endregion
 
+
+#pragma region Combo: V2_CMD_GET_COMBO / V2_CMD_UPD_COMBO
+
+void V2_GetCombo(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_GetCombo]"));
+	byte seq = cmd[4];
+	if (seq >= CD_MAX_COMBO) {
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_COMBO_OUT_RANGE);
+		return;
+	}
+	comboTable[seq].Data()[3] = cmd[3];
+	V2_SendResult(comboTable[seq].Data());
+
+}
+
+void V2_UpdateCombo(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_UpdateCombo]"));
+
+	V2_SendSingleByteResult(cmd, RESULT::SUCCESS);
+}
+
+#pragma endregion
 
 #pragma region SPIFFS: V2_CMD_READSPIFFS / V2_CMD_WRITESPIFFS
 /*

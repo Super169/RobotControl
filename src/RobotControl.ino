@@ -206,10 +206,11 @@ void setup() {
 
 	servo.setLED(0, 1);
 
+/*
 	pinMode(10, INPUT_PULLUP);
 	int b = digitalRead(10);
 	DEBUG.printf("Pin 10 is %s\n", (b == HIGH ? "HIGH" : "LOW"));
-
+*/
 	// Load default action
 	for (byte seq = 0; seq < CD_MAX_COMBO; seq++) comboTable[seq].ReadSPIFFS(seq);
 	actionData.ReadSPIFFS(0);
