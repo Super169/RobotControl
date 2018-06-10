@@ -62,17 +62,6 @@ void setup() {
 	SetHeadLed(false);
 	// digitalWrite(HEAD_LED_GPIO, LOW);
 
-	// Start OLED ASAP to display the welcome message
-	myOLED.begin();  
-	myOLED.clr();
-	myOLED.show();
-	
-	myOLED.setFont(OLED_font6x8);
-	myOLED.printFlashMsg(0,0, msg_welcomeHeader);
-	myOLED.printFlashMsg(62,1, msg_author);
-	myOLED.printFlashMsg(0,4, msg_welcomeMsg);	
-	myOLED.show();
-
 	// Delay 2s to wait for all servo started
 	delay(2000);
 
@@ -84,14 +73,28 @@ void setup() {
 	DEBUG.println("\n\n");
 
 	config.readConfig();
+
 	config.setMaxServo(20);
-	// config.setMp3Enabled(false);  // special version only
 
 	SetDebug(config.enableDebug());
-	// SetDebug(true);
+
+	if (config.enableOLED()) {
+
+		// Start OLED ASAP to display the welcome message
+		myOLED.begin();  
+		myOLED.clr();
+		myOLED.show();
+		
+		myOLED.setFont(OLED_font6x8);
+		myOLED.printFlashMsg(0,0, msg_welcomeHeader);
+		myOLED.printFlashMsg(62,1, msg_author);
+		myOLED.printFlashMsg(0,4, msg_welcomeMsg);	
+		myOLED.show();
+
+	}
+
 	
 	retBuffer = servo.retBuffer();
-
 
 	if (debug) DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
 	
@@ -101,11 +104,12 @@ void setup() {
 	char buf[20];
 	bool isConnected = false;
 	
-	/*
-	if (digitalRead(PIN_SETUP) == LOW) {
-		myOLED.clr(2);
-		myOLED.print(0,2,"Connecting to router");
-		myOLED.show();
+	if (config.connectRouter()) {
+		if (config.enableOLED()) {
+			myOLED.clr(2);
+			myOLED.print(0,2,"Connecting to router");
+			myOLED.show();
+		}
 		wifiManager.setDebugOutput(false);
 		wifiManager.setAPCallback(configModeCallback);
 		wifiManager.setConfigPortalTimeout(60);
@@ -114,34 +118,37 @@ void setup() {
 		DEBUG.printf("Try to connect router\n");
 		isConnected = wifiManager.autoConnect(AP_Name, AP_Password);
 	}
-	*/
 
 	String ip;
 
 	if (isConnected) {
 		ip = WiFi.localIP().toString();
-		myOLED.clr();
+		if (config.enableOLED()) myOLED.clr();
 		memset(buf, 0, 20);
 		String ssid = WiFi.SSID();
 		ssid.toCharArray(buf, 20);
-		myOLED.print(0,0, buf);
+		if (config.enableOLED()) myOLED.print(0,0, buf);
 	} else {
 		DEBUG.println(F("Start using softAP"));
 		DEBUG.printf("Please connect to %s\n\n", AP_Name);
 		WiFi.softAP(AP_Name, AP_Password);
 		IPAddress myIP = WiFi.softAPIP();
 		ip = myIP.toString();
-		myOLED.clr();
-		myOLED.print(0,0, "AP: ");
-		myOLED.print(AP_Name);
+		if (config.enableOLED()) {
+			myOLED.clr();
+			myOLED.print(0,0, "AP: ");
+			myOLED.print(AP_Name);
+		}
 	}
 
 	memset(buf, 0, 20);
 	ip.toCharArray(buf, 20);
-	myOLED.print(0,1, buf);
-	myOLED.print(":");
-	myOLED.print(port);
-	myOLED.show();
+	if (config.enableOLED()) {
+		myOLED.print(0,1, buf);
+		myOLED.print(":");
+		myOLED.print(port);
+		myOLED.show();
+	}
 
 	DEBUG.print("Robot IP: ");
 	DEBUG.println(ip);
@@ -181,17 +188,21 @@ void setup() {
 		delay(10);
 		mp3_Vol = mp3.getVol();
 		
-		mp3.playMp3File(1);
-		delay(10);
+		if (config.mp3Startup()) {
+			mp3.playMp3File(config.mp3Startup());
+			delay(10);
+		}
 
 		// software serial is not stable in 9600bps, for safety, disable mp3 connection when not use
 		mp3.end(); 
 
 	}
 	
-	myOLED.print(0,4,"MP3 Vol: ");
-	myOLED.print(mp3_Vol);
-	myOLED.show();
+	if (config.enableOLED()) {
+		myOLED.print(0,4,"MP3 Vol: ");
+		myOLED.print(mp3_Vol);
+		myOLED.show();
+	}
 
 	servo.setLED(0, 1);
 
@@ -202,7 +213,7 @@ void setup() {
 	// Load default action
 	for (byte seq = 0; seq < CD_MAX_COMBO; seq++) comboTable[seq].ReadSPIFFS(seq);
 	actionData.ReadSPIFFS(0);
-	myOLED.show();
+	if (config.enableOLED()) myOLED.show();
 
 }
 
@@ -232,8 +243,10 @@ void loop() {
 	// For Wifi checking, once connected, it should use the client object until disconnect, and check within client.connected()
 	client = server.available();
 	if (client){
-		myOLED.print(122, 1, '*');
-		myOLED.show();
+		if (config.enableOLED()) {
+			myOLED.print(122, 1, '*');
+			myOLED.show();
+		}
 		while (client.connected()) {
 			if (millis() > noPrompt) {
 				DEBUG.println("Client connected");
@@ -245,8 +258,10 @@ void loop() {
 			// Keep running RobotCommander within the connection.
 			RobotCommander();
 		}
-		myOLED.print(122, 1, ' ');
-		myOLED.show();
+		if (config.enableOLED()) {
+			myOLED.print(122, 1, ' ');
+			myOLED.show();
+		}
 	}	
 	if (millis() > noPrompt) {
 		// DEBUG.println("No Client connected, or connection lost");
@@ -275,9 +290,11 @@ void CheckVoltage() {
 	if (millis() > nextVoltageMs) {
 		uint16_t v = analogRead(0);
 		int iPower = GetPower(v);
-		myOLED.printNum(104,0,iPower, 10, 3, false);
-		myOLED.print(122,0,"%");
-		myOLED.show();
+		if (config.enableOLED()) {
+			myOLED.printNum(104,0,iPower, 10, 3, false);
+			myOLED.print(122,0,"%");
+			myOLED.show();
+		}
 		nextVoltageMs = millis() + 1000;
 		// DEBUG.printf("v: %d, min: %d, max: %d, alarm: %d, power: %d%%\n\n", v, config.minVoltage(), config.maxVoltage(), config.alarmVoltage(), iPower);
 

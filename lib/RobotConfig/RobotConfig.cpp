@@ -9,6 +9,17 @@ RobotConfig::RobotConfig(HardwareSerial *hsDebug) {
     initObject(hsDebug);
 }
 
+void RobotConfig::setUint16_t(uint8_t offset, uint16_t value) {
+    _data[offset] = (value >> 8);
+    _data[offset+1] = (value & 0xFF);  // just for safety, it can be assigned directly
+}
+
+uint16_t RobotConfig::getUint16_t(uint8_t offset) {
+    uint16_t value = 0;
+    value = (_data[offset] << 8) | _data[offset+1];
+    return value;
+}
+
 void RobotConfig::initObject(HardwareSerial *hsDebug) {
     initConfig();
     _dbg = hsDebug;
@@ -20,8 +31,10 @@ void RobotConfig::initConfig() {
     memset(_data, 0, RC_DATA_SIZE);
 
     setDebug(DEFAULT_ENABLE_DEBUG);
+    setRouter(DEFAULT_CONNECT_ROUTER);
+    setOLED(DEFAULT_ENABLE_OLED);
     
-    setVoltage(DEFAULT_REF_VOLTAGE, DEFAULT_MIN_VOLTAGE, DEFAULT_MAX_VOLTAGE, DEFAULT_ALARM_VOLTAGE);
+    setVoltage(DEFAULT_REF_VOLTAGE, DEFAULT_MIN_VOLTAGE, DEFAULT_MAX_VOLTAGE, DEFAULT_ALARM_VOLTAGE, DEFAULT_ALARM_MP3, DEFAULT_ALARM_INTERVAL);
 
     setMaxServo(DEFAULT_MAX_SERVO);
     setMaxDetectRetry(DEFAULT_MAX_DETECT_RETRY);
@@ -30,6 +43,8 @@ void RobotConfig::initConfig() {
 
     setMp3Enabled(DEFAULT_MP3_ENABLED);
     setMp3Volume(DEFAULT_MP3_VOLUME);
+
+    setAutoStand(DEFAULT_AUTO_STAND, DEFAULT_AUTO_FACE_UP, DEFAULT_AUTO_FACE_DOWN);
 
 }
 
@@ -70,7 +85,7 @@ bool RobotConfig::writeConfig() {
     if (configFile) {
 
         if (enableDebug()) _dbg->printf("#### Write to: %s\n", _configFileName);
-        size_t cnt = configFile.write((byte *) _data, RC_DATA_SIZE);
+        size_t cnt = configFile.write((uint8_t *) _data, RC_DATA_SIZE);
         configFile.close();
         configSaved = (cnt == RC_DATA_SIZE);
     }
@@ -84,6 +99,16 @@ bool RobotConfig::setDebug(bool debug) {
 	if (_dbg == NULL) debug = false; 
     _data[RC_ENABLE_DEBUG] = debug;
 	return debug;
+}
+
+bool RobotConfig::setRouter(bool router) {
+    _data[RC_CONNECT_ROUTER] = router;
+	return router;
+}
+
+bool RobotConfig::setOLED(bool oled) {
+    _data[RC_ENABLE_OLED] = oled;
+	return oled;
 }
 
 void RobotConfig::setRefVoltage(uint16_t refVoltage) {    
@@ -102,11 +127,21 @@ void RobotConfig::setAlarmVoltage(uint16_t alarmVoltage) {
     setUint16_t(RC_ALARM_VOLTAGE, alarmVoltage);
 }
 
-void RobotConfig::setVoltage(uint16_t refVoltage, uint16_t minVoltage, uint16_t maxVoltage, uint16_t alarmVoltage) { 
+void RobotConfig::setVoltageAlarmMp3(uint8_t mp3) {    
+    setUint16_t(RC_ALARM_MP3, mp3);
+}
+
+void RobotConfig::setVoltageAlarmInterval(uint8_t interval) {    
+    setUint16_t(RC_ALARM_MP3, interval);
+}
+
+void RobotConfig::setVoltage(uint16_t refVoltage, uint16_t minVoltage, uint16_t maxVoltage, uint16_t alarmVoltage, uint8_t mp3, uint8_t interval) { 
     setRefVoltage(refVoltage); 
     setMinVoltage(minVoltage); 
     setMaxVoltage(maxVoltage); 
     setAlarmVoltage(alarmVoltage);
+    setVoltageAlarmMp3(mp3);
+    setVoltageAlarmInterval(interval);
 };
 
 
@@ -134,13 +169,18 @@ void RobotConfig::setMp3Volume(uint8_t volume) {
     _data[RC_MP3_VOLUME] = volume;
 }
 
-void RobotConfig::setUint16_t(uint8_t offset, uint16_t value) {
-    _data[offset] = (value >> 8);
-    _data[offset+1] = (value & 0xFF);  // just for safety, it can be assigned directly
+void RobotConfig::setMp3Startup(uint8_t mp3) {
+    _data[RC_MP3_STARTUP] = mp3;
 }
 
-uint16_t RobotConfig::getUint16_t(uint8_t offset) {
-    uint16_t value = 0;
-    value = (_data[offset] << 8) | _data[offset+1];
-    return value;
+void RobotConfig::setAutoStand(bool autoStand) {
+    _data[RC_AUTO_STAND] = autoStand;
+}
+
+void RobotConfig::setAutoFaceUp(uint8_t faceUp) {
+    _data[RC_AUTO_FACE_UP] = faceUp;
+}
+
+void RobotConfig::setAutoFaceDown(uint8_t faceDown) {
+    _data[RC_AUTO_FACE_DOWN] = faceDown;
 }
