@@ -27,6 +27,8 @@ class ComboData {
         inline byte ReadSPIFFS() { return ReadSPIFFS(_seq); }
         byte ReadSPIFFS(byte seq);
 
+        byte * Data() { return (byte *) _data; }
+
     private:
         byte SpiffsReadComboFile(byte seq);
 

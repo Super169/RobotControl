@@ -15,6 +15,7 @@
 //                                    A9 9A 03 02 01 06 ED    
 //   03 - Set DevMode (fix) 		: A9 9A 03 03 00 06 ED
 //									  A9 9A 03 03 01 07 ED
+//   04 - Get Config (fix)          : A9 9A 02 04 06 ED
 //   0A - Command Enable (fix)		: A9 9A 02 0A 0C ED
 //                                    A9 9A 07 0A 00 01 01 01 01 15 ED
 //   0B - Check battery (fix)       : A9 9A 02 0B 0D ED
@@ -168,6 +169,14 @@ bool V2_Command() {
 			V2_CommandEnable(cmd);
 			break;
 
+		case V2_CMD_GETCONFIG:
+			V2_GetConfig(cmd);
+			break;
+
+		case V2_CMD_SETCONFIG:
+			V2_SetConfig(cmd);
+			break;
+
 		case V2_CMD_SERVOANGLE:
 			V2_GetServoAngle(cmd);
 			break;
@@ -293,7 +302,7 @@ void V2_SendSingleByteResult(byte *cmd, byte data) {
 	V2_SendResult(result);
 }
 
-#pragma region V2_CMD_RESET / V2_CMD_DEBUG / V2_CMD_DEVMODE
+#pragma region V2_CMD_RESET / V2_CMD_DEBUG / V2_CMD_DEVMODE / V2_CMD_GETCONFIG / V2_CMD_SETCONFIG
 
 void V2_Reset(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_Reset]"));
@@ -350,6 +359,20 @@ void V2_CommandEnable(byte *cmd) {
 
 	V2_SendResult(result);
 }
+
+void V2_GetConfig(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_GetConfig]"));
+	config.Data()[3] = cmd[3];
+
+	V2_SendResult((byte *) config.Data());
+
+}
+
+void V2_SetConfig(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_SetConfig]"));
+	V2_SendSingleByteResult(cmd, 0);
+}
+
 
 #pragma endregion
 

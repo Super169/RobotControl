@@ -30,6 +30,11 @@ void RobotConfig::initConfig() {
 
     memset(_data, 0, RC_DATA_SIZE);
 
+    _data[0] = 0xA9;
+    _data[1] = 0x9A;
+    _data[2] = RC_CONFIG_DATA_SIZE;
+    _data[RC_DATA_SIZE-1] = 0xED;
+    
     setDebug(DEFAULT_ENABLE_DEBUG);
     setRouter(DEFAULT_CONNECT_ROUTER);
     setOLED(DEFAULT_ENABLE_OLED);
@@ -43,6 +48,7 @@ void RobotConfig::initConfig() {
 
     setMp3Enabled(DEFAULT_MP3_ENABLED);
     setMp3Volume(DEFAULT_MP3_VOLUME);
+    setMp3Startup(DEFAULT_MP3_STARTUP);
 
     setAutoStand(DEFAULT_AUTO_STAND, DEFAULT_AUTO_FACE_UP, DEFAULT_AUTO_FACE_DOWN);
 
@@ -69,6 +75,12 @@ bool RobotConfig::readConfig() {
 	size_t cnt = configFile.readBytes((char *)_data, RC_DATA_SIZE);    
 
     configFile.close();
+
+    // make sure the header information is filled
+    _data[0] = 0xA9;
+    _data[1] = 0x9A;
+    _data[2] = RC_CONFIG_DATA_SIZE;
+    _data[RC_DATA_SIZE-1] = 0xED;
 
     return true;
 

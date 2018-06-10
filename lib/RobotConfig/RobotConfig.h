@@ -4,9 +4,9 @@
 #include <ESP8266WiFi.h>
 #include <FS.h>
 
-#define DEFAULT_ENABLE_DEBUG    false
+#define DEFAULT_ENABLE_DEBUG    true
 #define DEFAULT_CONNECT_ROUTER  false
-#define DEFAULT_ENABLE_OLED     false
+#define DEFAULT_ENABLE_OLED     true
 #define DEFAULT_REF_VOLTAGE     3200        // aroud 3.2v for A0 of D1 mini, 1.0v for ADC of ESP-12
 #define DEFAULT_MIN_VOLTAGE     220
 #define DEFAULT_MAX_VOLTAGE     246
@@ -28,7 +28,8 @@
 #define DEFAULT_AUTO_FACE_UP    0
 #define DEFAULT_AUTO_FACE_DOWN  0
 
-#define RC_DATA_SIZE            64
+#define RC_DATA_SIZE            60
+#define RC_CONFIG_DATA_SIZE     56
 #define RC_VERSION              04
 #define RC_ENABLE_DEBUG         05
 #define RC_CONNECT_ROUTER       06
@@ -37,8 +38,8 @@
 #define RC_MIN_VOLTAGE          12
 #define RC_MAX_VOLTAGE          14
 #define RC_ALARM_VOLTAGE        16
-#define RC_ALARM_MP3            17
-#define RC_ALARM_INTERVAL       18
+#define RC_ALARM_MP3            18
+#define RC_ALARM_INTERVAL       19
 #define RC_MAX_SERVO            21
 #define RC_MAX_DETECT_RETRY     22
 #define RC_MAX_COMMAND_WAIT_MS  23
@@ -61,6 +62,8 @@ class RobotConfig {
         void initConfig();
         bool readConfig();
         bool writeConfig();
+
+        uint8_t * Data() { return (uint8_t *) _data; }
 
         bool setDebug(bool debug);
         bool setRouter(bool router);

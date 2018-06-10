@@ -73,6 +73,7 @@ void setup() {
 	DEBUG.println("\n\n");
 
 	config.readConfig();
+	config.initConfig();
 
 	config.setMaxServo(20);
 
