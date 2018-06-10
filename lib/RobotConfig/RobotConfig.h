@@ -28,7 +28,7 @@
 #define DEFAULT_AUTO_FACE_UP    0
 #define DEFAULT_AUTO_FACE_DOWN  0
 
-#define RC_DATA_SIZE            60
+#define RC_RECORD_SIZE          60
 #define RC_CONFIG_DATA_SIZE     56
 #define RC_VERSION              04
 #define RC_ENABLE_DEBUG         05
@@ -112,7 +112,7 @@ class RobotConfig {
 
         HardwareSerial *_dbg;
         
-        uint8_t _data[RC_DATA_SIZE];
+        uint8_t _data[RC_RECORD_SIZE];
 
 };
 

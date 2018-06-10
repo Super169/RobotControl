@@ -314,7 +314,7 @@ void V2_Reset(byte *cmd) {
 	if ((showAngle) && (showAngle != '0')) {
 		V2_GetServoAngle(cmd);
 	} else {
-		V2_SendSingleByteResult(cmd, 0);
+		V2_SendSingleByteResult(cmd, RESULT::SUCCSSS);
 	}
 }
 
@@ -326,14 +326,14 @@ void V2_SetDebug(byte *cmd) {
 	config.setDebug(status);
 	config.writeConfig();
 	if (debug) DEBUG.printf("Debug mode %s\n", (status ? "enabled" : "disabled"));
-	V2_SendSingleByteResult(cmd, 0);
+	V2_SendSingleByteResult(cmd, RESULT::SUCCSSS);
 }
 
 void V2_SetDevMode(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_SetDevMode]"));
 	devMode = (cmd[4] ? 1 : 0);
 	if (debug) DEBUG.printf("Developer mode %s\n", (devMode ? "enabled" : "disabled"));
-	V2_SendSingleByteResult(cmd, 0);
+	V2_SendSingleByteResult(cmd, RESULT::SUCCSSS);
 }
 
 void V2_CommandEnable(byte *cmd) {
@@ -370,9 +370,17 @@ void V2_GetConfig(byte *cmd) {
 
 void V2_SetConfig(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_SetConfig]"));
-	V2_SendSingleByteResult(cmd, 0);
+	if (cmd[2] != RC_CONFIG_DATA_SIZE) {
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_SIZE);
+	}
+/*
+	memcpy((byte *) config.Data(), (byte *) cmd, RC_RECORD_SIZE);
+	if (config.writeConfig()) {
+		V2_SendSingleByteResult(cmd, RESULT::SUCCSSS);
+	}
+	V2_SendSingleByteResult(cmd, 1);
+	*/
 }
-
 
 #pragma endregion
 

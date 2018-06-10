@@ -28,12 +28,12 @@ void RobotConfig::initObject(HardwareSerial *hsDebug) {
 
 void RobotConfig::initConfig() {
 
-    memset(_data, 0, RC_DATA_SIZE);
+    memset(_data, 0, RC_RECORD_SIZE);
 
     _data[0] = 0xA9;
     _data[1] = 0x9A;
     _data[2] = RC_CONFIG_DATA_SIZE;
-    _data[RC_DATA_SIZE-1] = 0xED;
+    _data[RC_RECORD_SIZE-1] = 0xED;
     
     setDebug(DEFAULT_ENABLE_DEBUG);
     setRouter(DEFAULT_CONNECT_ROUTER);
@@ -72,7 +72,7 @@ bool RobotConfig::readConfig() {
     // * partial read is allowed
 
     initConfig();
-	size_t cnt = configFile.readBytes((char *)_data, RC_DATA_SIZE);    
+	size_t cnt = configFile.readBytes((char *)_data, RC_RECORD_SIZE);    
 
     configFile.close();
 
@@ -80,7 +80,7 @@ bool RobotConfig::readConfig() {
     _data[0] = 0xA9;
     _data[1] = 0x9A;
     _data[2] = RC_CONFIG_DATA_SIZE;
-    _data[RC_DATA_SIZE-1] = 0xED;
+    _data[RC_RECORD_SIZE-1] = 0xED;
 
     return true;
 
@@ -97,9 +97,9 @@ bool RobotConfig::writeConfig() {
     if (configFile) {
 
         if (enableDebug()) _dbg->printf("#### Write to: %s\n", _configFileName);
-        size_t cnt = configFile.write((uint8_t *) _data, RC_DATA_SIZE);
+        size_t cnt = configFile.write((uint8_t *) _data, RC_RECORD_SIZE);
         configFile.close();
-        configSaved = (cnt == RC_DATA_SIZE);
+        configSaved = (cnt == RC_RECORD_SIZE);
     }
 
     SPIFFS.end();
