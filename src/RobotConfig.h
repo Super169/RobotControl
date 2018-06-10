@@ -3,6 +3,7 @@
 
 #include <ESP8266WiFi.h>
 #include <FS.h>
+#include "RESULT.h"
 
 #define DEFAULT_ENABLE_DEBUG    true
 #define DEFAULT_CONNECT_ROUTER  false
@@ -61,7 +62,7 @@ class RobotConfig {
         RobotConfig(HardwareSerial *hsDebug);
         void initConfig();
         bool readConfig();
-        bool writeConfig();
+        byte writeConfig();
 
         uint8_t * Data() { return (uint8_t *) _data; }
 

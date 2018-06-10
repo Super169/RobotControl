@@ -373,13 +373,10 @@ void V2_SetConfig(byte *cmd) {
 	if (cmd[2] != RC_CONFIG_DATA_SIZE) {
 		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_SIZE);
 	}
-/*
+
 	memcpy((byte *) config.Data(), (byte *) cmd, RC_RECORD_SIZE);
-	if (config.writeConfig()) {
-		V2_SendSingleByteResult(cmd, RESULT::SUCCSSS);
-	}
-	V2_SendSingleByteResult(cmd, 1);
-	*/
+	byte result = config.writeConfig();
+	V2_SendSingleByteResult(cmd, result);
 }
 
 #pragma endregion

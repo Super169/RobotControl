@@ -86,20 +86,20 @@ bool RobotConfig::readConfig() {
 
 }
 
-bool RobotConfig::writeConfig() {
+byte RobotConfig::writeConfig() {
 
     if (enableDebug()) _dbg->printf("writeConfig");
 
-    if (!SPIFFS.begin()) return false;
+    if (!SPIFFS.begin()) return RESULT::ERR::SPIFFS;
 
-    bool configSaved = false;
+    byte configSaved = RESULT::ERR::UNKNOWN;
     File configFile = SPIFFS.open(_configFileName, "w");
     if (configFile) {
 
         if (enableDebug()) _dbg->printf("#### Write to: %s\n", _configFileName);
         size_t cnt = configFile.write((uint8_t *) _data, RC_RECORD_SIZE);
         configFile.close();
-        configSaved = (cnt == RC_RECORD_SIZE);
+        configSaved = (cnt == RC_RECORD_SIZE ? RESULT::SUCCSSS : RESULT::ERR::FILE_WRITE_COUNT);
     }
 
     SPIFFS.end();
