@@ -277,6 +277,26 @@ void loop() {
 }
 
 void RobotCommander() {
+
+	if (millis() > noPrompt) {
+		// DEBUG.println("No Client connected, or connection lost");
+    	// if (EN_MPU6050) MpuGetActionHandle();
+		if (config.autoStand()) MpuGetActionHandle();
+		myOLED.print(0,5,"Volt: ");
+		myOLED.printFloat((float)(analogRead(A0)/1024.0*11.0));
+		// myOLED.printNum(0,10,analogRead(A0));
+		myOLED.show();
+   
+		noPrompt = millis() + 1000;
+	}
+
+
+  //touch handle
+    uint8_t touchMotion = DetectTouchMotion();
+    if(touchMotion == LONG_TOUCH) ReserveEyeBreath();
+    if(touchMotion == DOUBLE_CLICK) ReserveEyeBlink();
+    EyeLedHandle();
+
 	CheckVoltage();
 	CheckSerialInput();
 	remoteControl();  

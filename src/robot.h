@@ -5,6 +5,7 @@
 #include "WiFiClient.h"
 #include "WiFiManager.h"
 
+#include <Wire.h>
 #include "OLED12864.h"
 
 #include "UBTech.h"
@@ -18,6 +19,7 @@
 #include "message.h"
 #include "RESULT.h"
 
+
 WiFiManager wifiManager;
 
 #define DEBUG Serial1
@@ -27,6 +29,36 @@ WiFiManager wifiManager;
 Buffer cmdBuffer(CMD_BUFFER_SIZE);
 
 RobotConfig config(&DEBUG);
+
+
+//OTA Setting
+#include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
+const char* ssid = "wuhulanren";          
+const char* password = "wuhulanren";
+#define EN_OTA true
+
+//Touch Setting
+#define LONG_TOUCH 255
+#define NONE_MOTION 0
+#define SINGLE_CLICK 1
+#define DOUBLE_CLICK 2
+#define TRIPLE_CLICK 3
+
+//MPU6050 Setting
+// #define EN_MPU6050 true
+#define MPU_CHECK_TIMES 10
+const uint8_t MPU_addr=0x68;  // I2C address of the MPU-6050
+int16_t ax, ay, az;
+int16_t gx, gy, gz;
+int16_t tmp;
+int8_t actionSign;
+int8_t getFaceDown , getFaceUp;
+bool mpuActionBegin = false;;
+// #define FACE_DOWN_ID 5
+// #define FACE_UP_ID 6
 
 // OLED Settings
 
@@ -89,25 +121,10 @@ long lastCmdMs = 0;
 bool debug = true;
 bool devMode = false;
 
-#define MY_PCB_2
-
-#ifdef MY_PCB
-    // My PCB
-    #define MP3_RXD_GPIO    14
-    #define MP3_TXD_GPIO    13  
-    #define HEAD_LED_GPIO   15
-#else
-    #ifdef MY_PCB_2
-        #define MP3_RXD_GPIO    14
-        #define MP3_TXD_GPIO    16  
-        #define HEAD_LED_GPIO   15
-    #else 
-        // L's PCB
-        #define MP3_RXD_GPIO    14
-        #define MP3_TXD_GPIO    16  
-        #define HEAD_LED_GPIO   13
-    #endif
-#endif
+#define MP3_RXD_GPIO    14
+#define MP3_TXD_GPIO    16  
+#define HEAD_LED_GPIO   15
+#define PIN_SETUP       13
 
 bool headLed = false;
 
@@ -169,5 +186,22 @@ void RobotMaintenanceMode();
 
 // HILZD
 bool HILZD_Command();
+
+// OTA.ino
+void ArduinoOTASetup();
+
+// Mpu6050
+void MpuGetActionHandle();
+
+// Touch.ino
+uint8_t DetectTouchMotion();
+boolean ButtonIsPressed();
+
+// EyeLed.ino
+void ReserveEyeBlink();
+void ReserveEyeBreath();
+void EyeBlink();
+void EyeBreath();
+void EyeLedHandle();
 
 #endif

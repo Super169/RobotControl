@@ -85,7 +85,7 @@ class RobotConfig {
         void setMp3Volume(uint8_t volume);
         void setMp3Startup(uint8_t mp3);
         void setAutoStand(bool autoStand);
-        void setAutoFaceUp(uint8_t faceDown);
+        void setAutoFaceUp(uint8_t faceUp);
         void setAutoFaceDown(uint8_t faceDown);
         inline void setAutoStand(bool autoStand, uint8_t faceUp, uint8_t faceDown) { setAutoStand(autoStand); setAutoFaceUp(faceUp); setAutoFaceDown(faceDown);}
 
@@ -105,6 +105,9 @@ class RobotConfig {
         bool mp3Enabled() { return _data[RC_MP3_ENABLED]; }
         uint8_t mp3Volume() { return _data[RC_MP3_VOLUME]; }
         uint8_t mp3Startup() { return _data[RC_MP3_STARTUP]; }
+        bool autoStand() { return _data[RC_AUTO_STAND]; }
+        uint8_t faceUpAction() { return _data[RC_AUTO_FACE_UP]; }
+        uint8_t faceDownAction() { return _data[RC_AUTO_FACE_DOWN]; }
 
     private:
         void initObject(HardwareSerial *hsDebug);
