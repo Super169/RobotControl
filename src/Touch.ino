@@ -30,26 +30,34 @@ uint8_t DetectTouchMotion(){
           if(pressedTimes > 40){
             buttonMotion = LONG_TOUCH;
             clickTimes = 0;
-            DEBUG.println(F("LongTouch Detected!!"));
-            myOLED.print(0,6,"LongTouch Detected!!");
-            myOLED.show();
+			if (debug) DEBUG.println(F("LongTouch Detected!!"));
+			if (config.enableOLED()) {
+				myOLED.print(0,6,"LongTouch Detected!!");
+				myOLED.show();
+			}
           }
           else if(pressedTimes < 10 && clickTimes != 0){
             buttonMotion = clickTimes;
             if(clickTimes == 1){
-              DEBUG.println(F("SINGLE_CLICK Detected!!"));
-              myOLED.print(0,6,"SINGLE_CLICK Detected!!");
-              myOLED.show();
+              if (debug) DEBUG.println(F("SINGLE_CLICK Detected!!"));
+			  if (config.enableOLED()) {
+				myOLED.print(0,6,"SINGLE_CLICK Detected!!");
+				myOLED.show();
+			  }
             }
             else if(clickTimes == 2){
-              DEBUG.println(F("DOUBLE_CLICK Detected!!"));
-              myOLED.print(0,6,"DOUBLE_CLICK Detected!!");
-              myOLED.show();
+              if (debug) DEBUG.println(F("DOUBLE_CLICK Detected!!"));
+			  if (config.enableOLED()) {
+				myOLED.print(0,6,"DOUBLE_CLICK Detected!!");
+				myOLED.show();
+			  }
             }
             else {
-              DEBUG.println(F("TRIPLE_CLICK Detected!!"));
-              myOLED.print(0,6,"TRIPLE_CLICK Detected!!");
-              myOLED.show();
+				if (debug) DEBUG.println(F("TRIPLE_CLICK Detected!!"));
+				if (config.enableOLED()) {
+					myOLED.print(0,6,"TRIPLE_CLICK Detected!!");
+					myOLED.show();
+				}
             }
           }
           if(releasedTimes > 5){
@@ -57,8 +65,11 @@ uint8_t DetectTouchMotion(){
               clickTimes = 0;
               pressedTimes = 0;
               buttonMotion = NONE_MOTION;
-              myOLED.print(0,6,"                        ");
-              myOLED.show();
+			  if (config.enableOLED()) {
+				// myOLED.print(0,6,"                        ");
+				myOLED.clr(6);
+				myOLED.show();
+			  }
             }
         }
     }

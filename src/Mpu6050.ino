@@ -31,13 +31,17 @@ void MpuGetActionHandle(){
     gx=Wire.read()<<8|Wire.read();  // 0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
     gy=Wire.read()<<8|Wire.read();  // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
     gz=Wire.read()<<8|Wire.read();  // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
-    //Wire.endTransmission(true);
-    Serial.print(" | AcZ = ");
-    Serial.println(az);
-    myOLED.print(64,5,"AZ: ");
-    myOLED.printNum( 80 , 5 , az ,5);
-    myOLED.print("   ");
-    myOLED.show();
+    // TODO: ask L why he comment out the endTransmission
+	//Wire.endTransmission(true);
+    
+	// Serial.print(" | AcZ = ");
+    // Serial.println(az);
+	if (config.enableOLED()) {
+		myOLED.print(64,5,"AZ: ");
+		myOLED.printNum( 80 , 5 , az ,5);
+		myOLED.print("   ");
+		myOLED.show();
+	}
     if(!mpuActionBegin && !V2_ActionPlaying && !debug){
       if(az<-14000 ){
         // actionSign = FACE_DOWN_ID;

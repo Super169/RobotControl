@@ -38,6 +38,7 @@ void RobotConfig::initConfig() {
     setDebug(DEFAULT_ENABLE_DEBUG);
     setRouter(DEFAULT_CONNECT_ROUTER);
     setOLED(DEFAULT_ENABLE_OLED);
+	setTouch(DEFAULT_ENABLE_TOUCH);
     
     setVoltage(DEFAULT_REF_VOLTAGE, DEFAULT_MIN_VOLTAGE, DEFAULT_MAX_VOLTAGE, DEFAULT_ALARM_VOLTAGE, DEFAULT_ALARM_MP3, DEFAULT_ALARM_INTERVAL);
 
@@ -107,20 +108,37 @@ byte RobotConfig::writeConfig() {
 
 }
 
+
+void RobotConfig::dumpConfig() {
+	if (_dbg == NULL) return;
+	_dbg->printf("\n\nRobot Config:\n");
+	_dbg->printf("Debug: %s\n", (enableDebug() ? "Enabled" : "Disabled"));
+	_dbg->printf("Router: %s\n", (connectRouter() ? "Enabled" : "Disabled"));
+ 	_dbg->printf("OLED: %s\n", (enableOLED() ? "Enabled" : "Disabled"));
+ 	_dbg->printf("Touch Sensor: %s\n", (enableTouch() ? "Enabled" : "Disabled"));
+
+	_dbg->println();
+}
+
 bool RobotConfig::setDebug(bool debug) {
 	if (_dbg == NULL) debug = false; 
     _data[RC_ENABLE_DEBUG] = debug;
-	return debug;
+	return enableDebug();
 }
 
-bool RobotConfig::setRouter(bool router) {
-    _data[RC_CONNECT_ROUTER] = router;
-	return router;
+bool RobotConfig::setRouter(bool value) {
+    _data[RC_CONNECT_ROUTER] = value;
+	return connectRouter();
 }
 
-bool RobotConfig::setOLED(bool oled) {
-    _data[RC_ENABLE_OLED] = oled;
-	return oled;
+bool RobotConfig::setOLED(bool value) {
+    _data[RC_ENABLE_OLED] = value;
+	return enableOLED();
+}
+
+bool RobotConfig::setTouch(bool value) {
+    _data[RC_ENABLE_TOUCH] = value;
+	return enableTouch();
 }
 
 void RobotConfig::setRefVoltage(uint16_t refVoltage) {    

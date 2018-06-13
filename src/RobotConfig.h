@@ -8,6 +8,7 @@
 #define DEFAULT_ENABLE_DEBUG    true
 #define DEFAULT_CONNECT_ROUTER  false
 #define DEFAULT_ENABLE_OLED     true
+#define DEFAULT_ENABLE_TOUCH    false
 #define DEFAULT_REF_VOLTAGE     3200        // aroud 3.2v for A0 of D1 mini, 1.0v for ADC of ESP-12
 #define DEFAULT_MIN_VOLTAGE     220
 #define DEFAULT_MAX_VOLTAGE     246
@@ -31,10 +32,11 @@
 
 #define RC_RECORD_SIZE          60
 #define RC_CONFIG_DATA_SIZE     56
-#define RC_VERSION              04
-#define RC_ENABLE_DEBUG         05
-#define RC_CONNECT_ROUTER       06
-#define RC_ENABLE_OLED          05
+#define RC_VERSION              4
+#define RC_ENABLE_DEBUG         5
+#define RC_CONNECT_ROUTER       6
+#define RC_ENABLE_OLED          7
+#define RC_ENABLE_TOUCH         8
 #define RC_REF_VOLTAGE          10
 #define RC_MIN_VOLTAGE          12
 #define RC_MAX_VOLTAGE          14
@@ -63,12 +65,14 @@ class RobotConfig {
         void initConfig();
         bool readConfig();
         byte writeConfig();
+		void dumpConfig();
 
         uint8_t * Data() { return (uint8_t *) _data; }
 
         bool setDebug(bool debug);
-        bool setRouter(bool router);
-        bool setOLED(bool oled);
+        bool setRouter(bool value);
+        bool setOLED(bool value);
+		bool setTouch(bool value);
         void setRefVoltage(uint16_t refVoltage); 
         void setMinVoltage(uint16_t minVoltage); 
         void setMaxVoltage(uint16_t maxVoltage); 
@@ -92,6 +96,7 @@ class RobotConfig {
         bool enableDebug() { return _data[RC_ENABLE_DEBUG]; }
         bool connectRouter() { return _data[RC_CONNECT_ROUTER]; }
         bool enableOLED() { return _data[RC_ENABLE_OLED]; }
+        bool enableTouch() { return _data[RC_ENABLE_TOUCH]; }
         uint16_t refVoltage() { return getUint16_t(RC_REF_VOLTAGE); }
         uint16_t minVoltage() { return getUint16_t(RC_MIN_VOLTAGE); }
         uint16_t maxVoltage() { return getUint16_t(RC_MAX_VOLTAGE); }

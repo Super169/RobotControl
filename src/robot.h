@@ -19,12 +19,13 @@
 #include "message.h"
 #include "RESULT.h"
 
+#include "V2_Command.h"
 
 WiFiManager wifiManager;
 
 #define DEBUG Serial1
 
-#define CMD_BUFFER_SIZE 64
+#define CMD_BUFFER_SIZE 256
 
 Buffer cmdBuffer(CMD_BUFFER_SIZE);
 
