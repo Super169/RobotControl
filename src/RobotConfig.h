@@ -9,10 +9,10 @@
 #define DEFAULT_CONNECT_ROUTER  false
 #define DEFAULT_ENABLE_OLED     true
 #define DEFAULT_ENABLE_TOUCH    false
-#define DEFAULT_REF_VOLTAGE     3200        // aroud 3.2v for A0 of D1 mini, 1.0v for ADC of ESP-12
-#define DEFAULT_MIN_VOLTAGE     220
-#define DEFAULT_MAX_VOLTAGE     246
-#define DEFAULT_ALARM_VOLTAGE   225
+#define DEFAULT_REF_VOLTAGE     1100        // aroud 3.2v for A0 of D1 mini, 1.0v for ADC of ESP-12
+#define DEFAULT_MIN_VOLTAGE     600
+#define DEFAULT_MAX_VOLTAGE     840
+#define DEFAULT_ALARM_VOLTAGE   650
 #define DEFAULT_ALARM_MP3       0
 #define DEFAULT_ALARM_INTERVAL  0
 #define DEFAULT_MAX_SERVO       16

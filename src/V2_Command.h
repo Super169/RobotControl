@@ -19,6 +19,7 @@ bool V2_UseGlobalTime = true;
 #define V2_CMD_DEVMODE      	0x03
 #define V2_CMD_GETCONFIG     	0x04
 #define V2_CMD_SETCONFIG      	0x05
+#define V2_CMD_DEFAULTCONFIG    0x06
 
 #define V2_CMD_ENABLE			0x0A
 #define V2_CMD_CHECK_BATTERY	0x0B

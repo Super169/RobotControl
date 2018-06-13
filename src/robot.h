@@ -25,7 +25,7 @@ WiFiManager wifiManager;
 
 #define DEBUG Serial1
 
-#define CMD_BUFFER_SIZE 256
+#define CMD_BUFFER_SIZE 64
 
 Buffer cmdBuffer(CMD_BUFFER_SIZE);
 

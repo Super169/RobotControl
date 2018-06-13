@@ -177,6 +177,10 @@ bool V2_Command() {
 			V2_SetConfig(cmd);
 			break;
 
+		case V2_CMD_DEFAULTCONFIG:
+			V2_DefaultConfig(cmd);
+			break;
+
 		case V2_CMD_SERVOANGLE:
 			V2_GetServoAngle(cmd);
 			break;
@@ -380,9 +384,17 @@ void V2_SetConfig(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_SetConfig]"));
 	if (cmd[2] != RC_CONFIG_DATA_SIZE) {
 		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_SIZE);
+		return;
 	}
 
 	memcpy((byte *) config.Data(), (byte *) cmd, RC_RECORD_SIZE);
+	byte result = config.writeConfig();
+	V2_SendSingleByteResult(cmd, result);
+}
+
+void V2_DefaultConfig(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_DefaultConfig]"));
+	config.initConfig();
 	byte result = config.writeConfig();
 	V2_SendSingleByteResult(cmd, result);
 }
@@ -647,7 +659,7 @@ void V2_ServoMove(byte *cmd) {
 			moveCnt++;
 		}
 	}
-	result[2] = 2 + 3 * moveCnt;
+	result[2] = 3 + 3 * moveCnt;
 	result[3] = cmd[3];
 	result[4] = moveCnt;
 	V2_SendResult(result);
@@ -704,10 +716,11 @@ void V2_SetHeadLED(byte *cmd) {
 
 void V2_Mp3Stop(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_Mp3Stop]"));
-	if (!config.mp3Enabled()) return;
-	mp3.begin();
-	mp3.stop();
-	mp3.end();
+	if (config.mp3Enabled()) {
+		mp3.begin();
+		mp3.stop();
+		mp3.end();
+	}
 	V2_SendSingleByteResult(cmd, 0);
 }
 

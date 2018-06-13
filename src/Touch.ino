@@ -6,6 +6,7 @@ boolean buttonState,lastButtonState;
 uint8_t buttonMotion;
 
 uint8_t DetectTouchMotion(){
+  if (!config.enableTouch()) return NONE_MOTION;
    if(millis() - buttonTime > 20){
       buttonTime = millis();
       buttonState = ButtonIsPressed();

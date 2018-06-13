@@ -75,6 +75,13 @@ void setup() {
 	config.readConfig();
 	config.dumpConfig();
 
+	// Reset by program in case config crashed
+	/*
+	config.initConfig();
+	config.writeConfig();
+	config.dumpConfig();
+	*/
+
 	// config.setMaxServo(20);
 
 	SetDebug(config.enableDebug());
@@ -289,7 +296,7 @@ void RobotCommander() {
 	// Check auto-response action (should only play if not in action)
 	if (V2_ActionPlaying) return;
 	CheckPosition();
-	CheckTouch();
+	CheckTouch();  // TODO: Too many messages!
 
 }
 
