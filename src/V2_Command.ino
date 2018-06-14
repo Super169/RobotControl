@@ -798,17 +798,26 @@ void V2_Mp3SetVolume(byte *cmd) {
 void V2_PlayAction(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_PlayAction]"));
 	V2_ResetAction();
-	if (cmd[2] != 3) {
+	if ((cmd[2] != 3) || (cmd[2] != 4)) {
 		V2_SendSingleByteResult(cmd, 1);
 		return;
 	}
 	byte actionId = cmd[4];
-	V2_GoAction(actionId, true, cmd);
+	byte playCount = 1;
+	if (cmd[2] == 4) {
+		playCount = cmd[5];
+	}
+	V2_GoAction(actionId, playCount, true, cmd);
 }
 
 
 // Function for both V1 and V2 and it need to keep V1 Play command
 void V2_GoAction(byte actionId, bool v2, byte *cmd) {
+	// Default play only once
+	V2_GoAction(actionId, 1, v2, cmd);
+}
+
+void V2_GoAction(byte actionId, byte playCount, bool v2, byte *cmd) {
 	if (actionData.id() != actionId) {
 		// need to load actionData
 		if (debug) DEBUG.printf("Read action %d from SPIFFS\n", actionId);

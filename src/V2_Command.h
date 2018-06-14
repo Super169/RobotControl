@@ -10,6 +10,8 @@ byte V2_NextAction = 0;
 uint16_t V2_NextPose = 0;
 unsigned long V2_GlobalTimeMs = 0;
 unsigned long V2_NextPlayMs = 0;
+byte V2_ActionPlayCount = 0;
+
 int V2_ServoTimeRatio = 20;
 bool V2_UseGlobalTime = true;
 

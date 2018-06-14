@@ -10,6 +10,7 @@ void V2_ResetAction() {
 	V2_NextPose = 0;
 	V2_GlobalTimeMs = 0;
 	V2_NextPlayMs = 0;
+	V2_ActionPlayCount = 0;
 }
 
 bool V2_IsEndPose() {
@@ -36,12 +37,18 @@ void V2_CheckAction() {
 		actionData.ReadSPIFFS(V2_NextAction);
 	}
 	// Should already checked in previous pose, just check again for safety
-	if (V2_IsEndPose()) {
-		// TODO: go next action in Combo when Combo is ready
-		if (debug) DEBUG.printf("Action Completed\n");
-		V2_ResetAction();
-		return;
+	if (V2_IsEndPose())	 {
+		if (V2_ActionPlayCount < 2) {
+			if (debug) DEBUG.printf("Action Completed\n");
+			// TODO: go next action in Combo when Combo is ready
+			V2_ResetAction();
+			return;
+		}
+		V2_ActionPlayCount--;
+		V2_NextPose = 0;		
+		if (debug) DEBUG.printf("Action finish, continue with last %d times\n", V2_ActionPlayCount);
 	}
+
 
 	uint16_t offset = 0;
 	if (!actionData.IsPoseReady(V2_NextPose, offset)) {
@@ -166,10 +173,17 @@ if (debug) DEBUG.printf("%08ld -- End servo command\n", millis());
 	V2_NextPose++;
 
 	if (V2_IsEndPose())	 {
-		if (debug) DEBUG.printf("Action Completed\n");
-		V2_ResetAction();
-		return;
+		if (V2_ActionPlayCount < 2) {
+			// TODO: go next action in Combo when Combo is ready
+			if (debug) DEBUG.printf("Action Completed\n");
+			V2_ResetAction();
+			return;
+		}
+		V2_ActionPlayCount--;
+		V2_NextPose = 0;		
+		if (debug) DEBUG.printf("Action finished, continue with last %d times\n", V2_ActionPlayCount);
 	}
+
 
 	// Try to preLoad next pose by checking is
 	actionData.IsPoseReady(V2_NextPose);
