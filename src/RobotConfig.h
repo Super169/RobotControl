@@ -30,6 +30,8 @@
 #define DEFAULT_AUTO_FACE_UP    0
 #define DEFAULT_AUTO_FACE_DOWN  0
 
+#define DEFAULT_TOUCH_NO_ACTION 0
+
 #define RC_RECORD_SIZE          60
 #define RC_CONFIG_DATA_SIZE     56
 #define RC_VERSION              4
@@ -53,7 +55,8 @@
 #define RC_AUTO_STAND           41
 #define RC_AUTO_FACE_UP         42
 #define RC_AUTO_FACE_DOWN       43
-
+#define RC_TOUCH_ACTION			44  // 4 bytes
+#define RC_TOUCH_ACTION_CNT		4
 
 class RobotConfig {
 
@@ -92,11 +95,19 @@ class RobotConfig {
         void setAutoFaceUp(uint8_t faceUp);
         void setAutoFaceDown(uint8_t faceDown);
         inline void setAutoStand(bool autoStand, uint8_t faceUp, uint8_t faceDown) { setAutoStand(autoStand); setAutoFaceUp(faceUp); setAutoFaceDown(faceDown);}
-
+		void setTouchAction(uint8_t id, uint8_t value);
+		inline void setTouch(uint8_t action0, uint8_t action1, uint8_t action2, uint8_t action3) {
+			// setTouch((action0 || action1 || action2 || action3));
+			setTouchAction(0, action0);
+			setTouchAction(1, action1);
+			setTouchAction(2, action2);
+			setTouchAction(3, action3);
+		}
+		
         bool enableDebug() { return _data[RC_ENABLE_DEBUG]; }
         bool connectRouter() { return _data[RC_CONNECT_ROUTER]; }
         bool enableOLED() { return _data[RC_ENABLE_OLED]; }
-        bool enableTouch() { return _data[RC_ENABLE_TOUCH]; }
+        bool enableTouch();
         uint16_t refVoltage() { return getUint16_t(RC_REF_VOLTAGE); }
         uint16_t minVoltage() { return getUint16_t(RC_MIN_VOLTAGE); }
         uint16_t maxVoltage() { return getUint16_t(RC_MAX_VOLTAGE); }
@@ -113,6 +124,7 @@ class RobotConfig {
         bool autoStand() { return _data[RC_AUTO_STAND]; }
         uint8_t faceUpAction() { return _data[RC_AUTO_FACE_UP]; }
         uint8_t faceDownAction() { return _data[RC_AUTO_FACE_DOWN]; }
+		uint8_t touchAction(uint8_t id);
 
     private:
         void initObject(HardwareSerial *hsDebug);

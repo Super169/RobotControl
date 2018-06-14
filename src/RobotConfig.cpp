@@ -39,6 +39,7 @@ void RobotConfig::initConfig() {
     setRouter(DEFAULT_CONNECT_ROUTER);
     setOLED(DEFAULT_ENABLE_OLED);
 	setTouch(DEFAULT_ENABLE_TOUCH);
+	setTouch(DEFAULT_TOUCH_NO_ACTION, DEFAULT_TOUCH_NO_ACTION, DEFAULT_TOUCH_NO_ACTION, DEFAULT_TOUCH_NO_ACTION);
     
     setVoltage(DEFAULT_REF_VOLTAGE, DEFAULT_MIN_VOLTAGE, DEFAULT_MAX_VOLTAGE, DEFAULT_ALARM_VOLTAGE, DEFAULT_ALARM_MP3, DEFAULT_ALARM_INTERVAL);
 
@@ -139,6 +140,25 @@ bool RobotConfig::setOLED(bool value) {
 bool RobotConfig::setTouch(bool value) {
     _data[RC_ENABLE_TOUCH] = value;
 	return enableTouch();
+}
+
+void RobotConfig::setTouchAction(uint8_t id, uint8_t value) {
+	if (id >= RC_TOUCH_ACTION_CNT) return;
+	_data[RC_TOUCH_ACTION + id] = value;
+}
+
+bool RobotConfig::enableTouch() {
+	if (!_data[RC_ENABLE_TOUCH]) return false;
+	bool enabled = false;
+	for (uint8_t id = 0; id < RC_TOUCH_ACTION_CNT; id++) {
+		enabled |= _data[RC_TOUCH_ACTION + id];
+	}
+	return enabled;
+}
+
+uint8_t RobotConfig::touchAction(uint8_t id) {
+	if (id >= RC_TOUCH_ACTION_CNT) return DEFAULT_TOUCH_NO_ACTION;
+	return (_data[RC_TOUCH_ACTION + id]);
 }
 
 void RobotConfig::setRefVoltage(uint16_t refVoltage) {    
