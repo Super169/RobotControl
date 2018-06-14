@@ -1,7 +1,7 @@
 #include "robot.h"
 #include "V2_Command.h"
 
-boolean MpuInit(){
+bool MpuInit(){
   Wire.begin();
   Wire.beginTransmission(MPU_addr);
   Wire.write(0x6B);  // PWR_MGMT_1 register
@@ -34,6 +34,9 @@ void MpuGetActionHandle(){
     // TODO: ask L why he comment out the endTransmission
 	//Wire.endTransmission(true);
     
+    if (debug) DEBUG.printf("x,y,z: %d,%d, %d ; faceUp: %d, faceDown: %d\n", ax, ay, az, config.faceUpAction(), config.faceDownAction());
+
+
 	// Serial.print(" | AcZ = ");
     // Serial.println(az);
 	if (config.enableOLED()) {

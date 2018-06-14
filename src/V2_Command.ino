@@ -798,7 +798,7 @@ void V2_Mp3SetVolume(byte *cmd) {
 void V2_PlayAction(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_PlayAction]"));
 	V2_ResetAction();
-	if ((cmd[2] != 3) || (cmd[2] != 4)) {
+	if ((cmd[2] != 3) && (cmd[2] != 4)) {
 		V2_SendSingleByteResult(cmd, 1);
 		return;
 	}
@@ -814,10 +814,12 @@ void V2_PlayAction(byte *cmd) {
 // Function for both V1 and V2 and it need to keep V1 Play command
 void V2_GoAction(byte actionId, bool v2, byte *cmd) {
 	// Default play only once
+	if (debug) DEBUG.printf("[V2_GoAction(%d, %s, [])]\n", actionId, (v2 ? "true" : "false"));
 	V2_GoAction(actionId, 1, v2, cmd);
 }
 
 void V2_GoAction(byte actionId, byte playCount, bool v2, byte *cmd) {
+	if (debug) DEBUG.printf("[V2_GoAction(%d, %d, %s, [])]\n", actionId, playCount,  (v2 ? "true" : "false"));
 	if (actionData.id() != actionId) {
 		// need to load actionData
 		if (debug) DEBUG.printf("Read action %d from SPIFFS\n", actionId);
@@ -847,13 +849,14 @@ void V2_GoAction(byte actionId, byte playCount, bool v2, byte *cmd) {
 	if (actionData.PoseCnt() > 0) {
 		V2_ActionCombo = 0;
 		V2_NextAction = actionId;
+		V2_ActionPlayCount = playCount;
 		V2_NextPose = 0;
 		V2_GlobalTimeMs = millis();
 		V2_NextPlayMs = V2_GlobalTimeMs;
 		V2_ActionPlaying = true;
 	}
 	if (v2) V2_SendSingleByteResult(cmd, 0);
-	if (debug) DEBUG.printf("Ready to play action %d with %d steps\n", actionId, actionData.PoseCnt());
+	if (debug) DEBUG.printf("Ready to play action %d with %d steps, %d time(s)\n", actionId, actionData.PoseCnt(), V2_ActionPlayCount);
 
 }
 
@@ -1014,15 +1017,12 @@ void V2_UpdateAdHeader(byte *cmd) {
 
 	// Action ID must be matched.  
 	// i.e. must GET before UPDATE (Why?  user can load action from file, remove this checking)
-	if (cmd[4] != actionData.Header()[4]) {
-		/*
-		if (debug) DEBUG.printf("ID not matched: %d (current: %d)\n", cmd[4], actionData.Header()[4]);
-		V2_SendSingleByteResult(cmd, 2);
-		return;
-		*/
+	// Should always initilize before updating action header, it should rewrite the whole action.
+	//
+	// if (cmd[4] != actionData.Header()[4]) {
 		if (debug) DEBUG.printf("InitialObject(%d)\n", cmd[4]);
 		actionData.InitObject(cmd[4]);
-	}
+	// }
 	for (int i = 0; i < AD_HEADER_SIZE; i++) {
 		actionData.Header()[i] = cmd[i];
 	}

@@ -117,6 +117,7 @@ void RobotConfig::dumpConfig() {
 	_dbg->printf("Router: %s\n", (connectRouter() ? "Enabled" : "Disabled"));
  	_dbg->printf("OLED: %s\n", (enableOLED() ? "Enabled" : "Disabled"));
  	_dbg->printf("Touch Sensor: %s\n", (enableTouch() ? "Enabled" : "Disabled"));
+ 	_dbg->printf("AutoStandup: %s\n", (autoStand() ? "Enabled" : "Disabled"));
 
 	_dbg->println();
 }

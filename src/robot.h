@@ -192,6 +192,7 @@ bool HILZD_Command();
 void ArduinoOTASetup();
 
 // Mpu6050
+bool MpuInit();
 void MpuGetActionHandle();
 
 // Touch.ino

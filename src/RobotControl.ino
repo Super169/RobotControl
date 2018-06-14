@@ -212,6 +212,11 @@ void setup() {
 		myOLED.show();
 	}
 
+	// Turn on 6050
+	if (config.autoStand()) {
+		MpuInit();
+	}
+
 	servo.setLED(0, 1);
 
 /*
@@ -307,6 +312,7 @@ void CheckPosition() {
 	if (millis() > nextPositionCheckMs) {
 		// DEBUG.println("No Client connected, or connection lost");
     	// if (EN_MPU6050) MpuGetActionHandle();
+		if (debug) DEBUG.println("MpuGetActionHandle");
 		MpuGetActionHandle();
 
 		// TODO, use config for frequency
