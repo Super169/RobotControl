@@ -44,7 +44,8 @@ void V2_CheckAction() {
 			V2_ResetAction();
 			return;
 		}
-		V2_ActionPlayCount--;
+		// Set count to 0xFF for endless loop
+		if (V2_ActionPlayCount != 0xFF) V2_ActionPlayCount--;
 		V2_NextPose = 0;		
 		if (debug) DEBUG.printf("Action finish, continue with last %d times\n", V2_ActionPlayCount);
 	}
@@ -91,7 +92,7 @@ void V2_CheckAction() {
 		ledChange |= pose[AD_POFFSET_LED + i];
 	}
 
-if (debug) DEBUG.printf("%08ld -- Start servo command\n", millis());
+	if (debug) DEBUG.printf("%08ld -- Start servo command\n", millis());
 
 	if (debug && deepDebug) DEBUG.printf("LED changed: %s\n", (ledChange ? "YES" : "NO"));
 
@@ -179,7 +180,8 @@ if (debug) DEBUG.printf("%08ld -- End servo command\n", millis());
 			V2_ResetAction();
 			return;
 		}
-		V2_ActionPlayCount--;
+		// Set count to 0xFF for endless loop
+		if (V2_ActionPlayCount != 0xFF) V2_ActionPlayCount--;
 		V2_NextPose = 0;		
 		if (debug) DEBUG.printf("Action finished, continue with last %d times\n", V2_ActionPlayCount);
 	}

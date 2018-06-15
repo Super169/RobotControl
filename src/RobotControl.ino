@@ -330,10 +330,12 @@ void CheckTouch() {
 }
 
 // ADC_MODE(ADC_VCC);  -- only use if checking input voltage ESP.getVcc() is required.
-unsigned nextVoltageMs = 0;
+unsigned long nextVoltageMs = 0;
+unsigned long nextVoltageAlarmMs = 0;
 
 void CheckVoltage() {
 	if (millis() > nextVoltageMs) {
+
 		uint16_t v = analogRead(0);
 		// if (debug) DEBUG.printf("analgeRead(0): %d\n", v);
 		int iPower = GetPower(v);
@@ -349,12 +351,25 @@ void CheckVoltage() {
 			myOLED.printFloat((float)(analogRead(A0)/1024.0*11.0));
 			// myOLED.printNum(0,10,analogRead(A0));
 			myOLED.show();
-
 		}
+
+		if (v < config.alarmVoltage())	{
+			if (millis() > nextVoltageAlarmMs) {
+				nextVoltageAlarmMs += (config.voltageAlarmInterval() * 1000);
+				if (debug) DEBUG.printf("Battery low: %d (%d) \n", v, config.alarmVoltage());
+				if (config.voltageAlarmMp3()) {
+					mp3.begin();
+					mp3.stop();
+					mp3.playMp3File(config.voltageAlarmMp3());
+					mp3.end();
+				}
+			}
+		} 
+
 		nextVoltageMs = millis() + 1000;
 		// DEBUG.printf("v: %d, min: %d, max: %d, alarm: %d, power: %d%%\n\n", v, config.minVoltage(), config.maxVoltage(), config.alarmVoltage(), iPower);
-
 	}
+
 }
 
 // For consistence, build common function to convert A0 value to Power rate
