@@ -84,6 +84,6 @@ uint8_t DetectTouchMotion()
 }
 
 boolean ButtonIsPressed(){
-  pinMode(PIN_SETUP,INPUT);
-  return  digitalRead(PIN_SETUP);
+  pinMode(TOUCH_GPIO,INPUT);
+  return  digitalRead(TOUCH_GPIO);
 }

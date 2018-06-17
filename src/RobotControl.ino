@@ -323,10 +323,14 @@ void CheckPosition() {
 void CheckTouch() {
 	if (!config.enableTouch()) return;
 	//touch handle
-	uint8_t touchMotion = DetectTouchMotion();
+	
+	// uint8_t touchMotion = DetectTouchMotion();
+	uint8_t touchMotion = CheckTouchAction();
 	if(touchMotion == LONG_TOUCH) ReserveEyeBreath();
 	if(touchMotion == DOUBLE_CLICK) ReserveEyeBlink();
 	EyeLedHandle();
+
+
 }
 
 // ADC_MODE(ADC_VCC);  -- only use if checking input voltage ESP.getVcc() is required.

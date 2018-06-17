@@ -125,7 +125,7 @@ bool devMode = false;
 #define MP3_RXD_GPIO    14
 #define MP3_TXD_GPIO    16  
 #define HEAD_LED_GPIO   15
-#define PIN_SETUP       13
+#define TOUCH_GPIO      13
 
 bool headLed = false;
 
@@ -198,6 +198,9 @@ void MpuGetActionHandle();
 // Touch.ino
 uint8_t DetectTouchMotion();
 boolean ButtonIsPressed();
+
+// TouchV2.ino
+uint8_t CheckTouchAction();
 
 // EyeLed.ino
 void ReserveEyeBlink();
