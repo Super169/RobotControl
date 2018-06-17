@@ -49,10 +49,6 @@ GPIO-15 : Head LED
 
 #include "robot.h"
 
-// Start a TCP Server on port 6169
-uint16_t port = 6169;
-WiFiServer server(port);
-WiFiClient client;
 
 // #define PIN_SETUP 		13		// for L's PCB
 
@@ -106,9 +102,6 @@ void setup() {
 
 	if (debug) DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
 	
-	char *AP_Name = (char *) "Alpha 1S";
-	char *AP_Password = (char *) "12345678";
-
 	char buf[20];
 	bool isConnected = false;
 	
@@ -130,6 +123,7 @@ void setup() {
 	String ip;
 
 	if (isConnected) {
+		NetworkMode = NETWORK_ROUTER;
 		ip = WiFi.localIP().toString();
 		if (config.enableOLED()) myOLED.clr();
 		memset(buf, 0, 20);
@@ -137,6 +131,7 @@ void setup() {
 		ssid.toCharArray(buf, 20);
 		if (config.enableOLED()) myOLED.print(0,0, buf);
 	} else {
+		NetworkMode = NETWORK_AP;
 		DEBUG.println(F("Start using softAP"));
 		DEBUG.printf("Please connect to %s\n\n", AP_Name);
 		WiFi.softAP(AP_Name, AP_Password);
@@ -228,6 +223,48 @@ void setup() {
 	for (byte seq = 0; seq < CD_MAX_COMBO; seq++) comboTable[seq].ReadSPIFFS(seq);
 	actionData.ReadSPIFFS(0);
 	if (config.enableOLED()) myOLED.show();
+
+	showNetwork();
+
+}
+
+void showNetwork() {
+	String ssid;
+	String ip;
+
+	DEBUG.println();
+	
+	DEBUG.printf("Network: %s\n",(NetworkMode == NETWORK_ROUTER ? "Router" : (NetworkMode == NETWORK_AP ? "AP" : "NONE")));
+
+	switch (NetworkMode) {
+
+		case NETWORK_ROUTER:
+
+			ssid = WiFi.SSID();
+			ip = WiFi.localIP().toString();
+
+			DEBUG.print("Router: ");
+			DEBUG.println(ssid);
+			DEBUG.print("Robot: ");
+			DEBUG.print(ip);
+			DEBUG.printf(":%d\n\n", port);
+
+			break;
+
+		case NETWORK_AP:
+
+			DEBUG.printf("AP: %s - (%s)\n", AP_Name, AP_Password);
+			
+			IPAddress myIP = WiFi.softAPIP();
+			ip = myIP.toString();
+
+			DEBUG.print("Robot: ");
+			DEBUG.print(ip);
+			DEBUG.printf(":%d\n\n", port);
+
+			break;
+	}
+
 
 }
 

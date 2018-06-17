@@ -181,6 +181,10 @@ bool V2_Command() {
 			V2_DefaultConfig(cmd);
 			break;
 
+		case V2_CMD_GET_NETWORK:
+			V2_GetNetwork(cmd);
+			break;
+
 		case V2_CMD_SERVOANGLE:
 			V2_GetServoAngle(cmd);
 			break;
@@ -415,6 +419,44 @@ void V2_CheckBattery(byte *cmd) {
 
 	if (debug) DEBUG.printf("[V2_CheckBattery] - %d -> %d%%\n", v, iPower);
 
+	V2_SendResult(result);
+}
+
+void V2_GetNetwork(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_GetNetwork]"));
+	byte result[60];
+	memset(result, 0, 60);
+	result[2] = 56;
+	result[3] = cmd[3];
+	result[4] = NetworkMode;
+	String tmp;
+	char buf[20];
+	
+	switch (NetworkMode) {
+		case NETWORK_ROUTER:
+			memset(buf, 0, 20);
+			tmp = WiFi.SSID();
+			tmp.toCharArray(buf, 20);
+			memcpy((byte *)(result + 5), buf, 20);
+			tmp = WiFi.localIP().toString();
+			tmp.toCharArray(buf, 20);
+			memcpy((byte *)(result + 25), buf, 20);
+			break;
+		case NETWORK_AP:
+			memcpy((byte *)(result + 5), AP_Name, strlen(AP_Name));
+			/*
+			for (size_t i = 0; i < strlen(AP_Name); i++ ) {
+				result[5+i] = AP_Name[i];
+			}
+			*/
+			tmp = WiFi.softAPIP().toString();
+			tmp.toCharArray(buf, 20);
+			memcpy((byte *)(result + 25), buf, 20);
+			break;
+	}
+	
+	result[45] = port >> 8;
+	result[46] = port & 0xFF;
 	V2_SendResult(result);
 }
 

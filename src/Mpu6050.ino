@@ -49,13 +49,13 @@ void MpuGetActionHandle(){
   if(az < -14000 || az > 14000)detectTimes++;
   else if(!(az < -14000 || az > 14000) && detectTimes > 0 )detectTimes = 0;
   
-  if( !debug && detectTimes >= (1000 / config.mpuCheckFreq()) ){
+  if( !debug && detectTimes >= config.mpuCheckFreq() ){
     if(az < -14000 ){
       // actionSign = FACE_DOWN_ID;
       actionSign = config.faceDownAction();
     }
     else if(az > 14000 ){
-      // actionSign = FACE_UP_ID;
+      // actionSign = FACE_UP_ID;hu9
       actionSign = config.faceUpAction();
     }
     if (actionSign) {

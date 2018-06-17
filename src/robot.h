@@ -23,6 +23,22 @@
 
 WiFiManager wifiManager;
 
+
+// Start a TCP Server on port 6169
+uint16_t port = 6169;
+WiFiServer server(port);
+WiFiClient client;
+
+#define NETWORK_NONE        0
+#define NETWORK_ROUTER      1
+#define NETWORK_AP          2
+uint8_t NetworkMode = 0;
+
+char *AP_Name = (char *) "Alpha 1S";
+char *AP_Password = (char *) "12345678";
+
+
+
 #define DEBUG Serial1
 
 #define CMD_BUFFER_SIZE 64

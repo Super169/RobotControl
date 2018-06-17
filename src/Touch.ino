@@ -38,7 +38,7 @@ uint8_t CheckTouchAction() {
                         if (debug) DEBUG.printf("Long hold\n");
                         if (config.enableOLED()) {
                             myOLED.clr(6);
-                            myOLED.print(0, 6, "LongTouch Detected!!");
+                            myOLED.print(0, 6, "Long hold");
                             myOLED.show();
                         }
                         if (config.touchAction(0)) V2_GoAction(config.touchAction(0), false, NULL);
@@ -48,7 +48,7 @@ uint8_t CheckTouchAction() {
                         if (debug) DEBUG.printf("Single click\n");
                         if (config.enableOLED()) {
                             myOLED.clr(6);
-                            myOLED.print(0, 6, "SINGLE_CLICK Detected!!");
+                            myOLED.print(0, 6, "Single click");
                             myOLED.show();
                         }
                         if (config.touchAction(1)) V2_GoAction(config.touchAction(1), false, NULL);
@@ -59,7 +59,7 @@ uint8_t CheckTouchAction() {
                     if (debug) DEBUG.printf("Double click\n");
                     if (config.enableOLED()) {
                         myOLED.clr(6);
-                        myOLED.print(0, 6, "DOUBLE_CLICK Detected!!");
+                        myOLED.print(0, 6, "Double click");
                         myOLED.show();
                     }
                     if (config.touchAction(2)) V2_GoAction(config.touchAction(2), false, NULL);
@@ -69,7 +69,7 @@ uint8_t CheckTouchAction() {
                     if (debug) DEBUG.printf("Triple click\n");
                     if (config.enableOLED()) {
                         myOLED.clr(6);
-                        myOLED.print(0, 6, "TRIPLE_CLICK Detected!!");
+                        myOLED.print(0, 6, "Triple click");
                         myOLED.show();
                     }
                     if (config.touchAction(3)) V2_GoAction(config.touchAction(3), false, NULL);
