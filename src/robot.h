@@ -41,23 +41,29 @@ const char* ssid = "wuhulanren";
 const char* password = "wuhulanren";
 #define EN_OTA true
 
+/*
 //Touch Setting
 #define LONG_TOUCH 255
 #define NONE_MOTION 0
 #define SINGLE_CLICK 1
 #define DOUBLE_CLICK 2
 #define TRIPLE_CLICK 3
+*/
+
+#define TOUCH_NONE      0
+#define TOUCH_SINGLE    1
+#define TOUCH_DOUBLE    2
+#define TOUCH_TRIPLE    3
+#define TOUCH_LONG      0xFF
 
 //MPU6050 Setting
-// #define EN_MPU6050 true
-#define MPU_CHECK_TIMES 10
 const uint8_t MPU_addr=0x68;  // I2C address of the MPU-6050
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
 int16_t tmp;
 int8_t actionSign;
 int8_t getFaceDown , getFaceUp;
-bool mpuActionBegin = false;;
+bool mpuActionBegin = false;
 // #define FACE_DOWN_ID 5
 // #define FACE_UP_ID 6
 

@@ -308,16 +308,16 @@ void RobotCommander() {
 unsigned nextPositionCheckMs = 0;
 
 void CheckPosition() {
-	if (!config.autoStand()) return;
-	if (millis() > nextPositionCheckMs) {
-		// DEBUG.println("No Client connected, or connection lost");
-    	// if (EN_MPU6050) MpuGetActionHandle();
-		if (debug) DEBUG.println("MpuGetActionHandle");
-		MpuGetActionHandle();
+  if (!config.autoStand()) return;
+  if (millis() > nextPositionCheckMs) {
+    // DEBUG.println("No Client connected, or connection lost");
+      // if (EN_MPU6050) MpuGetActionHandle();
+    if (debug) DEBUG.println("MpuGetActionHandle");
+    MpuGetActionHandle();
 
-		// TODO, use config for frequency
-		nextPositionCheckMs = millis() + 1000;
-	}
+    // TODO, use config for frequency
+    nextPositionCheckMs = millis() + (1000 / config.positionCheckFreq());
+  }
 }
 
 void CheckTouch() {
@@ -326,8 +326,8 @@ void CheckTouch() {
 	
 	// uint8_t touchMotion = DetectTouchMotion();
 	uint8_t touchMotion = CheckTouchAction();
-	if(touchMotion == LONG_TOUCH) ReserveEyeBreath();
-	if(touchMotion == DOUBLE_CLICK) ReserveEyeBlink();
+	if(touchMotion == TOUCH_LONG) ReserveEyeBreath();
+	if(touchMotion == TOUCH_DOUBLE) ReserveEyeBlink();
 	EyeLedHandle();
 
 

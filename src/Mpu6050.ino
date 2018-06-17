@@ -15,6 +15,7 @@ bool MpuInit(){
  *   AX              -16383    AY   16384    AZ
  *   -16383                                16384
  */
+uint8_t detectTimes = 0;
 
 void MpuGetActionHandle(){
     if (!config.autoStand()) return;
@@ -32,37 +33,40 @@ void MpuGetActionHandle(){
     gy=Wire.read()<<8|Wire.read();  // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
     gz=Wire.read()<<8|Wire.read();  // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
     // TODO: ask L why he comment out the endTransmission
-	//Wire.endTransmission(true);
+  //Wire.endTransmission(true);
     
     if (debug) DEBUG.printf("x,y,z: %d,%d, %d ; faceUp: %d, faceDown: %d\n", ax, ay, az, config.faceUpAction(), config.faceDownAction());
 
 
-	// Serial.print(" | AcZ = ");
-    // Serial.println(az);
-	if (config.enableOLED()) {
-		myOLED.print(64,5,"AZ: ");
-		myOLED.printNum( 80 , 5 , az ,5);
-		myOLED.print("   ");
-		myOLED.show();
-	}
-    if(!mpuActionBegin && !V2_ActionPlaying && !debug){
-      if(az<-14000 ){
-        // actionSign = FACE_DOWN_ID;
-        actionSign = config.faceDownAction();
-      }
-      else if(az>14000 ){
-        // actionSign = FACE_UP_ID;
-        actionSign = config.faceUpAction();
-      }
-      if (actionSign) {
-        V2_ResetAction();
-        MpuAutoAction(actionSign);
-        mpuActionBegin = true;
-      }
+   //Serial.print(" | AcZ = ");
+   //Serial.println(az);
+  if (config.enableOLED()) {
+    myOLED.print(64,5,"AZ: ");
+    myOLED.printNum( 85 , 5 , (long)az , 10 , 6 , true);
+    myOLED.show();
+  }
+  
+  if(az < -14000 || az > 14000)detectTimes++;
+  else if(!(az < -14000 || az > 14000) && detectTimes > 0 )detectTimes = 0;
+  
+  if( !debug && detectTimes >= (1000 / config.mpuCheckFreq()) ){
+    if(az < -14000 ){
+      // actionSign = FACE_DOWN_ID;
+      actionSign = config.faceDownAction();
     }
-   
+    else if(az > 14000 ){
+      // actionSign = FACE_UP_ID;
+      actionSign = config.faceUpAction();
+    }
+    if (actionSign) {
+      V2_ResetAction();
+      MpuAutoAction(actionSign);
+      detectTimes = 0;
+    }
+  }
 }
 
 void MpuAutoAction(int8_t actionId){
   V2_GoAction(actionId, false, NULL);
 }
+

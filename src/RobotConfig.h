@@ -14,7 +14,7 @@
 #define DEFAULT_MAX_VOLTAGE     840
 #define DEFAULT_ALARM_VOLTAGE   650
 #define DEFAULT_ALARM_MP3       0
-#define DEFAULT_ALARM_INTERVAL  0
+#define DEFAULT_ALARM_INTERVAL  30
 #define DEFAULT_MAX_SERVO       16
 
 #define DEFAULT_MAX_DETECT_RETRY        2
@@ -26,11 +26,17 @@
 #define DEFAULT_MP3_STARTUP     1
 
 
+
 #define DEFAULT_AUTO_STAND      false
 #define DEFAULT_AUTO_FACE_UP    0
 #define DEFAULT_AUTO_FACE_DOWN  0
 
 #define DEFAULT_TOUCH_NO_ACTION 0
+#define DEFAULT_TOUCH_DETECT_PERIOD  1500
+#define DEFAULT_TOUCH_RELEASE_PERIOD 1000
+#define DEFAULT_MPU_CHECK_FREQ      10
+#define DEFAULT_POSITION_CHECK_FREQ 20
+
 
 #define RC_RECORD_SIZE          60
 #define RC_CONFIG_DATA_SIZE     56
@@ -57,6 +63,11 @@
 #define RC_AUTO_FACE_DOWN       43
 #define RC_TOUCH_ACTION			44  // 4 bytes
 #define RC_TOUCH_ACTION_CNT		4
+#define RC_TOUCH_DETECT_PERIOD  48  // 2 bytes
+#define RC_TOUCH_RELEASE_PERIOD 50  // 2 bytes
+#define RC_MPU_CHECK_FREQ       52
+#define RC_POSITION_CHECK_FREQ  53
+
 
 class RobotConfig {
 
@@ -103,7 +114,12 @@ class RobotConfig {
 			setTouchAction(2, action2);
 			setTouchAction(3, action3);
 		}
-		
+		void setTouchDetectPeriod(uint16_t detectPeriod);
+        void setTouchReleasePeriod(uint16_t releasePeriod);
+        void setMpuCheckFreq(uint8_t checkFreq);
+        void setPositionCheckFreq(uint8_t checkFreq);
+
+
         bool enableDebug() { return _data[RC_ENABLE_DEBUG]; }
         bool connectRouter() { return _data[RC_CONNECT_ROUTER]; }
         bool enableOLED() { return _data[RC_ENABLE_OLED]; }
@@ -125,9 +141,15 @@ class RobotConfig {
         uint8_t faceUpAction() { return _data[RC_AUTO_FACE_UP]; }
         uint8_t faceDownAction() { return _data[RC_AUTO_FACE_DOWN]; }
 		uint8_t touchAction(uint8_t id);
+        uint16_t touchDetectPeriod() { return getUint16_t(RC_TOUCH_DETECT_PERIOD); }
+        uint16_t touchReleasePeriod() { return getUint16_t(RC_TOUCH_RELEASE_PERIOD); }
+        uint8_t mpuCheckFreq() { return _data[RC_MPU_CHECK_FREQ]; }
+        uint8_t positionCheckFreq() { return _data[RC_POSITION_CHECK_FREQ]; }
+        
 
     private:
         void initObject(HardwareSerial *hsDebug);
+        void checkConfig();
         void setUint16_t(uint8_t offset, uint16_t value);
         uint16_t getUint16_t(uint8_t offset);
 

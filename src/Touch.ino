@@ -1,89 +1,101 @@
 #include "robot.h"
 
-unsigned long buttonTime,motionBeginTime;
-uint8_t pressedTimes,clickTimes,releasedTimes;
-boolean buttonState,lastButtonState;
-uint8_t buttonMotion;
 
-uint8_t DetectTouchMotion()
-{
-    if (!config.enableTouch())
-        return NONE_MOTION;
-    if (millis() - buttonTime > 20) {
-        buttonTime = millis();
-        buttonState = ButtonIsPressed();
+bool lastStatus = 0;
+unsigned long touchStartMs = 0;
+unsigned long touchReleaseMs = 0;
+unsigned long touchCount = 0;
+bool waitRelease = false;
 
-        if (buttonState && !lastButtonState && releasedTimes > 15) {
-            releasedTimes = 0;
-            motionBeginTime = millis();
-        }
-        if (buttonState && lastButtonState) {
-            pressedTimes++;
-        }
-        if (!buttonState && lastButtonState) {
-            clickTimes++;
-        }
-        if (!buttonState && !lastButtonState) {
-            releasedTimes++;
-            pressedTimes = 0;
-        }
-        lastButtonState = buttonState;
+uint8_t CheckTouchAction() {
 
-        if (millis() - motionBeginTime > 1000) {
-            if (pressedTimes > 40) {
-                buttonMotion = LONG_TOUCH;
-                clickTimes = 0;
-                if (debug) DEBUG.println(F("LongTouch Detected!!"));
-                if (config.enableOLED()) {
-                    myOLED.print(0, 6, "LongTouch Detected!!");
-                    myOLED.show();
-                }
-                if (config.touchAction(0)) V2_GoAction(config.touchAction(0), false, NULL);
-            }
-            else if (pressedTimes < 10 && clickTimes != 0) {
-                buttonMotion = clickTimes;
-                if (clickTimes == 1) {
-                    if (debug) DEBUG.println(F("SINGLE_CLICK Detected!!"));
-                    if (config.enableOLED()) {
-                        myOLED.print(0, 6, "SINGLE_CLICK Detected!!");
-                        myOLED.show();
+    uint8_t retCode = TOUCH_NONE;
+    if (!config.enableTouch()) return retCode;
+
+    unsigned long currMs = millis();    // for safety, use same time in ms for all checking later
+    bool currStatus = IsTouchPressed();
+
+    if (currStatus != lastStatus) {
+        if (currStatus) {
+            touchCount++;
+            touchReleaseMs = 0;
+            if (!touchStartMs) touchStartMs = millis();
+        } else {
+            touchReleaseMs = currMs;
+        }
+        lastStatus = currStatus;
+    }
+    
+    if (touchStartMs) {
+        // Touch detected
+        if ((millis() - touchStartMs) > config.touchDetectPeriod()) {
+            if (!waitRelease) {
+                waitRelease = true;
+                // End of detection
+                if (touchCount == 1) {
+                    if (currStatus) {
+                        // Long hold
+                        if (debug) DEBUG.printf("Long hold\n");
+                        if (config.enableOLED()) {
+                            myOLED.clr(6);
+                            myOLED.print(0, 6, "LongTouch Detected!!");
+                            myOLED.show();
+                        }
+                        if (config.touchAction(0)) V2_GoAction(config.touchAction(0), false, NULL);
+                        retCode = TOUCH_LONG;
+                    } else {
+                        // Single click
+                        if (debug) DEBUG.printf("Single click\n");
+                        if (config.enableOLED()) {
+                            myOLED.clr(6);
+                            myOLED.print(0, 6, "SINGLE_CLICK Detected!!");
+                            myOLED.show();
+                        }
+                        if (config.touchAction(1)) V2_GoAction(config.touchAction(1), false, NULL);
+                        retCode = TOUCH_SINGLE;
                     }
-                    if (config.touchAction(1)) V2_GoAction(config.touchAction(1), false, NULL);
-                }
-                else if (clickTimes == 2) {
-                    if (debug) DEBUG.println(F("DOUBLE_CLICK Detected!!"));
+                } else if (touchCount == 2) {
+                    // double click
+                    if (debug) DEBUG.printf("Double click\n");
                     if (config.enableOLED()) {
+                        myOLED.clr(6);
                         myOLED.print(0, 6, "DOUBLE_CLICK Detected!!");
                         myOLED.show();
                     }
                     if (config.touchAction(2)) V2_GoAction(config.touchAction(2), false, NULL);
-                }
-                else {
-                    if (debug) DEBUG.println(F("TRIPLE_CLICK Detected!!"));
+                    retCode = TOUCH_DOUBLE;
+                } else {
+                    // triple click
+                    if (debug) DEBUG.printf("Triple click\n");
                     if (config.enableOLED()) {
+                        myOLED.clr(6);
                         myOLED.print(0, 6, "TRIPLE_CLICK Detected!!");
                         myOLED.show();
                     }
                     if (config.touchAction(3)) V2_GoAction(config.touchAction(3), false, NULL);
+                    retCode = TOUCH_TRIPLE;
                 }
-            }
-            if (releasedTimes > 5) {
-                releasedTimes = 0;
-                clickTimes = 0;
-                pressedTimes = 0;
-                buttonMotion = NONE_MOTION;
-                if (config.enableOLED()) {
-                    // myOLED.print(0,6,"                        ");
-                    myOLED.clr(6);
-                    myOLED.show();
+            } else {
+                // must release for reasonable time to stop actino
+                if ((!currStatus) && ((currMs - touchReleaseMs) > config.touchReleasePeriod())) {
+                    ResetTouchAction();
                 }
             }
         }
-    }
-    return buttonMotion;
+    } 
+
+    return retCode;
 }
 
-boolean ButtonIsPressed(){
-  pinMode(TOUCH_GPIO,INPUT);
-  return  digitalRead(TOUCH_GPIO);
+void ResetTouchAction() {
+    if (debug) DEBUG.printf("ResetTouchAction\n");
+    touchStartMs = 0;
+    touchReleaseMs = 0;
+    touchCount = 0;
+    waitRelease = false;
+}
+
+bool IsTouchPressed() {
+    pinMode(TOUCH_GPIO,INPUT);
+    return  digitalRead(TOUCH_GPIO);
 }

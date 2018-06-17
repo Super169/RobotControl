@@ -40,6 +40,8 @@ void RobotConfig::initConfig() {
     setOLED(DEFAULT_ENABLE_OLED);
 	setTouch(DEFAULT_ENABLE_TOUCH);
 	setTouch(DEFAULT_TOUCH_NO_ACTION, DEFAULT_TOUCH_NO_ACTION, DEFAULT_TOUCH_NO_ACTION, DEFAULT_TOUCH_NO_ACTION);
+    setTouchDetectPeriod(DEFAULT_TOUCH_DETECT_PERIOD);
+    setTouchReleasePeriod(DEFAULT_TOUCH_RELEASE_PERIOD);
     
     setVoltage(DEFAULT_REF_VOLTAGE, DEFAULT_MIN_VOLTAGE, DEFAULT_MAX_VOLTAGE, DEFAULT_ALARM_VOLTAGE, DEFAULT_ALARM_MP3, DEFAULT_ALARM_INTERVAL);
 
@@ -53,6 +55,9 @@ void RobotConfig::initConfig() {
     setMp3Startup(DEFAULT_MP3_STARTUP);
 
     setAutoStand(DEFAULT_AUTO_STAND, DEFAULT_AUTO_FACE_UP, DEFAULT_AUTO_FACE_DOWN);
+
+    setMpuCheckFreq(DEFAULT_MPU_CHECK_FREQ);
+    setPositionCheckFreq(DEFAULT_POSITION_CHECK_FREQ);
 
 }
 
@@ -84,8 +89,23 @@ bool RobotConfig::readConfig() {
     _data[2] = RC_CONFIG_DATA_SIZE;
     _data[RC_RECORD_SIZE-1] = 0xED;
 
+    checkConfig();
+
     return true;
 
+}
+
+void RobotConfig::checkConfig() {
+    
+    // Just for safety, to check for possible invalid interval to prevent continue trigger event
+   
+    if (touchDetectPeriod() < 1000) setTouchDetectPeriod(DEFAULT_TOUCH_DETECT_PERIOD);
+    if (touchReleasePeriod() < 1000) setTouchReleasePeriod(DEFAULT_TOUCH_RELEASE_PERIOD);
+
+    if (voltageAlarmInterval() < 10) setVoltageAlarmInterval(DEFAULT_ALARM_INTERVAL);
+
+    if (mpuCheckFreq() < 10) setMpuCheckFreq(DEFAULT_MPU_CHECK_FREQ);
+    if (positionCheckFreq() < 10) setPositionCheckFreq(DEFAULT_POSITION_CHECK_FREQ);
 }
 
 byte RobotConfig::writeConfig() {
@@ -162,6 +182,14 @@ uint8_t RobotConfig::touchAction(uint8_t id) {
 	return (_data[RC_TOUCH_ACTION + id]);
 }
 
+void RobotConfig::setTouchDetectPeriod(uint16_t detectPeriod) {
+    setUint16_t(RC_TOUCH_DETECT_PERIOD, detectPeriod);
+}
+
+void RobotConfig::setTouchReleasePeriod(uint16_t releasePeriod) {
+    setUint16_t(RC_TOUCH_RELEASE_PERIOD, releasePeriod);
+}
+
 void RobotConfig::setRefVoltage(uint16_t refVoltage) {    
     setUint16_t(RC_REF_VOLTAGE, refVoltage);
 }
@@ -234,4 +262,12 @@ void RobotConfig::setAutoFaceUp(uint8_t faceUp) {
 
 void RobotConfig::setAutoFaceDown(uint8_t faceDown) {
     _data[RC_AUTO_FACE_DOWN] = faceDown;
+}
+
+void RobotConfig::setMpuCheckFreq(uint8_t checkFreq) {
+    _data[RC_MPU_CHECK_FREQ] = checkFreq;
+}
+
+void RobotConfig::setPositionCheckFreq(uint8_t checkFreq) {
+    _data[RC_POSITION_CHECK_FREQ] = checkFreq;
 }
