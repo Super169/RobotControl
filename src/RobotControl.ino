@@ -363,9 +363,9 @@ void CheckTouch() {
 	
 	// uint8_t touchMotion = DetectTouchMotion();
 	uint8_t touchMotion = CheckTouchAction();
-	if(touchMotion == TOUCH_LONG) ReserveEyeBreath();
-	if(touchMotion == TOUCH_DOUBLE) ReserveEyeBlink();
-	EyeLedHandle();
+	// if(touchMotion == TOUCH_LONG) ReserveEyeBreath();
+	// if(touchMotion == TOUCH_DOUBLE) ReserveEyeBlink();
+	// EyeLedHandle();
 
 
 }
