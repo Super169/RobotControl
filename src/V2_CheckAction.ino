@@ -8,11 +8,13 @@ void V2_ResetAction() {
 	V2_ActionCombo = 0;
 	V2_NextAction = 0;
 	V2_NextPose = 0;
+	V2_GlobalTimeMs = 0;
 	V2_NextPlayMs = 0;
+	V2_ActionPlayCount = 0;
 }
 
 bool V2_IsEndPose() {
-	return (V2_NextPose >= actionData.Header()[AD_OFFSET_POSECNT]);
+	return (V2_NextPose >= actionData.PoseCnt());
 }
 
 void V2_CheckAction() {
@@ -21,6 +23,7 @@ void V2_CheckAction() {
 	if (millis() < V2_NextPlayMs) return;
 
 	if (debug) DEBUG.printf("%08ld V2_CheckAction: %d - %d - %d\n", millis(), V2_ActionCombo, V2_NextAction, V2_NextPose);
+
 
 	if (actionData.id() != V2_NextAction) {
 		if (V2_NextPose) {
@@ -34,15 +37,32 @@ void V2_CheckAction() {
 		actionData.ReadSPIFFS(V2_NextAction);
 	}
 	// Should already checked in previous pose, just check again for safety
-	if (V2_IsEndPose()) {
-		// TODO: go next action in Combo when Combo is ready
-		if (debug) DEBUG.printf("Action Completed\n");
+	if (V2_IsEndPose())	 {
+		if (V2_ActionPlayCount < 2) {
+			if (debug) DEBUG.printf("Action Completed\n");
+			// TODO: go next action in Combo when Combo is ready
+			V2_ResetAction();
+			return;
+		}
+		// Set count to 0xFF for endless loop
+		if (V2_ActionPlayCount != 0xFF) V2_ActionPlayCount--;
+		V2_NextPose = 0;		
+		if (debug) DEBUG.printf("Action finish, continue with last %d times\n", V2_ActionPlayCount);
+	}
+
+
+	uint16_t offset = 0;
+	if (!actionData.IsPoseReady(V2_NextPose, offset)) {
+		// Fail loading pose data
+		if (debug) DEBUG.printf("Fail loading pose data: %d - %d\n", actionData.id(), V2_NextAction);
 		V2_ResetAction();
 		return;
 	}
 
+
 	byte *pose = actionData.Data();
-	pose = pose + AD_POSE_SIZE * V2_NextPose;
+	// pose = pose + AD_POSE_SIZE * V2_NextPose;
+	pose = pose + offset;
 
 	if (debug && deepDebug) {
 		DEBUG.println("\nPOSE Data: ");
@@ -50,6 +70,14 @@ void V2_CheckAction() {
 		DEBUG.println("\n");
 	}
 
+
+	// safetu check: running corrupted data may damage the servo
+	if ((pose[0] != 0xA9) || (pose[1] != 0x9A) || (pose[AD_POSE_SIZE - 1] != 0xED)) {
+		if (debug) DEBUG.printf("Data file corrupted, action STOP!\n");
+		V2_ResetAction();
+		return;
+	}
+	    
 
 	// Play current pose here
 	// Should use float for rounding here? // or just let it truncated.
@@ -64,22 +92,15 @@ void V2_CheckAction() {
 		ledChange |= pose[AD_POFFSET_LED + i];
 	}
 
-DEBUG.printf("%08ld -- Start servo command\n", millis());
+	if (debug) DEBUG.printf("%08ld -- Start servo command\n", millis());
 
 	if (debug && deepDebug) DEBUG.printf("LED changed: %s\n", (ledChange ? "YES" : "NO"));
+
 
 	// Move servo only if servo time > 0
 	if ((servoTime > 0) || (ledChange)) {
 		for (int id = 1; id <= config.maxServo(); id++) {
 			if (servo.exists(id)) {
-				if (servoTime > 0) {
-					byte angle = pose[AD_POFFSET_ANGLE + id - 1];
-					// Check for dummy action to reduce commands
-					if ((angle <= 0xF0) && ((V2_NextPose) || (servo.lastAngle(id) != angle))) {
-						servo.move(id, angle, servoTime);
-						delay(1);
-					}
-				}
 				if (ledChange) {
 					int h = (id - 1) / 4;
 					int l = 2 * ( 3 - ((id -1) % 4));
@@ -91,15 +112,22 @@ DEBUG.printf("%08ld -- Start servo command\n", millis());
 						}
 					}
 				}
+				if (servoTime > 0) {
+					byte angle = pose[AD_POFFSET_ANGLE + id - 1];
+					// Check for dummy action to reduce commands
+					if ((angle <= 0xF0) && ((V2_NextPose) || (servo.lastAngle(id) != angle))) {
+						servo.move(id, angle, servoTime);
+						delay(1);
+					}
+				}
 			}
 		}
 	}
 
-DEBUG.printf("%08ld -- End servo command\n", millis());
+if (debug) DEBUG.printf("%08ld -- End servo command\n", millis());
 
 	// Check HeadLED, follow servo status 0 - on, 1 - off
 	byte headLight = pose[AD_POFFSET_HEAD];
-	if (debug && deepDebug) DEBUG.printf("HeadLED: %d", headLight);
 	if (headLight == 0b10) {
 		if (debug && deepDebug) DEBUG.printf("HeadLED: %d -> %d\n", headLight, 1);
 		if (headLed != 1) SetHeadLed(1);
@@ -133,38 +161,33 @@ DEBUG.printf("%08ld -- End servo command\n", millis());
 
 	uint16_t waitTimeMs = (pose[AD_POFFSET_WTIME] << 8) | pose[AD_POFFSET_WTIME+1];
 	
-	V2_NextPlayMs = millis() + waitTimeMs;
+	if (V2_UseGlobalTime) {
+		V2_GlobalTimeMs += waitTimeMs;
+		V2_NextPlayMs = V2_GlobalTimeMs;			
+	} else {
+		V2_NextPlayMs = millis() + waitTimeMs;
+	}
+
 
 	if (debug) DEBUG.printf("Wait Time: %d -> %ld\n", waitTimeMs, V2_NextPlayMs);
 
 	V2_NextPose++;
 
 	if (V2_IsEndPose())	 {
-		if (debug) DEBUG.printf("Action Completed\n");
-		V2_ResetAction();
-		return;
-	}
-}
-/*
-void V2_goPlayAction(byte actionCode) {
-	if (debug) DEBUG.printf("Start playing action %c\n", (actionCode + 'A'));
-	for (int po = 0; po < MAX_POSES; po++) {
-		int waitTime = actionTable[actionCode][po][WAIT_TIME_HIGH] * 256 + actionTable[actionCode][po][WAIT_TIME_LOW];
-		byte time = actionTable[actionCode][po][EXECUTE_TIME];
-		// End with all zero, so wait time will be 0x00, 0x00, and time will be 0x00 also
-		if ((waitTime == 0) && (time == 0)) break;
-		if (time > 0) {
-			for (int id = 1; id <= config.maxServo(); id++) {
-				byte angle = actionTable[actionCode][po][ID_OFFSET + id];
-				// max 240 degree, no action required if angle not changed, except first action
-				if ((angle <= 0xf0) && 
-					((po == 0) || (angle != actionTable[actionCode][po-1][ID_OFFSET + id]))) {
-					servo.move(id, angle, time);
-				}
-			}
+		if (V2_ActionPlayCount < 2) {
+			// TODO: go next action in Combo when Combo is ready
+			if (debug) DEBUG.printf("Action Completed\n");
+			V2_ResetAction();
+			return;
 		}
-		delay(waitTime);
+		// Set count to 0xFF for endless loop
+		if (V2_ActionPlayCount != 0xFF) V2_ActionPlayCount--;
+		V2_NextPose = 0;		
+		if (debug) DEBUG.printf("Action finished, continue with last %d times\n", V2_ActionPlayCount);
 	}
-	if (debug) DEBUG.printf("Action %c completed\n", (actionCode + 'A'));
+
+
+	// Try to preLoad next pose by checking is
+	actionData.IsPoseReady(V2_NextPose);
+
 }
-*/

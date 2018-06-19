@@ -125,7 +125,7 @@ void RM_DelAction() {
 			break;
 		}
 	}
-	byte result = actionData.DeleteSPIFFS((byte) aId);
+	byte result = actionData.DeleteActionFile((byte) aId);
 
 	char fileName[25];
 	memset(fileName, 0, 25);
@@ -154,7 +154,7 @@ void RM_GenFile() {
 	switch (ch) {
 		case 'A':
 		case 'a':
-			RM_GenAction();
+//			RM_GenAction();
 			break;
 
 		default:
@@ -162,7 +162,7 @@ void RM_GenFile() {
 			break;
 	}
 }
-
+/*
 // standby pose
 // ID:   01  02  03  04  05  06  07  08  09  10  11  12  13  14  15  16
 // Dec:  90  90  90  90  90  90  90  60  76 110  90  90 120 104  70  90
@@ -214,3 +214,4 @@ void RM_GenAction() {
 	Serial.printf("Action %d Pose %d saved to SPIFFS\n", aId, 0);
 	SPIFFS.end();
 }
+*/

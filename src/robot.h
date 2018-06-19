@@ -5,18 +5,39 @@
 #include "WiFiClient.h"
 #include "WiFiManager.h"
 
+#include <Wire.h>
 #include "OLED12864.h"
 
 #include "UBTech.h"
 #include "FS.h"
 #include "Buffer.h"
+#include "ComboData.h"
 #include "ActionData.h"
 #include "MP3TF16P.h"
 #include "RobotConfig.h"
 
 #include "message.h"
+#include "RESULT.h"
+
+#include "V2_Command.h"
 
 WiFiManager wifiManager;
+
+
+// Start a TCP Server on port 6169
+uint16_t port = 6169;
+WiFiServer server(port);
+WiFiClient client;
+
+#define NETWORK_NONE        0
+#define NETWORK_ROUTER      1
+#define NETWORK_AP          2
+uint8_t NetworkMode = 0;
+
+char *AP_Name = (char *) "Alpha 1S";
+char *AP_Password = (char *) "12345678";
+
+
 
 #define DEBUG Serial1
 
@@ -25,6 +46,42 @@ WiFiManager wifiManager;
 Buffer cmdBuffer(CMD_BUFFER_SIZE);
 
 RobotConfig config(&DEBUG);
+
+
+//OTA Setting
+#include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
+const char* ssid = "wuhulanren";          
+const char* password = "wuhulanren";
+#define EN_OTA true
+
+/*
+//Touch Setting
+#define LONG_TOUCH 255
+#define NONE_MOTION 0
+#define SINGLE_CLICK 1
+#define DOUBLE_CLICK 2
+#define TRIPLE_CLICK 3
+*/
+
+#define TOUCH_NONE      0
+#define TOUCH_SINGLE    1
+#define TOUCH_DOUBLE    2
+#define TOUCH_TRIPLE    3
+#define TOUCH_LONG      0xFF
+
+//MPU6050 Setting
+const uint8_t MPU_addr=0x68;  // I2C address of the MPU-6050
+int16_t ax, ay, az;
+int16_t gx, gy, gz;
+int16_t tmp;
+int8_t actionSign;
+int8_t getFaceDown , getFaceUp;
+bool mpuActionBegin = false;
+// #define FACE_DOWN_ID 5
+// #define FACE_UP_ID 6
 
 // OLED Settings
 
@@ -40,9 +97,10 @@ bool enable_V2 = true;
 bool enable_UBTBT = true;
 bool enable_UBTCB = true;
 bool enable_UBTSV = true;
+bool enable_HILZD = false;
 
+ComboData comboTable[CD_MAX_COMBO];
 ActionData actionData;
-
 
 #define MAX_ACTION 		26
 #define MAX_POSES 		30 
@@ -66,41 +124,7 @@ ActionData actionData;
 #define MAX_COMBO 10
 #define MAX_COMBO_SIZE 100
 
-#define READ_OK 			 0x00
-#define READ_ERR_NOT_FOUND   0x01
-#define READ_ERR_OPEN_FILE   0x02
-#define READ_ERR_FILE_SIZE   0x03
-#define READ_ERR_READ_FILE   0x04
-
-#define WRITE_OK 			 0x00
-#define WRITE_ERR_OPEN_FILE  0x01
-#define WRITE_ERR_WRITE_FILE 0x02
-
-#define MOVE_OK 				0x00
-#define MOVE_ERR_PARM_CNT		0x01
-#define MOVE_ERR_PARM_VALUE     0x02
-#define MOVE_ERR_PARM_CONTENT   0x03
-#define MOVE_ERR_PARM_END		0x04
-#define MOVE_ERR_PARM_ALL_CNT	0x11
-#define MOVE_ERR_PARM_ALL_ANGLE	0x12
-#define MOVE_ERR_PARM_ONE_ID	0x21
-#define MOVE_ERR_PARM_ONE_ANGLE	0x22
-#define MOVE_ERR_PARM_DUP_ID	0x23
-
-#define UPLOAD_OK 				0x00
-#define UPLOAD_CLEAR_OK			0x00
-#define UPLOAD_ERR_HEADER		0x01
-#define UPLOAD_ERR_ACTION		0x02
-#define UPLOAD_ERR_POSE         0x03
-#define UPLOAD_ERR_POSE_DATA    0x04
-#define UPLOAD_ERR_CLEAR_POSE   0x05
-
-#define MAX_WAIT_CMD 			100
-
 #pragma region "Global variables"
-
-byte actionTable[MAX_ACTION][MAX_POSES][MAX_POSES_SIZE];
-byte comboTable[MAX_COMBO][MAX_COMBO_SIZE];
 
 char* actionDataFile = (char *) "/robot.dat";
 
@@ -120,25 +144,10 @@ long lastCmdMs = 0;
 bool debug = true;
 bool devMode = false;
 
-#define MY_PCB_2
-
-#ifdef MY_PCB
-    // My PCB
-    #define MP3_RXD_GPIO    14
-    #define MP3_TXD_GPIO    13  
-    #define HEAD_LED_GPIO   15
-#else
-    #ifdef MY_PCB_2
-        #define MP3_RXD_GPIO    14
-        #define MP3_TXD_GPIO    16  
-        #define HEAD_LED_GPIO   15
-    #else 
-        // L's PCB
-        #define MP3_RXD_GPIO    14
-        #define MP3_TXD_GPIO    16  
-        #define HEAD_LED_GPIO   13
-    #endif
-#endif
+#define MP3_RXD_GPIO    14
+#define MP3_TXD_GPIO    16  
+#define HEAD_LED_GPIO   15
+#define TOUCH_GPIO      13
 
 bool headLed = false;
 
@@ -151,6 +160,7 @@ uint8_t mp3_Vol = 0xff;
 
 #pragma region "Local Functions"
 
+byte GetPower(uint16_t v);
 void cmd_ReadSPIFFS();
 void ReadSPIFFS(bool sendResult);
 
@@ -195,5 +205,30 @@ void V2_CheckAction();
 void V2_GoAction(byte actionId, bool v2, byte *cmd);
 
 void RobotMaintenanceMode();
+
+
+// HILZD
+bool HILZD_Command();
+
+// OTA.ino
+void ArduinoOTASetup();
+
+// Mpu6050
+bool MpuInit();
+void MpuGetActionHandle();
+
+// Touch.ino
+uint8_t DetectTouchMotion();
+boolean ButtonIsPressed();
+
+// TouchV2.ino
+uint8_t CheckTouchAction();
+
+// EyeLed.ino
+void ReserveEyeBlink();
+void ReserveEyeBreath();
+void EyeBlink();
+void EyeBreath();
+void EyeLedHandle();
 
 #endif

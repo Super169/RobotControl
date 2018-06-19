@@ -15,8 +15,10 @@
 //                                    A9 9A 03 02 01 06 ED    
 //   03 - Set DevMode (fix) 		: A9 9A 03 03 00 06 ED
 //									  A9 9A 03 03 01 07 ED
+//   04 - Get Config (fix)          : A9 9A 02 04 06 ED
 //   0A - Command Enable (fix)		: A9 9A 02 0A 0C ED
 //                                    A9 9A 07 0A 00 01 01 01 01 15 ED
+//   0B - Check battery (fix)       : A9 9A 02 0B 0D ED
 //   11 - Get Angle (fix) 			: A9 9A 02 11 13 ED
 //   12 - Get One Angle (fix)		: A9 9A 03 12 01 16 ED
 //   13 - Get Adj Angle (fix)		: A9 9A 02 13 15 ED
@@ -28,16 +30,27 @@
 //	 24 - Set LED (var)				: A9 9A 04 24 00 01 29 ED
 //                                  : A9 9A 06 24 01 00 02 01 2E ED
 //   31 - Set Head LED (fix)        : A9 9A 03 31 00 34 ED
+//                                    A9 9A 03 31 01 35 ED
+//	 32	- Stop MP3 (fix)			: A9 9A 02 32 34 ED
+//   33 - Play File (fix)			: A9 9A 04 33 00 01 38 ED
+//                                    A9 9A 04 33 FF 02 38 ED
+//   34 - Play MP3 File (fix)		: A9 9A 03 34 01 38 ED
+//   35 - Play Avert File (fix)		: A9 9A 03 35 01 39 ED
+//   36 - MP3 Set Volume (fix)		: A9 9A 04 36 00 0F 49 ED
+//                                    A9 9A 04 36 01 01 3C ED
+
+
+
 //   41 - Play Action               : A9 9A 03 41 00 43 ED
 //   42 - Play Combo                : A9 9A 03 42 00 44 ED
 //   4F - Stop playing              : A9 9A 02 4F 51 ED
 //   61 - Read Action Header (fix) 	: A9 9A 03 61 01 65 ED
 //   62 - Read Action Data (fix)	: A9 9A 03 62 01 65 ED
-//   63 - Read Action Post (fix)	: A9 9A 03 61 01 65 ED
 
-
-//   F1 - Read SPIFFS (fix) 		: A9 9A 02 F1 F3 ED
-//   F2 - Write SPIFFS (fix) 		: A9 9A 02 F2 F4 ED
+//   71 - Update action header      : {Refer to ActionInfo}
+//   72 - Update action pose        : {refer to PoseInfo}	
+//   74 - Update action name	    : A9 9A 0B 74 01 07  44 65 66 61 75 6C 74 D7 ED
+//   75 - Delete action file	    : A9 9A 03 75 00 78 ED
 
 
 
@@ -95,12 +108,45 @@ bool V2_Command() {
 		return true;
 	}
 
-	// Special handle for stop play as there has no need to check for action playing
-	if (cmd[3] == V2_CMD_STOPPLAY) {
-		V2_ResetAction();
-		V2_SendSingleByteResult(cmd, 0);
-		return true;
+	switch (cmd[3]) {
+		case V2_CMD_DEBUG:
+			V2_SetDebug(cmd);
+			return true;
+			break;
+		
+		case V2_CMD_DEVMODE:			
+			V2_SetDevMode(cmd);
+			return true;
+			break;
+
+		case V2_CMD_CHECK_BATTERY:
+			V2_CheckBattery(cmd);
+			return true;
+			break;
+
+		case V2_CMD_MP3_STOP:
+			V2_Mp3Stop(cmd);
+			return true;
+			break;
+
+		case V2_CMD_MP3_SETVOLUME:
+			V2_Mp3SetVolume(cmd);
+			return true;
+			break;
+
+		case V2_CMD_STOPPLAY:
+			V2_ResetAction();
+			if (config.mp3Enabled()) {
+				mp3.begin();
+				mp3.stop();
+				mp3.end();
+			}
+			V2_SendSingleByteResult(cmd, 0);
+			return true;
+			break;
+
 	}
+
 
 	// No command except STOP is allowed when action playing
 	// Even some command will not affect the action, but for safety, do not play any of them.
@@ -119,16 +165,24 @@ bool V2_Command() {
 			V2_Reset(cmd);
 			break;
 
-		case V2_CMD_DEBUG:
-			V2_SetDebug(cmd);
-			break;
-
-		case V2_CMD_DEVMODE:			
-			V2_SetDevMode(cmd);
-			break;
-
 		case V2_CMD_ENABLE:
 			V2_CommandEnable(cmd);
+			break;
+
+		case V2_CMD_GETCONFIG:
+			V2_GetConfig(cmd);
+			break;
+
+		case V2_CMD_SETCONFIG:
+			V2_SetConfig(cmd);
+			break;
+
+		case V2_CMD_DEFAULTCONFIG:
+			V2_DefaultConfig(cmd);
+			break;
+
+		case V2_CMD_GET_NETWORK:
+			V2_GetNetwork(cmd);
 			break;
 
 		case V2_CMD_SERVOANGLE:
@@ -145,6 +199,10 @@ bool V2_Command() {
 
 		case V2_CMD_ONEADJANGLE:
 			V2_GetOneAdjAngle(cmd);
+			break;
+
+		case V2_CMD_SETADJANGLE:
+			V2_SetAdjAngle(cmd);
 			break;
 
 		case V2_CMD_LOCKSERVO:
@@ -167,10 +225,6 @@ bool V2_Command() {
 			V2_SetHeadLED(cmd);
 			break;
 
-		case V2_CMD_MP3_STOP:
-			V2_Mp3Stop(cmd);
-			break;
-
 		case V2_CMD_MP3_PLAYFILE:
 			V2_Mp3PlayFile(cmd);
 			break;
@@ -181,10 +235,6 @@ bool V2_Command() {
 
 		case V2_CMD_MP3_PLAYADVERT:
 			V2_Mp3PlayAdvert(cmd);
-			break;
-
-		case V2_CMD_MP3_SETVOLUME:
-			V2_Mp3SetVolume(cmd);
 			break;
 
 
@@ -209,11 +259,14 @@ bool V2_Command() {
 			V2_GetAdPose(cmd);
 			break;
 			
-		case V2_CMD_GET_ADDATA:
-			V2_GetAdData(cmd);
+		case V2_CMD_GET_COMBO:
+			V2_GetCombo(cmd);
 			break;
 
-		
+		case V2_CMD_UPD_COMBO:
+			V2_UpdateCombo(cmd);
+			break;
+
 		case V2_CMD_UPD_ADHEADER:
 			V2_UpdateAdHeader(cmd);
 			break;
@@ -226,6 +279,10 @@ bool V2_Command() {
 			V2_UpdateAdName(cmd);
 			break;
 
+		case V2_CMD_DEL_ACTION:
+			V2_DeleteActionFile(cmd);
+			break;
+/*
 		case V2_CMD_READSPIFFS:
 			V2_ReadSPIFFS(cmd);
 			break;
@@ -233,7 +290,7 @@ bool V2_Command() {
 		case V2_CMD_WRITESPIFFS:
 			V2_WriteSPIFFS(cmd);
 			break;
-
+*/
 		default:
 			if (debug) {
 				DEBUG.printf("Undefined command: %02X\n", cmd[3]);
@@ -261,7 +318,7 @@ void V2_SendSingleByteResult(byte *cmd, byte data) {
 	V2_SendResult(result);
 }
 
-#pragma region V2_CMD_RESET / V2_CMD_DEBUG / V2_CMD_DEVMODE
+#pragma region V2_CMD_RESET / V2_CMD_DEBUG / V2_CMD_DEVMODE / V2_CMD_GETCONFIG / V2_CMD_SETCONFIG
 
 void V2_Reset(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_Reset]"));
@@ -273,7 +330,7 @@ void V2_Reset(byte *cmd) {
 	if ((showAngle) && (showAngle != '0')) {
 		V2_GetServoAngle(cmd);
 	} else {
-		V2_SendSingleByteResult(cmd, 0);
+		V2_SendSingleByteResult(cmd, RESULT::SUCCESS);
 	}
 }
 
@@ -282,15 +339,17 @@ void V2_SetDebug(byte *cmd) {
 	byte status = (cmd[4] ? 1 : 0);
 	if (debug && !status) DEBUG.printf("Disable debug mode\n");
 	SetDebug(status);
+	config.setDebug(status);
+	config.writeConfig();
 	if (debug) DEBUG.printf("Debug mode %s\n", (status ? "enabled" : "disabled"));
-	V2_SendSingleByteResult(cmd, 0);
+	V2_SendSingleByteResult(cmd, RESULT::SUCCESS);
 }
 
 void V2_SetDevMode(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_SetDevMode]"));
 	devMode = (cmd[4] ? 1 : 0);
 	if (debug) DEBUG.printf("Developer mode %s\n", (devMode ? "enabled" : "disabled"));
-	V2_SendSingleByteResult(cmd, 0);
+	V2_SendSingleByteResult(cmd, RESULT::SUCCESS);
 }
 
 void V2_CommandEnable(byte *cmd) {
@@ -315,10 +374,93 @@ void V2_CommandEnable(byte *cmd) {
 	result[8] = (enable_UBTSV ? 1 : 0);
 
 	V2_SendResult(result);
-	// Serial.write(result, 5);
+}
+
+void V2_GetConfig(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_GetConfig]"));
+	config.Data()[3] = cmd[3];
+
+	V2_SendResult((byte *) config.Data());
+
+}
+
+void V2_SetConfig(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_SetConfig]"));
+	if (cmd[2] != RC_CONFIG_DATA_SIZE) {
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_SIZE);
+		return;
+	}
+
+	memcpy((byte *) config.Data(), (byte *) cmd, RC_RECORD_SIZE);
+	byte result = config.writeConfig();
+	V2_SendSingleByteResult(cmd, result);
+}
+
+void V2_DefaultConfig(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_DefaultConfig]"));
+	config.initConfig();
+	byte result = config.writeConfig();
+	V2_SendSingleByteResult(cmd, result);
 }
 
 #pragma endregion
+
+
+void V2_CheckBattery(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_CheckBattery]"));
+	byte result[9];
+	result[2] = 5;
+	result[3] = cmd[3];
+	uint16_t v = analogRead(0);
+	byte iPower = GetPower(v);
+	result[4] = iPower;
+	result[5] = v >> 8;
+	result[6] = v & 0xFF;
+
+	if (debug) DEBUG.printf("[V2_CheckBattery] - %d -> %d%%\n", v, iPower);
+
+	V2_SendResult(result);
+}
+
+void V2_GetNetwork(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_GetNetwork]"));
+	byte result[60];
+	memset(result, 0, 60);
+	result[2] = 56;
+	result[3] = cmd[3];
+	result[4] = NetworkMode;
+	String tmp;
+	char buf[20];
+	
+	switch (NetworkMode) {
+		case NETWORK_ROUTER:
+			memset(buf, 0, 20);
+			tmp = WiFi.SSID();
+			tmp.toCharArray(buf, 20);
+			memcpy((byte *)(result + 5), buf, 20);
+			tmp = WiFi.localIP().toString();
+			tmp.toCharArray(buf, 20);
+			memcpy((byte *)(result + 25), buf, 20);
+			break;
+		case NETWORK_AP:
+			memcpy((byte *)(result + 5), AP_Name, strlen(AP_Name));
+			/*
+			for (size_t i = 0; i < strlen(AP_Name); i++ ) {
+				result[5+i] = AP_Name[i];
+			}
+			*/
+			tmp = WiFi.softAPIP().toString();
+			tmp.toCharArray(buf, 20);
+			memcpy((byte *)(result + 25), buf, 20);
+			break;
+	}
+	
+	result[45] = port >> 8;
+	result[46] = port & 0xFF;
+	V2_SendResult(result);
+}
+
+
 
 #pragma region V2_CMD_SERVOANGLE / V2_CMD_ONEANGLE
 
@@ -341,7 +483,7 @@ void V2_GetOneAngle(byte *cmd) {
 
 	if (debug) DEBUG.println(F("[V2_GetOneAngle]"));
 	byte result[9];
-	result[2] = 4;
+	result[2] = 5;
 	result[3] = cmd[3];
 
 	if (cmd[2] == 3) {
@@ -386,10 +528,12 @@ void V2_GetServoAdjAngle(byte *cmd) {
 
 }
 
+// A9 9A 04 {cmd} {id} {high} {low} {sum} ED
+
 void V2_GetOneAdjAngle(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_GetOneAdjAngle]"));
 	byte result[9];
-	result[2] = 4;
+	result[2] = 5;
 	result[3] = cmd[3];
 
 	if (cmd[2] == 3) {
@@ -411,6 +555,22 @@ void V2_GetOneAdjAngle(byte *cmd) {
 	}
 	V2_SendResult(result);
 }
+
+void V2_SetAdjAngle(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_SetAdjAngle]"));
+	byte id = cmd[4];
+	if (cmd[2] == 5) {
+		byte id = cmd[4];
+		uint16_t adjSet = (cmd[5] << 8) | cmd[6];
+		DEBUG.printf("Set angle: %d\n", adjSet);
+		uint16_t adjResult = servo.setAdjAngle(id, adjSet);
+		DEBUG.printf("Result angle: %d\n", adjResult);
+		V2_SendSingleByteResult(cmd, (adjSet == adjResult ? 0 : 2));
+	} else {
+		V2_SendSingleByteResult(cmd, 1);
+	}
+}
+
 
 #pragma endregion
 
@@ -541,7 +701,7 @@ void V2_ServoMove(byte *cmd) {
 			moveCnt++;
 		}
 	}
-	result[2] = 2 + 3 * moveCnt;
+	result[2] = 3 + 3 * moveCnt;
 	result[3] = cmd[3];
 	result[4] = moveCnt;
 	V2_SendResult(result);
@@ -598,10 +758,11 @@ void V2_SetHeadLED(byte *cmd) {
 
 void V2_Mp3Stop(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_Mp3Stop]"));
-	if (!config.mp3Enabled()) return;
-	mp3.begin();
-	mp3.stop();
-	mp3.end();
+	if (config.mp3Enabled()) {
+		mp3.begin();
+		mp3.stop();
+		mp3.end();
+	}
 	V2_SendSingleByteResult(cmd, 0);
 }
 
@@ -679,39 +840,65 @@ void V2_Mp3SetVolume(byte *cmd) {
 void V2_PlayAction(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_PlayAction]"));
 	V2_ResetAction();
-	if (cmd[2] != 3) {
+	if ((cmd[2] != 3) && (cmd[2] != 4)) {
 		V2_SendSingleByteResult(cmd, 1);
 		return;
 	}
 	byte actionId = cmd[4];
-	V2_GoAction(actionId, true, cmd);
+	byte playCount = 1;
+	if (cmd[2] == 4) {
+		playCount = cmd[5];
+	}
+	V2_GoAction(actionId, playCount, true, cmd);
 }
 
 
 // Function for both V1 and V2 and it need to keep V1 Play command
 void V2_GoAction(byte actionId, bool v2, byte *cmd) {
+	// Default play only once
+	if (debug) DEBUG.printf("[V2_GoAction(%d, %s, [])]\n", actionId, (v2 ? "true" : "false"));
+	V2_GoAction(actionId, 1, v2, cmd);
+}
+
+void V2_GoAction(byte actionId, byte playCount, bool v2, byte *cmd) {
+	if (debug) DEBUG.printf("[V2_GoAction(%d, %d, %s, [])]\n", actionId, playCount,  (v2 ? "true" : "false"));
 	if (actionData.id() != actionId) {
 		// need to load actionData
 		if (debug) DEBUG.printf("Read action %d from SPIFFS\n", actionId);
-		if (!actionData.ReadSPIFFS(actionId)) {
+		if (int error = actionData.ReadSPIFFS(actionId)) {
+			if (debug) DEBUG.printf("Fail to get Id matched - %d\n", error);
 			if (v2) V2_SendSingleByteResult(cmd, 2);
 			return;
 		}
 	}
+
+	// Load starting with pId = 0
+	uint16_t pId = 0;
+	if (!actionData.IsPoseReady(pId)) {
+		if (v2) V2_SendSingleByteResult(cmd, 3);
+		return;	
+	}
+	
+
 	// Just for safety, check the poseCnt again.  
 	// May skip this step if those information is always updated.
-	if (debug) DEBUG.printf("Refresh action %d from SPIFFS\n", actionId);
-	actionData.RefreshActionInfo();
+	//
+	// -- In new version, it cannot be checked as only partial action is loaded in memory
+	//
+	// if (debug) DEBUG.printf("Refresh action %d from SPIFFS\n", actionId);
+	// actionData.RefreshActionInfo();
 
 	if (actionData.PoseCnt() > 0) {
 		V2_ActionCombo = 0;
 		V2_NextAction = actionId;
+		V2_ActionPlayCount = playCount;
 		V2_NextPose = 0;
-		V2_NextPlayMs = millis();
+		V2_GlobalTimeMs = millis();
+		V2_NextPlayMs = V2_GlobalTimeMs;
 		V2_ActionPlaying = true;
 	}
 	if (v2) V2_SendSingleByteResult(cmd, 0);
-	if (debug) DEBUG.printf("Ready to play action %d with %d steps\n", actionId, actionData.PoseCnt());
+	if (debug) DEBUG.printf("Ready to play action %d with %d steps, %d time(s)\n", actionId, actionData.PoseCnt(), V2_ActionPlayCount);
 
 }
 
@@ -726,13 +913,14 @@ void V2_PlayCombo(byte *cmd) {
 
 bool V2_CheckActionId(byte actionId) {
 
-	if (debug) DEBUG.printf("Current Id: %d; requested Id: %d\n", actionData.id(), actionId);
+	if (debug) DEBUG.printf("V2_CheckActionId - Current Id: %d (%d); requested Id: %d\n", actionData.id(), actionData.Header()[4], actionId);
 	if (actionId != actionData.id() ) {
-		if (!actionData.ReadSPIFFS(actionId)) {
+		if (int error = actionData.ReadSPIFFS(actionId)) {
 			// anything to do if still fail to read
-			if (debug) DEBUG.println("Fail to get Id matched.");
+			if (debug) DEBUG.printf("Fail to get Id matched - %d\n", error);
 			return false;
 		}
+		if (debug) DEBUG.printf("V2_CheckActionId - Current Id changed to %d (%d)\n", actionData.id(), actionData.Header()[4]);
 	} 
 	return true;
 }
@@ -795,63 +983,50 @@ int getActionId(Dir dir) {
 void V2_GetAdHeader(byte *cmd) {
 	if (debug) DEBUG.println("[V2_GetAdHeader]");
 	byte aId = cmd[4];	
+	if (!V2_CheckActionId(aId)) {
+		V2_SendSingleByteResult(cmd, 0x01);
+		return;	
+	}
 	actionData.Header()[3] = cmd[3];
-	if (!V2_CheckActionId(aId)) {
-		V2_SendSingleByteResult(cmd, 0x01);
-		return;	
-	}
 	V2_SendResult((byte *) actionData.Header());
-
-}
-
-void V2_GetAdData(byte *cmd) {
-	
-	if (debug) DEBUG.println(F("[V2_GetAdData]"));
-	byte aId = cmd[4];	
-	if (!V2_CheckActionId(aId)) {
-		V2_SendSingleByteResult(cmd, 0x01);
-		return;	
-	}
-	// Data size can over 256, single byte of len cannot be used_block
-	// Special handle for this result set or do not allow such retrieval
-	// - add special logic, make len = 0
-	// - then acual len will be stored in [4] [5] with Hing-Low order
-	// - data strt at offset 6 instead of 4
-	//
-	byte poseCnt = actionData.PoseCnt();
-	int dataSize = poseCnt * AD_POSE_SIZE;
-	int len = AD_HEADER_SIZE + dataSize + 6;  // {len} {cmd} {len_H} {len_L} {aId} {poseCnt} {data} => datasize + 6
-	byte len_H = (byte) (len / 256);
-	byte len_L = (byte) (len % 256);
-	byte d1[8] = { 0xA9, 0x9A, 0x00, cmd[3], len_H, len_L, aId, poseCnt};
-	byte sum = len + cmd[3] + len_H + len_L + aId + poseCnt;
-	byte *header = actionData.Header();
-	for (int i = 0; i < AD_HEADER_SIZE; i++) {
-		sum += header[i];
-	}
-	byte *data = actionData.Data();
-	for (int i = 0; i < dataSize; i++) {
-		sum += data[i];
-	}
-	Serial.write(d1, 8);
-	Serial.write(header, AD_HEADER_SIZE);
-	Serial.write(data, dataSize);
-	Serial.write(sum);
-	Serial.write(0xED);
 }
 
 
 void V2_GetAdPose(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_GetAdPose]"));
+
+	#ifdef UBT_DUMP
+		DEBUG.printf("\n\nV2_GetAdPose - A - Serial dump - first 60:\n");
+		for (int i = 0; i < 60; i++) {
+			DEBUG.printf("%02X ", actionData.Data()[i]);
+		}
+		DEBUG.printf("\n\n\n");
+	#endif
+
 	byte aId = cmd[4];
 	if (!V2_CheckActionId(aId)) {
 		V2_SendSingleByteResult(cmd, 0x01);
 		return;	
 	}
-	byte pId = cmd[5];
+	uint16_t pId = (cmd[5] << 8) | cmd[6];
+	uint16_t pOffset = 0;
+	if (!actionData.IsPoseReady(pId, pOffset)) {
+		V2_SendSingleByteResult(cmd, 0x02);
+		return;	
+	}
+
+	#ifdef UBT_DUMP
+		DEBUG.printf("\n\nV2_GetAdPose - B - Serial dump - first 60:\n");
+		for (int i = 0; i < 60; i++) {
+			DEBUG.printf("%02X ", actionData.Data()[i]);
+		}
+		DEBUG.printf("\n\n\n");
+	#endif
+
 	byte result[AD_POSE_SIZE];
 	byte * fromPos = actionData.Data();
-	fromPos += AD_POSE_SIZE * pId;
+
+	fromPos += pOffset;
 	memcpy(result, fromPos, AD_POSE_SIZE);
 	result[2] = AD_POSE_SIZE - 4;
 	result[3] = cmd[3];
@@ -862,7 +1037,7 @@ void V2_GetAdPose(byte *cmd) {
 	}
 	DEBUG.println();
 
-	DEBUG.printf("Return Data: \n");
+	DEBUG.printf("V2_GetAdPose - Return Data: \n");
 	for (int i = 0; i < AD_POSE_SIZE; i++) {
 		DEBUG.printf("%02X ", result[i]);
 	}
@@ -878,28 +1053,29 @@ void V2_UpdateAdHeader(byte *cmd) {
 	// Length should be header size - 4
 	if (cmd[2] != (AD_HEADER_SIZE - 4)) {
 		if (debug) DEBUG.printf("Invalid length: %d\n", cmd[2]);
-		V2_SendSingleByteResult(cmd, 1);
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_SIZE);
 		return;
 	}
 
 	// Action ID must be matched.  
 	// i.e. must GET before UPDATE (Why?  user can load action from file, remove this checking)
-	if (cmd[4] != actionData.Header()[4]) {
-		/*
-		if (debug) DEBUG.printf("ID not matched: %d (current: %d)\n", cmd[4], actionData.Header()[4]);
-		V2_SendSingleByteResult(cmd, 2);
-		return;
-		*/
+	// Should always initilize before updating action header, it should rewrite the whole action.
+	//
+	// if (cmd[4] != actionData.Header()[4]) {
+		if (debug) DEBUG.printf("InitialObject(%d)\n", cmd[4]);
 		actionData.InitObject(cmd[4]);
-	}
+	// }
 	for (int i = 0; i < AD_HEADER_SIZE; i++) {
 		actionData.Header()[i] = cmd[i];
 	}
 	
-	if (debug) DEBUG.printf("Action %d header updated\n", aId);
-	V2_SendSingleByteResult(cmd, 0);
+	byte result = actionData.WriteHeader();
+
+	if (debug) DEBUG.printf("Action %d header updated - %d\n", aId, result);
+	V2_SendSingleByteResult(cmd, result);
 	
 }
+
 
 void V2_UpdateAdPose(byte *cmd) {
 	
@@ -908,36 +1084,66 @@ void V2_UpdateAdPose(byte *cmd) {
 	// Length should be {len} {actionId} {poseId} {data} => pose datasize + 3
 	if (cmd[2] != (AD_POSE_SIZE - 4)) {
 		if (debug) DEBUG.printf("Invalid length: %d\n", cmd[2]);
-		V2_SendSingleByteResult(cmd, 1);
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_SIZE);
 		return;
 	}	
 	
 	byte aId = cmd[4];
-	byte pId = cmd[5];
+	uint16_t pId = (cmd[AD_POFFSET_SEQ_HIGH] << 8) | cmd[AD_POFFSET_SEQ];
 
 	// Action ID must be matched.  i.e. must GET before UPDATE
 	if (aId != actionData.Header()[4]) {
 		if (debug) DEBUG.printf("ID not matched: %d (current: %d)\n", aId, actionData.Header()[4]);
-		V2_SendSingleByteResult(cmd, 2);
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_AID_NOT_MATCH);
 		return;
 	}
 
-	int startPos = AD_POSE_SIZE * pId;
+	int poseOffset = actionData.PoseOffset();
+	int bufferEndPose = actionData.BufferEndPose();
+
+	if (debug) DEBUG.printf("[V2_UpdateAdPose] - pId: %d, pCnt: %d, poffset: %d, AD_PBUFFER_COUNT %d, End: %d\n", pId, actionData.PoseCnt(), poseOffset, AD_PBUFFER_COUNT, bufferEndPose);
+
+	if ((pId >= actionData.PoseCnt()) || (pId < poseOffset) || (pId > bufferEndPose)) {
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_PID_OUT_RANGE);
+		return;
+	}
+
+	int startPos = AD_POSE_SIZE * (pId - poseOffset);
 	for (int i = 0; i < AD_POSE_SIZE; i++) {
 		actionData.Data()[startPos + i] = cmd[i];
 	}
-	V2_SendSingleByteResult(cmd, 0);
+
+	byte result = RESULT::SUCCESS;
+
+	if (debug) DEBUG.printf("[V2_UpdateAdPose] - Saved\n");
+
+
+	if ((pId == (actionData.PoseCnt() - 1)) || (pId == bufferEndPose)) {
+		result = actionData.WritePoseData();
+	}
+
+	V2_SendSingleByteResult(cmd, result);
+
+	#ifdef UBT_DUMP
+		DEBUG.printf("\n\nV2_UpdateAdPose - Serial dump - first 60:\n");
+		for (int i = 0; i < 60; i++) {
+			DEBUG.printf("%02X ", actionData.Data()[i]);
+		}
+		DEBUG.printf("\n\n\n");
+	#endif
 }
+
+
 
 void V2_UpdateAdName(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_UpdateAdName]"));
 	byte id = cmd[4];
 	if (actionData.id() != id) {
-		V2_SendSingleByteResult(cmd, 1);
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_AID_NOT_MATCH);
 		return;
 	}
 	if (cmd[5] > AD_NAME_SIZE) {
-		V2_SendSingleByteResult(cmd, 2);
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_AD_NAME_SIZE);
 		return;
 	}
 	byte * startPos = actionData.Header() + AD_OFFSET_NAME;
@@ -951,18 +1157,47 @@ void V2_UpdateAdName(byte *cmd) {
 		actionData.Header()[AD_OFFSET_NAME + i] = cmd[6 + i];
 	}
 	if (debug) DEBUG.println();
-	V2_SendSingleByteResult(cmd, 0);
+	V2_SendSingleByteResult(cmd, RESULT::SUCCESS);
+}
+
+void V2_DeleteActionFile(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_DeleteActionFile]"));
+	byte id = cmd[4];
+	byte result = actionData.DeleteActionFile(id);
+	V2_SendSingleByteResult(cmd, result);
 }
 
 #pragma endregion
 
 
-#pragma region SPIFFS: V2_CMD_READSPIFFS / V2_CMD_WRITESPIFFS
+#pragma region Combo: V2_CMD_GET_COMBO / V2_CMD_UPD_COMBO
 
+void V2_GetCombo(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_GetCombo]"));
+	byte seq = cmd[4];
+	if (seq >= CD_MAX_COMBO) {
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_COMBO_OUT_RANGE);
+		return;
+	}
+	comboTable[seq].Data()[3] = cmd[3];
+	V2_SendResult(comboTable[seq].Data());
+
+}
+
+void V2_UpdateCombo(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_UpdateCombo]"));
+
+	V2_SendSingleByteResult(cmd, RESULT::SUCCESS);
+}
+
+#pragma endregion
+
+#pragma region SPIFFS: V2_CMD_READSPIFFS / V2_CMD_WRITESPIFFS
+/*
 void V2_ReadSPIFFS(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_ReadSPIFFS]"));
-	byte success = V2_UBT_ReadSPIFFS(cmd);
-	V2_SendSingleByteResult(cmd, success);
+	byte result = V2_UBT_ReadSPIFFS(cmd);
+	V2_SendSingleByteResult(cmd, result);
 }
 
 byte V2_UBT_ReadSPIFFS(byte *cmd) {
@@ -971,18 +1206,19 @@ byte V2_UBT_ReadSPIFFS(byte *cmd) {
 
 void V2_WriteSPIFFS(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_WriteSPIFFS]"));
-	byte result = actionData.WriteSPIFFS();
-	V2_SendSingleByteResult(cmd, result);
-}
 
-// What a fxxxing bug in vs.code + platformIO, the following is a dummy function copy from V2_WriteSPIFFS.
-// This function has not been fired in the program, it's a dummy function.
-// But it will cause error in software serial communization if it has been deleted or comment out.
-// Who can tell me WHY? WHY? WHY?  anyway, it takes me two days to find out such dummy "solution" for the bug.
-void V3_WriteSPIFFS(byte *cmd) {
-	if (debug) DEBUG.println(F("[V3_WriteSPIFFS]"));
+	#ifdef UBT_DUMP
+		DEBUG.printf("\n\nV2_WriteSPIFFS - first 60:\n");
+		DEBUG.printf("Action Id: %d\n", actionData.id());
+		for (int i = 0; i < 60; i++) {
+			DEBUG.printf("%02X ", actionData.Data()[i]);
+		}
+		DEBUG.printf("\n\n\n");
+	#endif
+
 	byte result = actionData.WriteSPIFFS();
 	V2_SendSingleByteResult(cmd, result);
 }
+*/
 
 #pragma endregion

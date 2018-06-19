@@ -7,20 +7,30 @@
 bool V2_ActionPlaying = false;
 byte V2_ActionCombo = 0; // combo = 0 reserved for single action play
 byte V2_NextAction = 0;
-byte V2_NextPose = 0;
+uint16_t V2_NextPose = 0;
+unsigned long V2_GlobalTimeMs = 0;
 unsigned long V2_NextPlayMs = 0;
+byte V2_ActionPlayCount = 0;
+
 int V2_ServoTimeRatio = 20;
+bool V2_UseGlobalTime = true;
+
 
 #define V2_CMD_RESET			0x01
 #define V2_CMD_DEBUG			0x02
 #define V2_CMD_DEVMODE      	0x03
+#define V2_CMD_GETCONFIG     	0x04
+#define V2_CMD_SETCONFIG      	0x05
+#define V2_CMD_DEFAULTCONFIG    0x06
 
 #define V2_CMD_ENABLE			0x0A
-
+#define V2_CMD_CHECK_BATTERY	0x0B
+#define V2_CMD_GET_NETWORK      0x0C
 #define V2_CMD_SERVOANGLE		0x11
 #define V2_CMD_ONEANGLE			0x12
 #define V2_CMD_SERVOADJANGLE	0x13
 #define V2_CMD_ONEADJANGLE		0x14
+#define V2_CMD_SETADJANGLE      0x15
 
 #define V2_CMD_LOCKSERVO		0x21
 #define V2_CMD_UNLOCKSERVO		0x22
@@ -42,16 +52,20 @@ int V2_ServoTimeRatio = 20;
 #define V2_CMD_GET_ADLIST		0x60
 #define V2_CMD_GET_ADHEADER		0x61
 #define V2_CMD_GET_ADPOSE		0x62
-#define V2_CMD_GET_ADDATA		0x63
+
+#define V2_CMD_GET_COMBO		0x68
+#define V2_CMD_UPD_COMBO		0x69
 
 
 #define V2_CMD_UPD_ADHEADER		0x71
 #define V2_CMD_UPD_ADPOSE		0x72
 #define V2_CMD_UPD_ADNAME		0x74
+#define V2_CMD_DEL_ACTION		0x75
 
-
+/*
 #define V2_CMD_READSPIFFS   	0xF1
 #define V2_CMD_WRITESPIFFS  	0xF2
+*/
 
 bool deepDebug = true;
 
