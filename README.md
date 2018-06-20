@@ -10,26 +10,24 @@ In this version, it will support both V1 & V2 commands.
 
 ## Major changes in V2
 
-- New command set for V2 with start / end cod and checksum for better communization control
-- Use major loop for action playback, so there has no block in playing action, can be stopped anytime
-- Default reset action with all servo locked, and LED on
-- Use single file to store individual action
-- Define name for action (to be used in PC UI only), and a maximum of 255 actions allowed
-- Support up to 255 steps for each action
-- Support servo LED control
-- Support Robot Head Light control
-- Support remote control by
-  - USB direct connect
-  - Bluetooth 
-  - WiFi with router 
-  - WiFi with softAP
+- New V2.0 communication protocol to avoid misinterpretation
+  (some V1 commands are kept for bluetooth control)
+- Support control from USB, Bluetooth and Wifi (connect to router or AP mode)
+- Action setup by reading position from robot
+- Convert action from UBT action file in aesx and hts format
+- Play MP3 with action
+- Use MPU 6050 to detect current situation
+- Define the action to stand up after fall down for both face up & face down cases
+- Touch sensor and response for single, double and triple click, and long touch.
+- ...
+
 
 ## Dependency
 
-- [Wifi Manager]
 - [UBTech] Library 
-- Latest [espsoftwareserial] 
-  - After the merge on [Helf duplex serial communization]
+- [OLED12864] library
+- [espsoftwareserial] library
+- [Wifi Manager]
 
 Save all above libraries in lib folder.
 
@@ -44,20 +42,61 @@ This is a Visual Studio Code project with PlatformIO IDE.
 ## Hardware
 
 - ESP8266 board
-- HC-05 for Bluetooth connection
+- HC-05 Bluetooth module (optional)
+- MP3-TF-16P MP3 player (optional)
+- MPU6050 module (optional) 
+- TTP223 touch sensor (optional)
+- SSD1306 OLED module (optional)
 
 ## Pin Assignment for ESP8266 Board
 
 | Pin | Usage |
 | ------ | ------ |
+| GPIO-2 | Connect to Rx of serial console for debug output |
+| GPIO-4 | Connect to SDA of I2C bus |
+| GPIO-5 | Connect to SCL of I2C bus |
 | GPIO-12 | Connect to signal pin of Servo |
+| GPIO-13 | Connect to Touch sensor |
+| GPIO-14 | Connect to Tx of MP3 module |
+| GPIO-15 | Connect to head led |
+| GPIO-16 | Connect to Rx of MP3 module |
 | Rx | Connect to Tx of HC-05 |
 | Tx | Connect to Rx of HC-05 |
-| GOPI-2 | Connect to Rx of serial console for debug output 
+| I2C | for MPU6050 and OLED display |
+
+
+The PC setup program MyAlphaRobot can be found in https://github.com/Super169/MyAlphaRobotV2/releases/tag/MyAlphaRobot_2.0
+![MyAlphaRobot](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/MyAlphaRobot.png)
+
+You need a ESP8266 control board in order to use this firmware.
+
+You can make a simple PCB like this,
+![PCBLayout](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/PCBLayout.png)
+
+I just make one as below, 
+![MyPCB](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/MyPCB_1.png)
+
+
+and installed in my robot.  You can also add the OLED and MPU6050 via the I2C bus, and connect a touch sensor to GPIO-13.
+
+![Robot](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/MyPCB_2.png)
+
+
+
+Or if you cannot make the PCB yourself, you can buy a ready to use control board from Taobo.
+https://item.taobao.com/item.htm?id=571368655206
+
+![PCBLayout](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/TB_01.png)
+
+![PCBLayout](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/TB_02.png)
+
+
+
+ENJOY!
 
 
 [Wifi Manager]: <https://github.com/tzapu/WiFiManager.git>
-[UBTech]: <https://github.com/Super169/UBTech.git>
+[UBTech]: <https://github.com/Super169/UBTech/releases/tag/RobotControl_2.0>
+[OLED12864]: <https://github.com/Super169/OLED12864/releases/tag/RobotControl_2.0>
 [espsoftwareserial]: <https://github.com/plerup/espsoftwareserial.git>
 [Visual Studio Code]: <https://code.visualstudio.com/>
-[Helf duplex serial communization]: <https://github.com/plerup/espsoftwareserial/commit/12664f2355be24b49138a83a76de96803e3040d7>
