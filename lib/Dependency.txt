@@ -2,6 +2,14 @@
 git clone https://github.com/tzapu/WiFiManager.git 
 -- WiFiManager can be installed via pio.home
 
+
+SoftwareTx-ESP32 : Software Serial library for ESP32 with Tx only
+
+
+jdollar/espsoftwareserial (still working on ESP32 - for serial monitor only)
+https://github.com/jdollar/espsoftwareserial.git
+
+
 git clone https://github.com/plerup/espsoftwareserial.git
 -- espsoftwareserial can be installed via pio.home
 

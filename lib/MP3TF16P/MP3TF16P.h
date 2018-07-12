@@ -1,7 +1,11 @@
 #ifndef _MP3_TF_16P_H_
 #define _MP3_TF_16P_H_
 
-#include <ESP8266WiFi.h>
+#if defined(ESP8266)
+	#include <ESP8266WiFi.h>
+#else
+	#include <WiFi.h>
+#endif
 #include "HardwareSerial.h"
 #include "SoftwareSerial.h"
 

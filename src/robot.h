@@ -1,7 +1,11 @@
 #ifndef _robot_h_
 #define _robot_h_
 
-#include "ESP8266WiFi.h"
+#if defined(ESP8266)
+	#include <ESP8266WiFi.h>
+#else
+	#include <WiFi.h>
+#endif
 #include "WiFiClient.h"
 #include "WiFiManager.h"
 
@@ -49,8 +53,12 @@ RobotConfig config(&DEBUG);
 
 
 //OTA Setting
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
+#if defined(ESP8266)
+	#include <ESP8266WiFi.h>
+	#include <ESP8266mDNS.h>
+#else
+	#include <WiFi.h>
+#endif
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 const char* ssid = "wuhulanren";          

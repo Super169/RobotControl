@@ -1,7 +1,11 @@
 #ifndef _ROBOT_CONFIG_H_
 #define _ROBOT_CONFIG_H_
 
-#include <ESP8266WiFi.h>
+#if defined(ESP8266)
+	#include <ESP8266WiFi.h>
+#else
+	#include <WiFi.h>
+#endif
 #include <FS.h>
 #include "RESULT.h"
 
