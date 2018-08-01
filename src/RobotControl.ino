@@ -104,7 +104,7 @@ void setup() {
 	
 	char buf[20];
 	bool isConnected = false;
-	
+/*	
 	if (config.connectRouter()) {
 		if (config.enableOLED()) {
 			myOLED.clr(2);
@@ -119,6 +119,36 @@ void setup() {
 		DEBUG.printf("Try to connect router\n");
 		isConnected = wifiManager.autoConnect(AP_Name, AP_Password);
 	}
+*/
+	if (config.connectRouter()) {
+		if (config.enableOLED()) {
+			myOLED.clr(2);
+			myOLED.print(0,2,"SmartConfig running");
+			myOLED.show();
+		}
+		DEBUG.printf("Try to connect router with SmartConfig\n");
+
+		unsigned long endMs = millis() + 30000;
+	    int cnt = 0;
+		// sometimes, it will have WiFi.smartConfigDone(), but not connected.  So have double loop to make sure WiFi.status() == WL_CONNECTED
+		while ((millis() < endMs) && (WiFi.status() != WL_CONNECTED)) {
+			delay(500);
+			DEBUG.print(".");
+			if(cnt++ >= 10){
+				WiFi.beginSmartConfig();
+				while(millis() < endMs) {
+					delay(1000);
+					if(WiFi.smartConfigDone()){
+						DEBUG.println();
+						DEBUG.println("SmartConfig Success");
+						break;
+					}
+				}
+			}
+		}
+		isConnected = (WiFi.status() == WL_CONNECTED);
+	}
+
 
 	String ip;
 
@@ -268,6 +298,7 @@ void showNetwork() {
 
 }
 
+/*
 void configModeCallback (WiFiManager *myWiFiManager) {
 	DEBUG.println("Fail connecting to router");
 	DEBUG.print("WiFi Manager AP Enabled, please connect to ");
@@ -287,6 +318,7 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 	digitalWrite(HEAD_LED_GPIO, LOW);
 	delay(200);
 }
+*/
 
 unsigned long noPrompt = 0;
 

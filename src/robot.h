@@ -7,7 +7,7 @@
 	#include <WiFi.h>
 #endif
 #include "WiFiClient.h"
-#include "WiFiManager.h"
+// #include "WiFiManager.h"
 
 #include <Wire.h>
 #include "OLED12864.h"
@@ -25,7 +25,7 @@
 
 #include "V2_Command.h"
 
-WiFiManager wifiManager;
+// WiFiManager wifiManager;
 
 
 // Start a TCP Server on port 6169
