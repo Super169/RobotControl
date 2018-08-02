@@ -149,6 +149,7 @@ void setup() {
 			}
 		}
 		isConnected = (WiFi.status() == WL_CONNECTED);
+		if (!isConnected) WiFi.stopSmartConfig();
 	}
 
 
@@ -164,7 +165,8 @@ void setup() {
 		if (config.enableOLED()) myOLED.print(0,0, buf);
 	} else {
 		NetworkMode = NETWORK_AP;
-		DEBUG.println(F("Start using softAP"));
+		WiFi.mode(WIFI_AP_STA);
+		DEBUG.println(F("\nStart using softAP"));
 		DEBUG.printf("Please connect to %s\n\n", AP_Name);
 		WiFi.softAP(AP_Name, AP_Password);
 		IPAddress myIP = WiFi.softAPIP();
