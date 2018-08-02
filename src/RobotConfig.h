@@ -6,7 +6,7 @@
 #include "RESULT.h"
 
 #define DEFAULT_ENABLE_DEBUG    true
-#define DEFAULT_CONNECT_ROUTER  false
+#define DEFAULT_CONNECT_ROUTER  true
 #define DEFAULT_ENABLE_OLED     true
 #define DEFAULT_ENABLE_TOUCH    false
 #define DEFAULT_REF_VOLTAGE     1100        // aroud 3.2v for A0 of D1 mini, 1.0v for ADC of ESP-12

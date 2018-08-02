@@ -126,7 +126,9 @@ void setup() {
 			myOLED.print(0,2,"SmartConfig running");
 			myOLED.show();
 		}
+
 		DEBUG.printf("Try to connect router with SmartConfig\n");
+  		WiFi.mode(WIFI_STA);
 
 		unsigned long endMs = millis() + 30000;
 	    int cnt = 0;
