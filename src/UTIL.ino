@@ -11,9 +11,17 @@ void SetDebug(bool mode) {
 void SetHeadLed(bool status) {
 	headLed = status;
 	if (status) {
-		digitalWrite(HEAD_LED_GPIO, HIGH);
+		#ifdef ROBOT_ARM_BOARD
+		  digitalWrite(HEAD_LED_GPIO, LOW);
+		#else
+		  digitalWrite(HEAD_LED_GPIO, HIGH);
+		#endif
 	} else {
-		digitalWrite(HEAD_LED_GPIO, LOW);
+		#ifdef ROBOT_ARM_BOARD
+		  digitalWrite(HEAD_LED_GPIO, HIGH);
+		#else
+		  digitalWrite(HEAD_LED_GPIO, LOW);
+		#endif
 	}
 }
 

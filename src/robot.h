@@ -1,13 +1,10 @@
 #ifndef _robot_h_
 #define _robot_h_
 
-#if defined(ESP8266)
-	#include <ESP8266WiFi.h>
-#else
-	#include <WiFi.h>
-#endif
+#include "ESP8266WiFi.h"
 #include "WiFiClient.h"
-// #include "WiFiManager.h"
+#include "WiFiManager.h"
+#include <WiFiUDP.h>
 
 #include <Wire.h>
 #include "OLED12864.h"
@@ -25,13 +22,20 @@
 
 #include "V2_Command.h"
 
-// WiFiManager wifiManager;
+WiFiManager wifiManager;
 
 
 // Start a TCP Server on port 6169
 uint16_t port = 6169;
+uint16_t udpReceiveport = 9012;
+uint16_t udpSendport = 9020;
+String receiveIp;
+String localip;
 WiFiServer server(port);
 WiFiClient client;
+WiFiUDP udpClient;
+bool isRevIP = false;
+bool isConnected = false;
 
 #define NETWORK_NONE        0
 #define NETWORK_ROUTER      1
@@ -53,12 +57,8 @@ RobotConfig config(&DEBUG);
 
 
 //OTA Setting
-#if defined(ESP8266)
-	#include <ESP8266WiFi.h>
-	#include <ESP8266mDNS.h>
-#else
-	#include <WiFi.h>
-#endif
+#include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 const char* ssid = "wuhulanren";          
@@ -110,8 +110,8 @@ bool enable_HILZD = false;
 ComboData comboTable[CD_MAX_COMBO];
 ActionData actionData;
 
-#define MAX_ACTION 		26
-#define MAX_POSES 		30 
+#define MAX_ACTION     26
+#define MAX_POSES     30 
 // #define MAX_POSES_SIZE 40
 #define MAX_POSES_SIZE 20
 // PoseInfo (20 bytes)
@@ -151,6 +151,10 @@ long lastCmdMs = 0;
 
 bool debug = true;
 bool devMode = false;
+
+//BoardDefine
+
+#define ROBOT_ARM_BOARD
 
 #define MP3_RXD_GPIO    14
 #define MP3_TXD_GPIO    16  

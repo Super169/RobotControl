@@ -53,7 +53,8 @@ GPIO-15 : Head LED
 // #define PIN_SETUP 		13		// for L's PCB
 
 void setup() {
-
+ // wifiManager.resetSettings();
+	
 	pinMode(HEAD_LED_GPIO, OUTPUT);
 	SetHeadLed(false);
 	// digitalWrite(HEAD_LED_GPIO, LOW);
@@ -103,8 +104,40 @@ void setup() {
 	if (debug) DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
 	
 	char buf[20];
-	bool isConnected = false;
-/*	
+/*
+  if (config.connectRouter()) {
+    if (config.enableOLED()) {
+      myOLED.clr(2);
+      myOLED.print(0,2,"SmartConfig running");
+      myOLED.show();
+    }
+    DEBUG.printf("Try to connect router with SmartConfig\n");
+
+    unsigned long endMs = millis() + 30000;
+      int cnt = 0;
+    // sometimes, it will have WiFi.smartConfigDone(), but not connected.  So have double loop to make sure WiFi.status() == WL_CONNECTED
+    while ((millis() < endMs) && (WiFi.status() != WL_CONNECTED)) {
+      delay(500);
+      DEBUG.print(".");
+      
+      if(cnt++ >= 10){
+        Serial.print(".");
+        WiFi.beginSmartConfig();
+        while(millis() < endMs) {
+          delay(1000);
+          if(WiFi.smartConfigDone()){
+            DEBUG.println();
+            DEBUG.println("SmartConfig Success");
+            Serial.println("SmartConfig Success");
+            break;
+          }
+        }
+      }
+    }
+    isConnected = (WiFi.status() == WL_CONNECTED);
+  }
+	 */
+	
 	if (config.connectRouter()) {
 		if (config.enableOLED()) {
 			myOLED.clr(2);
@@ -119,39 +152,6 @@ void setup() {
 		DEBUG.printf("Try to connect router\n");
 		isConnected = wifiManager.autoConnect(AP_Name, AP_Password);
 	}
-*/
-	if (config.connectRouter()) {
-		if (config.enableOLED()) {
-			myOLED.clr(2);
-			myOLED.print(0,2,"SmartConfig running");
-			myOLED.show();
-		}
-
-		DEBUG.printf("Try to connect router with SmartConfig\n");
-  		WiFi.mode(WIFI_STA);
-
-		unsigned long endMs = millis() + 30000;
-	    int cnt = 0;
-		// sometimes, it will have WiFi.smartConfigDone(), but not connected.  So have double loop to make sure WiFi.status() == WL_CONNECTED
-		while ((millis() < endMs) && (WiFi.status() != WL_CONNECTED)) {
-			delay(500);
-			DEBUG.print(".");
-			if(cnt++ >= 10){
-				WiFi.beginSmartConfig();
-				while(millis() < endMs) {
-					delay(1000);
-					if(WiFi.smartConfigDone()){
-						DEBUG.println();
-						DEBUG.println("SmartConfig Success");
-						break;
-					}
-				}
-			}
-		}
-		isConnected = (WiFi.status() == WL_CONNECTED);
-		if (!isConnected) WiFi.stopSmartConfig();
-	}
-
 
 	String ip;
 
@@ -163,10 +163,10 @@ void setup() {
 		String ssid = WiFi.SSID();
 		ssid.toCharArray(buf, 20);
 		if (config.enableOLED()) myOLED.print(0,0, buf);
+    udpClient.begin(udpReceiveport);
 	} else {
 		NetworkMode = NETWORK_AP;
-		WiFi.mode(WIFI_AP_STA);
-		DEBUG.println(F("\nStart using softAP"));
+		DEBUG.println(F("Start using softAP"));
 		DEBUG.printf("Please connect to %s\n\n", AP_Name);
 		WiFi.softAP(AP_Name, AP_Password);
 		IPAddress myIP = WiFi.softAPIP();
@@ -192,7 +192,6 @@ void setup() {
 	DEBUG.printf("Port: %d\n\n", port);
 	//	RobotMaintenanceMode();
 	server.begin();
-
 
 	DEBUG.println("Starting robot servo: ");
 	
@@ -259,7 +258,9 @@ void setup() {
 	if (config.enableOLED()) myOLED.show();
 
 	showNetwork();
-
+  
+  localip = WiFi.localIP().toString();
+  Serial.println(localip);
 }
 
 void showNetwork() {
@@ -302,7 +303,6 @@ void showNetwork() {
 
 }
 
-/*
 void configModeCallback (WiFiManager *myWiFiManager) {
 	DEBUG.println("Fail connecting to router");
 	DEBUG.print("WiFi Manager AP Enabled, please connect to ");
@@ -314,33 +314,66 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 	// Try to display here if OLED is ready
 	// Now flash LED to alert user
 	for (int i = 0; i < 10; i++) {
-		digitalWrite(HEAD_LED_GPIO, LOW);
+		SetHeadLed(true);
 		delay(200);
-		digitalWrite(HEAD_LED_GPIO, HIGH);
+		SetHeadLed(false);
 		delay(200);
 	}
-	digitalWrite(HEAD_LED_GPIO, LOW);
+	SetHeadLed(false);
 	delay(200);
 }
-*/
 
 unsigned long noPrompt = 0;
-
+unsigned long revIpTime = 0;
 void loop() {
-	// For Wifi checking, once connected, it should use the client object until disconnect, and check within client.connected()
+
 	client = server.available();
+      
+  if( isConnected && !client.connected() ){
+    char serverack = udpClient.parsePacket();
+    if (serverack)
+    {
+      DEBUG.println("UdpReceivedLength"+(int)serverack);
+      receiveIp = "";
+      for(int i=0;i<serverack;i++){
+        char fromserver=udpClient.read();
+        cmdBuffer.write(fromserver);
+        receiveIp += fromserver ;
+      }
+      if(receiveIp=="OK")isRevIP = true ;
+     // Serial.println(receiveIp);
+      if(millis()-revIpTime>200 && receiveIp.startsWith(localip.substring(0,7))){
+        revIpTime = millis();
+        DEBUG.println("ReceivedIP:"+receiveIp);
+        // Serial.println("ReceivedIP:"+receiveIp);
+        char str[20];
+        udpClient.beginPacket(strcpy(str,receiveIp.c_str()),udpSendport);
+        udpClient.println(AP_Name);
+        udpClient.print(localip);
+        udpClient.endPacket();
+      }
+     }
+     else
+     {
+        // DEBUG.println(F("No Data From Udpport....."));
+      } 
+    }
+  
+	// For Wifi checking, once connected, it should use the client object until disconnect, and check within client.connected()
 	if (client){
 		if (config.enableOLED()) {
 			myOLED.print(122, 1, '*');
 			myOLED.show();
 		}
-		while (client.connected()) {
+		while (client.connected()) {  
 			if (millis() > noPrompt) {
 				DEBUG.println("Client connected");
+				//Serial.println("Client connected");
 				noPrompt = millis() + 1000;
 			}
 			while (client.available()) {
 				cmdBuffer.write(client.read());
+       // Serial.println(client.read());
 			}
 			// Keep running RobotCommander within the connection.
 			RobotCommander();
@@ -399,11 +432,9 @@ void CheckTouch() {
 	
 	// uint8_t touchMotion = DetectTouchMotion();
 	uint8_t touchMotion = CheckTouchAction();
-	// if(touchMotion == TOUCH_LONG) ReserveEyeBreath();
-	// if(touchMotion == TOUCH_DOUBLE) ReserveEyeBlink();
-	// EyeLedHandle();
-
-
+	//if(touchMotion == TOUCH_LONG) ReserveEyeBreath();
+	//if(touchMotion == TOUCH_DOUBLE) ReserveEyeBlink();
+	EyeLedHandle();
 }
 
 // ADC_MODE(ADC_VCC);  -- only use if checking input voltage ESP.getVcc() is required.
@@ -530,6 +561,7 @@ void remoteControl() {
 			case 'i':  // special for debug
 			case 'I':  // special for debug
 			case 'Z':
+       
 				goNext = V1_Command();
 				break;
 

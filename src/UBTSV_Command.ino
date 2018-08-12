@@ -42,7 +42,8 @@ bool UBTSV_Command() {
 
 	int cnt =  (servo.execute(cmd, result));
 	if (cnt > 0) {
-		Serial.write(result, cnt);
+		if(client.connected())client.write(result,cnt);
+		else Serial.write(result, cnt);
 	}
 
 	if (debug) DEBUG.print(F("UBT Servo Command executed\n"));
