@@ -1,6 +1,10 @@
 #ifndef _robot_h_
 #define _robot_h_
 
+
+// #define ENABLE_SMART_CONFIG
+// #define ENABLE_OTA
+
 #include "ESP8266WiFi.h"
 #include "WiFiClient.h"
 #include "WiFiManager.h"
@@ -27,15 +31,16 @@ WiFiManager wifiManager;
 
 // Start a TCP Server on port 6169
 uint16_t port = 6169;
-uint16_t udpReceiveport = 9012;
-uint16_t udpSendport = 9020;
-String receiveIp;
-String localip;
+String localSegment;
 WiFiServer server(port);
 WiFiClient client;
-WiFiUDP udpClient;
-bool isRevIP = false;
 bool isConnected = false;
+
+// UDP related settings
+uint16_t udpReceiveport = 9012;
+uint16_t udpSendport = 9020;
+WiFiUDP udpClient;
+
 
 #define NETWORK_NONE        0
 #define NETWORK_ROUTER      1
@@ -49,13 +54,13 @@ char *AP_Password = (char *) "12345678";
 
 #define DEBUG Serial1
 
-#define CMD_BUFFER_SIZE 64
+#define CMD_BUFFER_SIZE 128
 
 Buffer cmdBuffer(CMD_BUFFER_SIZE);
 
 RobotConfig config(&DEBUG);
 
-
+#ifdef ENABLE_OTA
 //OTA Setting
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
@@ -64,16 +69,11 @@ RobotConfig config(&DEBUG);
 const char* ssid = "wuhulanren";          
 const char* password = "wuhulanren";
 #define EN_OTA true
+#endif
 
 /*
 //Touch Setting
-#define LONG_TOUCH 255
-#define NONE_MOTION 0
-#define SINGLE_CLICK 1
-#define DOUBLE_CLICK 2
-#define TRIPLE_CLICK 3
 */
-
 #define TOUCH_NONE      0
 #define TOUCH_SINGLE    1
 #define TOUCH_DOUBLE    2
@@ -110,8 +110,8 @@ bool enable_HILZD = false;
 ComboData comboTable[CD_MAX_COMBO];
 ActionData actionData;
 
-#define MAX_ACTION     26
-#define MAX_POSES     30 
+#define MAX_ACTION      26
+#define MAX_POSES       30 
 // #define MAX_POSES_SIZE 40
 #define MAX_POSES_SIZE 20
 // PoseInfo (20 bytes)

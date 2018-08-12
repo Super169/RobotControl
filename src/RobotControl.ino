@@ -102,42 +102,46 @@ void setup() {
 	retBuffer = servo.retBuffer();
 
 	if (debug) DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
-	
-	char buf[20];
-/*
-  if (config.connectRouter()) {
-    if (config.enableOLED()) {
-      myOLED.clr(2);
-      myOLED.print(0,2,"SmartConfig running");
-      myOLED.show();
-    }
-    DEBUG.printf("Try to connect router with SmartConfig\n");
 
-    unsigned long endMs = millis() + 30000;
-      int cnt = 0;
-    // sometimes, it will have WiFi.smartConfigDone(), but not connected.  So have double loop to make sure WiFi.status() == WL_CONNECTED
-    while ((millis() < endMs) && (WiFi.status() != WL_CONNECTED)) {
-      delay(500);
-      DEBUG.print(".");
-      
-      if(cnt++ >= 10){
-        Serial.print(".");
-        WiFi.beginSmartConfig();
-        while(millis() < endMs) {
-          delay(1000);
-          if(WiFi.smartConfigDone()){
-            DEBUG.println();
-            DEBUG.println("SmartConfig Success");
-            Serial.println("SmartConfig Success");
-            break;
-          }
-        }
-      }
-    }
-    isConnected = (WiFi.status() == WL_CONNECTED);
-  }
-	 */
-	
+	char buf[20];
+
+#ifdef ENABLE_SMART_CONFIG
+
+	if (config.connectRouter()) {
+		if (config.enableOLED()) {
+			myOLED.clr(2);
+			myOLED.print(0,2,"SmartConfig running");
+			myOLED.show();
+		}
+		DEBUG.printf("Try to connect router with SmartConfig\n");
+  		WiFi.mode(WIFI_STA);  // it seems SmartConfig not work in WIFI_AP_STA code
+
+		unsigned long endMs = millis() + 30000;
+			int cnt = 0;
+		// sometimes, it will have WiFi.smartConfigDone(), but not connected.  So have double loop to make sure WiFi.status() == WL_CONNECTED
+		while ((millis() < endMs) && (WiFi.status() != WL_CONNECTED)) {
+			delay(500);
+			DEBUG.print(".");
+			
+			if(cnt++ >= 10){
+			Serial.print(".");
+			WiFi.beginSmartConfig();
+			while(millis() < endMs) {
+				delay(1000);
+				if(WiFi.smartConfigDone()){
+					DEBUG.println();
+					DEBUG.println("SmartConfig Success");
+					Serial.println("SmartConfig Success");
+					break;
+				}
+			}
+			}
+		}
+		isConnected = (WiFi.status() == WL_CONNECTED);
+	}
+
+#endif	
+
 	if (config.connectRouter()) {
 		if (config.enableOLED()) {
 			myOLED.clr(2);
@@ -163,7 +167,7 @@ void setup() {
 		String ssid = WiFi.SSID();
 		ssid.toCharArray(buf, 20);
 		if (config.enableOLED()) myOLED.print(0,0, buf);
-    udpClient.begin(udpReceiveport);
+    	udpClient.begin(udpReceiveport);
 	} else {
 		NetworkMode = NETWORK_AP;
 		DEBUG.println(F("Start using softAP"));
@@ -177,6 +181,22 @@ void setup() {
 			myOLED.print(AP_Name);
 		}
 	}
+
+	localSegment = "";
+	if (ip.length()) {
+		int idx = 0;
+		int dotCnt = 0;
+		// no need to check first byte as it won't be dot
+		while (++idx < ip.length()) {
+			if (ip.charAt(idx) == '.') {
+				if (++dotCnt == 2) {
+					localSegment = ip.substring(0,idx+1);
+					break;
+				}
+			}
+		}
+	}
+	DEBUG.printf("Local segment: %s\n", localSegment.c_str());
 
 	memset(buf, 0, 20);
 	ip.toCharArray(buf, 20);
@@ -247,11 +267,6 @@ void setup() {
 
 	servo.setLED(0, 1);
 
-/*
-	pinMode(10, INPUT_PULLUP);
-	int b = digitalRead(10);
-	DEBUG.printf("Pin 10 is %s\n", (b == HIGH ? "HIGH" : "LOW"));
-*/
 	// Load default action
 	for (byte seq = 0; seq < CD_MAX_COMBO; seq++) comboTable[seq].ReadSPIFFS(seq);
 	actionData.ReadSPIFFS(0);
@@ -259,8 +274,10 @@ void setup() {
 
 	showNetwork();
   
-  localip = WiFi.localIP().toString();
-  Serial.println(localip);
+  	// localip = WiFi.localIP().toString();
+  	// Serial.println(localip);
+
+
 }
 
 void showNetwork() {
@@ -314,9 +331,9 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 	// Try to display here if OLED is ready
 	// Now flash LED to alert user
 	for (int i = 0; i < 10; i++) {
-		SetHeadLed(true);
-		delay(200);
 		SetHeadLed(false);
+		delay(200);
+		SetHeadLed(true);
 		delay(200);
 	}
 	SetHeadLed(false);
@@ -325,40 +342,36 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 
 unsigned long noPrompt = 0;
 unsigned long revIpTime = 0;
+
 void loop() {
 
 	client = server.available();
       
-  if( isConnected && !client.connected() ){
-    char serverack = udpClient.parsePacket();
-    if (serverack)
-    {
-      DEBUG.println("UdpReceivedLength"+(int)serverack);
-      receiveIp = "";
-      for(int i=0;i<serverack;i++){
-        char fromserver=udpClient.read();
-        cmdBuffer.write(fromserver);
-        receiveIp += fromserver ;
-      }
-      if(receiveIp=="OK")isRevIP = true ;
-     // Serial.println(receiveIp);
-      if(millis()-revIpTime>200 && receiveIp.startsWith(localip.substring(0,7))){
-        revIpTime = millis();
-        DEBUG.println("ReceivedIP:"+receiveIp);
-        // Serial.println("ReceivedIP:"+receiveIp);
-        char str[20];
-        udpClient.beginPacket(strcpy(str,receiveIp.c_str()),udpSendport);
-        udpClient.println(AP_Name);
-        udpClient.print(localip);
-        udpClient.endPacket();
-      }
-     }
-     else
-     {
-        // DEBUG.println(F("No Data From Udpport....."));
-      } 
-    }
-  
+	if( isConnected && !client.connected() ) {
+		char serverack = udpClient.parsePacket();
+		if (serverack)
+		{
+			char buffer[serverack+1];
+			// It's expected that updRxCnt == serverack, otherwise, some data is missing
+			// but for safety, use actual receive count in read command
+			int udpRxCnt = udpClient.read(buffer, serverack);
+			buffer[udpRxCnt] = 0x00;
+			if (String(buffer).startsWith(localSegment)) {
+				DEBUG.printf("ReceivedIP: %s\n", buffer);
+				udpClient.beginPacket(buffer,udpSendport);
+				udpClient.println(AP_Name);
+				udpClient.print(WiFi.localIP().toString());
+				udpClient.endPacket();
+			} else {
+				for (int i = 0; i < udpRxCnt; i++) cmdBuffer.write(buffer[i]);
+			}
+		}
+		else
+		{
+			// DEBUG.println(F("No Data From Udpport....."));
+		} 
+	}
+
 	// For Wifi checking, once connected, it should use the client object until disconnect, and check within client.connected()
 	if (client){
 		if (config.enableOLED()) {
@@ -570,7 +583,7 @@ void remoteControl() {
 				break;
 
 		}
-		// for some situation, command data not yet competed.
+		// for some situation, command data not yet completed.
 		// need to study if it should wait for full data inside the handler
 		if (goNext) {
 			if (preCount == cmdBuffer.available()) {

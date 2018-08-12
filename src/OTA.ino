@@ -1,5 +1,7 @@
 #include "robot.h"
 
+#ifdef ENABLE_OTA
+
 void ArduinoOTASetup(){
   Serial.begin(115200);
   Serial.println("Booting");
@@ -37,3 +39,4 @@ void ArduinoOTAHandle(){
   ArduinoOTA.handle();
 }
 
+#endif
