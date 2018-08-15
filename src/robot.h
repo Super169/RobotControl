@@ -1,6 +1,9 @@
 #ifndef _robot_h_
 #define _robot_h_
 
+// Use either WIFI_MANAGER or SIMPLE_WIFI_MANAGER
+// #define ENABLE_WIFI_MANAGER
+#define ENABLE_SIMPLE_WIFI_MANAGER
 
 // #define ENABLE_SMART_CONFIG
 // #define ENABLE_OTA
@@ -24,9 +27,16 @@
 #include "message.h"
 #include "RESULT.h"
 
+#ifdef ENABLE_SIMPLE_WIFI_MANAGER
+#include "SimpleWiFiManager.h"
+SimpleWiFiManager SWFM;
+#endif
+
 #include "V2_Command.h"
 
+#ifdef ENABLE_WIFI_MANAGER
 WiFiManager wifiManager;
+#endif
 
 
 // Start a TCP Server on port 6169

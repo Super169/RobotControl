@@ -1,0 +1,202 @@
+#ifndef _SIMPLE_WIFI_MANAGER_H_
+#define _SIMPLE_WIFI_MANAGER_H_
+
+#ifdef ESP32
+	#include <ESP.H>
+	#include <WiFi.h>
+	#include <SPIFFS.h>
+#else
+	#include <ESP8266WiFi.h>
+	#define FILE_READ	"r"
+	#define FILE_WRITE	"w"	
+#endif
+
+#define _ENABLE_TRACE_
+
+#include <FS.h>
+#include "myUtil.h"
+#include "MyDebugger.h"
+#include "MyData.h"
+
+#define SWFM_OFFSET_A9            	0
+#define SWFM_OFFSET_9A              1
+#define SWFM_OFFSET_RECORD_SIZE     2
+#define SWFM_OFFSET_COMMAND         3
+#define SWFM_OFFSET_VER_MAJOR       4
+#define SWFM_OFFSET_VER_MINOR       5
+#define SWFM_OFFSET_ENABLE_ROUTER   8
+#define SWFM_OFFSET_SSID            10
+#define SWFM_OFFSET_PASSWORD        30
+#define SWFM_OFFSET_ROUTER_TIMEOUT  50
+#define SWFM_OFFSET_ENABLE_AP       52
+#define SWFM_OFFSET_AP_NAME         54
+#define SWFM_OFFSET_AP_KEY          74
+#define SWFM_OFFSET_ENABLE_SERVER   94
+#define SWFM_OFFSET_SERVER_PORT     96
+#define SWFM_OFFSET_ENABLE_UDP      98
+#define SWFM_OFFSET_UDP_RX_PORT     100
+#define SWFM_OFFSET_UDP_TX_PORT     102
+#define SWFM_OFFSET_END_BYTE        104
+
+#define SWFM_CONFIG_FILE_SIZE		105
+#define SWFM_FILE_BUFFER_SIZE		128
+#define SWFM_MD_SIZE 20 
+
+#define SWFM_MODE_NONE       0
+#define SWFM_MODE_ROUTER     1
+#define SWFM_MODE_AP         2
+
+#define SWFM_CONFIG_FILE	 "/system/wifi.cfg"
+
+struct __field {
+	int    type;
+	String label;
+	String key;
+	int64_t defInt;
+	String defString;
+	int64_t vInt;
+	String vString;
+};
+
+class SimpleWiFiManager {
+
+	public:
+		SimpleWiFiManager();
+		~SimpleWiFiManager();
+
+		void setDebug(Stream *dbg, bool enableDebug = true);
+		void enableDebug(bool value);
+
+		bool begin(int preferMode = SWFM_MODE_NONE);
+		void httpServerHandler();
+		void stopServer();
+		
+		void dumpSettings();
+
+		bool updateRouter(bool enableRouter, String ssid, String password, uint32_t long routerTimeout, bool updateConfig = true);
+		bool updateAP(bool enableAP, String APName, String APKey, bool updateConfig = true);
+		bool updateServer(bool enableServer, uint16_t serverPort, bool updateConfig = true);
+		bool updateUDP(bool enableUDP, uint16_t udpRxPort, uint16_t udpTxPort, bool updateConfig = true);
+		bool updateSettings(bool enableRouter, String ssid, String password, uint32_t long routerTimeout,
+							bool enableAP, String APName, String APKey,
+							bool enableServer, uint16_t serverPort,
+							bool enableUDP, uint16_t udpRxPort, uint16_t udpTxPort);
+
+
+		bool isReady();
+		bool isServerRunning() { return _serverRunning; }
+		uint8_t mode() { return _mode; }
+		String ip();
+
+		bool enableRouter() { return _wifi.enableRouter.getBool(); }
+		String ssid() { return _wifi.ssid.getString(); }
+		String password() { return _wifi.password.getString(); }
+		uint32_t routerTimeout() { return (uint32_t) _wifi.routerTimeout.getInt(); }
+		bool enableAP() { return _wifi.enableAP.getBool(); }
+		String apName() { return _wifi.apName.getString(); }
+		String apKey() { return _wifi.apKey.getString(); }
+		bool enableServer() { return _wifi.enableServer.getBool(); }
+		uint16_t serverPort() { return (uint16_t) _wifi.serverPort.getInt(); }
+		bool enableUDP() { return _wifi.enableUDP.getBool(); }
+		uint16_t udpRxPort() { return (uint16_t) _wifi.udpRxPort.getInt(); }
+		uint16_t udpTxPOrt() { return (uint16_t) _wifi.udpTxPort.getInt(); }
+
+	private:
+
+		std::unique_ptr<WiFiServer>	_httpServer;
+
+		// Status flag
+		bool _configReady;
+		uint8_t _mode;
+		bool _serverRunning;
+
+		MyDebugger _dbg;
+
+		struct WIFI_STRUCT {
+			MyData varMajor;
+			MyData varMinor;
+			MyData enableRouter;
+			MyData ssid;
+			MyData password;
+			MyData routerTimeout;
+			MyData enableAP;
+			MyData apName;
+			MyData apKey;
+			MyData enableServer;
+			MyData serverPort;
+			MyData enableUDP;
+			MyData udpRxPort;
+			MyData udpTxPort;
+		};
+
+		WIFI_STRUCT _wifi = {
+			MyData("Major Version", "major_version", (int64_t) 1, SWFM_OFFSET_VER_MAJOR, 1),
+			MyData("Minor Version", "minor_version", (int64_t) 0, SWFM_OFFSET_VER_MINOR, 1),
+			MyData("Enable Router", "enable_router", (bool) false, SWFM_OFFSET_ENABLE_ROUTER),
+			MyData("SSID", "ssid", (String) "", SWFM_OFFSET_SSID, 20),
+			MyData("PASSWORD", "password", (String) "", SWFM_OFFSET_PASSWORD, 20),
+			MyData("Router Timeout", "router_timeout", (int64_t) 15, SWFM_OFFSET_ROUTER_TIMEOUT, 2),
+			MyData("Enable AP", "enable_ap", (bool) true, SWFM_OFFSET_ENABLE_AP),
+			MyData("AP Name", "ap_name", (String) "ESP", SWFM_OFFSET_AP_NAME, 20),
+			MyData("AP Key", "ap_key", (String) "12345678", SWFM_OFFSET_AP_KEY, 20),
+			MyData("Enable Server", "enable_server", (bool) true, SWFM_OFFSET_ENABLE_SERVER),
+			MyData("Server Port", "server_port", (int64_t) 80, SWFM_OFFSET_SERVER_PORT, 2),
+			MyData("Enable UDP", "enable_udp", (bool) true, SWFM_OFFSET_ENABLE_UDP),
+			MyData("UDP Rx Port", "udp_rx_port", (int64_t) 9012, SWFM_OFFSET_UDP_RX_PORT, 2),
+			MyData("UDP Tx Port", "udp_tx_port", (int64_t) 9020, SWFM_OFFSET_UDP_TX_PORT, 2)
+		};
+
+		MyData* _md[SWFM_MD_SIZE];
+		uint8_t _mdCnt;
+
+		struct WIFI_SETTING_STRUCT {
+			uint8_t headerA9;
+			uint8_t header9A;
+			uint8_t size;
+			uint8_t command;
+			uint8_t ver_major;
+			uint8_t ver_minor;
+			uint8_t filler_01[2];
+			bool enableRouter;
+			uint8_t filler_02[1];
+			char ssid[20];
+			char password[20];
+			uint8_t routerTimeout;
+			uint8_t filler_03[1];
+			bool enableAP;
+			uint8_t filler_04[1];
+			char apName[20];
+			char apKey[20];
+			bool enableServer;
+			uint8_t filler_05[1];
+			uint16_t serverPort;
+			bool enableUDP;
+			uint8_t filler_06[1];
+			uint16_t udpRxPort;
+			uint16_t udpTxPort;
+			uint8_t endEA;
+		};
+
+		union WIFI_SETTING {
+			uint8_t buffer[SWFM_FILE_BUFFER_SIZE];
+			WIFI_SETTING_STRUCT data;
+		}; 
+
+		WIFI_SETTING _file;
+
+		void mdFromArray();
+		void mdToArray();
+
+		bool readConfig();
+		void setDefaultConfig();
+		String defaultAPName();
+		bool saveConfig();
+		
+		void dumpConfig();
+
+		bool getHttpParm(String s, MyData &data);
+		
+		void httpTrField(String *s, MyData data);
+		void httpTrCheckbox(String *s,  MyData data, int colSpan = 1);
+};
+#endif

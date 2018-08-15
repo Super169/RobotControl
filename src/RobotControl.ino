@@ -55,6 +55,8 @@ GPIO-15 : Head LED
 void setup() {
  // wifiManager.resetSettings();
 	
+	String ip;
+
 	pinMode(HEAD_LED_GPIO, OUTPUT);
 	SetHeadLed(false);
 	// digitalWrite(HEAD_LED_GPIO, LOW);
@@ -142,6 +144,8 @@ void setup() {
 
 #endif	
 
+#ifdef ENABLE_WIFI_MANAGER
+
 	if (config.connectRouter()) {
 		if (config.enableOLED()) {
 			myOLED.clr(2);
@@ -156,9 +160,23 @@ void setup() {
 		DEBUG.printf("Try to connect router\n");
 		isConnected = wifiManager.autoConnect(AP_Name, AP_Password);
 	}
+#endif
 
-	String ip;
-
+#ifdef ENABLE_SIMPLE_WIFI_MANAGER
+	// connect router setting is defined inside Simple WiFi Manager
+	SWFM.setDebug(&Serial1);
+	SWFM.begin();
+	if (SWFM.mode() == SWFM_MODE_ROUTER) {
+		NetworkMode = NETWORK_ROUTER;
+		if (SWFM.enableUDP()) {
+			udpClient.begin(SWFM.udpRxPort());
+		}
+	} else {
+		NetworkMode = NETWORK_AP;
+	}
+	isConnected = true;
+	ip = SWFM.ip();
+#else 
 	if (isConnected) {
 		NetworkMode = NETWORK_ROUTER;
 		ip = WiFi.localIP().toString();
@@ -167,7 +185,7 @@ void setup() {
 		String ssid = WiFi.SSID();
 		ssid.toCharArray(buf, 20);
 		if (config.enableOLED()) myOLED.print(0,0, buf);
-    	udpClient.begin(udpReceiveport);
+		udpClient.begin(udpReceiveport);
 	} else {
 		NetworkMode = NETWORK_AP;
 		DEBUG.println(F("Start using softAP"));
@@ -181,11 +199,12 @@ void setup() {
 			myOLED.print(AP_Name);
 		}
 	}
+#endif
 
 	localSegment = "";
 	if (ip.length()) {
-		int idx = 0;
-		int dotCnt = 0;
+		unsigned int idx = 0;
+		unsigned int dotCnt = 0;
 		// no need to check first byte as it won't be dot
 		while (++idx < ip.length()) {
 			if (ip.charAt(idx) == '.') {
@@ -286,7 +305,11 @@ void showNetwork() {
 
 	DEBUG.println();
 	
-	DEBUG.printf("Network: %s\n",(NetworkMode == NETWORK_ROUTER ? "Router" : (NetworkMode == NETWORK_AP ? "AP" : "NONE")));
+	#ifdef ENABLE_SIMPLE_WIFI_MANAGER
+		DEBUG.printf("Network: %s\n",(SWFM.mode() == SWFM_MODE_ROUTER ? "Router" : (NetworkMode == NETWORK_AP ? "AP" : "NONE")));
+	#else
+		DEBUG.printf("Network: %s\n",(NetworkMode == NETWORK_ROUTER ? "Router" : (NetworkMode == NETWORK_AP ? "AP" : "NONE")));
+	#endif		
 
 	switch (NetworkMode) {
 
@@ -305,8 +328,12 @@ void showNetwork() {
 
 		case NETWORK_AP:
 
-			DEBUG.printf("AP: %s - (%s)\n", AP_Name, AP_Password);
-			
+			#ifdef ENABLE_SIMPLE_WIFI_MANAGER 
+				DEBUG.printf("AP: %s - (%s)\n", SWFM.apName().c_str(), SWFM.apKey().c_str());
+			#else
+				DEBUG.printf("AP: %s - (%s)\n", AP_Name, AP_Password);
+			#endif
+
 			IPAddress myIP = WiFi.softAPIP();
 			ip = myIP.toString();
 
@@ -320,6 +347,7 @@ void showNetwork() {
 
 }
 
+#ifdef ENABLE_WIFI_MANAGER
 void configModeCallback (WiFiManager *myWiFiManager) {
 	DEBUG.println("Fail connecting to router");
 	DEBUG.print("WiFi Manager AP Enabled, please connect to ");
@@ -340,10 +368,17 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 	delay(200);
 }
 
+#endif
+
 unsigned long noPrompt = 0;
 unsigned long revIpTime = 0;
 
 void loop() {
+
+
+#ifdef ENABLE_SIMPLE_WIFI_MANAGER
+	SWFM.httpServerHandler();
+#endif
 
 	client = server.available();
       
@@ -386,7 +421,7 @@ void loop() {
 			}
 			while (client.available()) {
 				cmdBuffer.write(client.read());
-       // Serial.println(client.read());
+       			// DEBUG.println(client.read());
 			}
 			// Keep running RobotCommander within the connection.
 			RobotCommander();
