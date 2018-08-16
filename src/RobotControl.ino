@@ -541,10 +541,14 @@ byte GetPower(uint16_t v) {
 // move data from Serial buffer to command buffer
 void CheckSerialInput() {
 	if (Serial.available()) {
+		int bCnt = 0;
 		delay(1); // make sure one command is completed
 		while (Serial.available()) {
 			cmdBuffer.write(Serial.read());
+			bCnt++;
+			if (!Serial.available()) delay(1); // Try to receive a full comment in single batch
 		}
+		DEBUG.printf("\nSerial received %d bytes\n", bCnt);
 	}
 }
 

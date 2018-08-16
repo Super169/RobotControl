@@ -136,7 +136,10 @@ bool MyData::toBuffer(uint8_t *buffer) {
         }
         case MD_STRING:
         {
-            memcpy(target, getString().c_str(), _size);
+            memset(target, 0, _size);
+            size_t copySize = getString().length();
+            if (copySize > _size) copySize = _size;
+            memcpy(target, getString().c_str(), copySize);
             return true;
         }
 

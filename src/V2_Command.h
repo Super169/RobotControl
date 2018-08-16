@@ -26,6 +26,9 @@ bool V2_UseGlobalTime = true;
 #define V2_CMD_ENABLE			0x0A
 #define V2_CMD_CHECK_BATTERY	0x0B
 #define V2_CMD_GET_NETWORK      0x0C
+#define V2_CMD_GET_WIFI_CONFIG  0x0D
+#define V2_CMD_SET_WIFI_CONFIG  0x0E
+
 #define V2_CMD_SERVOANGLE		0x11
 #define V2_CMD_ONEANGLE			0x12
 #define V2_CMD_SERVOADJANGLE	0x13

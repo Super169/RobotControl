@@ -49,6 +49,17 @@ void SimpleWiFiManager::dumpSettings() {
 
 }
 
+uint8_t *SimpleWiFiManager::getConfig() {
+	mdToArray();
+	return _file.buffer;
+}
+
+bool SimpleWiFiManager::setConfig(uint8_t *data) {
+	memcpy(_file.buffer, data, SWFM_CONFIG_FILE_SIZE);
+	mdFromArray();
+	return saveConfig();
+}
+
 bool SimpleWiFiManager::begin(int preferMode) {
 #ifdef _ENABLE_TRACE_
 	_dbg.println("SWFM->begin");
@@ -164,12 +175,25 @@ void SimpleWiFiManager::mdFromArray() {
 
 void SimpleWiFiManager::mdToArray() {
 	memset(_file.buffer, 0, SWFM_FILE_BUFFER_SIZE);
+	_dbg.println("\n----------");
+	for (int idx = 0; idx < SWFM_CONFIG_FILE_SIZE; idx++) {
+		_dbg.printf(" %02x", _file.buffer[idx]);
+	}
+	_dbg.println("\n----------");
+
 	for (int idx = 0; idx < _mdCnt; idx++) {
 		_md[idx]->toBuffer(_file.buffer);
 	}
+	_dbg.println("\n----------");
+	for (int idx = 0; idx < SWFM_CONFIG_FILE_SIZE; idx++) {
+		_dbg.printf(" %02x", _file.buffer[idx]);
+	}
+	_dbg.println("\n----------");
 
 	_file.buffer[SWFM_OFFSET_A9] = 0xA9;
 	_file.buffer[SWFM_OFFSET_9A] = 0x9A;
+	_file.buffer[SWFM_OFFSET_RECORD_SIZE] = SWFM_CONFIG_FILE_SIZE - 4;
+	_file.buffer[SWFM_OFFSET_COMMAND] = 0x0C;
 	_file.buffer[SWFM_OFFSET_END_BYTE] = 0xED;
 }
 
@@ -405,8 +429,30 @@ void SimpleWiFiManager::httpServerHandler() {
 
 void SimpleWiFiManager::httpTrField(String *s, MyData data) {
 	char buf[256];
-	sprintf(buf, "<tr><td>%s</td><td><input type=\"text\" name=\"%s\" value=\"%s\"></td></tr>", 
-	        data.label().c_str(), data.key().c_str(), data.getPrintable().c_str());
+	String maxLen = "";
+	if (data.type() == MD_INTEGER) {
+		maxLen = "maxlength=\"";
+		switch (data.size()) {
+			case 1:
+				maxLen += "3\"";
+				break;
+			case 2:
+				maxLen += "5\"";
+				break;
+			case 4:
+				maxLen += "10\"";
+				break;
+			case 8:
+			default:
+				// no need to set for such large numbers
+				maxLen = "";
+				break;
+		}
+	} else if (data.type() == MD_STRING) {
+		maxLen = "maxLength=\"" + String(data.size()) + "\" ";
+	}
+	sprintf(buf, "<tr><td>%s</td><td><input type=\"text\" name=\"%s\" value=\"%s\" %s></td></tr>", 
+	        data.label().c_str(), data.key().c_str(), data.getPrintable().c_str(), maxLen.c_str());
 	s->concat(buf);
 }
 

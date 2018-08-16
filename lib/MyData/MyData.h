@@ -26,6 +26,8 @@ class MyData {
         inline uint8_t type() { return _type; }
         inline String label() { return _label; }
         inline String key() { return _key; }
+        inline uint8_t offset() { return _offset; }
+        inline uint8_t size() { return _size; }
 
 
         inline bool getBool() { return _value._bool; }

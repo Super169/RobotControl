@@ -26,20 +26,21 @@
 #define SWFM_OFFSET_VER_MINOR       5
 #define SWFM_OFFSET_ENABLE_ROUTER   8
 #define SWFM_OFFSET_SSID            10
-#define SWFM_OFFSET_PASSWORD        30
-#define SWFM_OFFSET_ROUTER_TIMEOUT  50
-#define SWFM_OFFSET_ENABLE_AP       52
-#define SWFM_OFFSET_AP_NAME         54
-#define SWFM_OFFSET_AP_KEY          74
-#define SWFM_OFFSET_ENABLE_SERVER   94
-#define SWFM_OFFSET_SERVER_PORT     96
-#define SWFM_OFFSET_ENABLE_UDP      98
-#define SWFM_OFFSET_UDP_RX_PORT     100
-#define SWFM_OFFSET_UDP_TX_PORT     102
-#define SWFM_OFFSET_END_BYTE        104
+#define SWFM_OFFSET_PASSWORD        40
+#define SWFM_OFFSET_ROUTER_TIMEOUT  60
+#define SWFM_OFFSET_ENABLE_AP       62
+#define SWFM_OFFSET_AP_NAME         64
+#define SWFM_OFFSET_AP_KEY          84
+#define SWFM_OFFSET_ENABLE_SERVER   104
+#define SWFM_OFFSET_SERVER_PORT     106
+#define SWFM_OFFSET_ENABLE_UDP      108
+#define SWFM_OFFSET_UDP_RX_PORT     110
+#define SWFM_OFFSET_UDP_TX_PORT     112
+#define SWFM_OFFSET_CHECKSUM        118
+#define SWFM_OFFSET_END_BYTE        119
 
-#define SWFM_CONFIG_FILE_SIZE		105
-#define SWFM_FILE_BUFFER_SIZE		128
+#define SWFM_CONFIG_FILE_SIZE		120
+#define SWFM_FILE_BUFFER_SIZE		120
 #define SWFM_MD_SIZE 20 
 
 #define SWFM_MODE_NONE       0
@@ -72,6 +73,9 @@ class SimpleWiFiManager {
 		void stopServer();
 		
 		void dumpSettings();
+
+		uint8_t *getConfig();
+		bool setConfig(uint8_t *data);
 
 		bool updateRouter(bool enableRouter, String ssid, String password, uint32_t long routerTimeout, bool updateConfig = true);
 		bool updateAP(bool enableAP, String APName, String APKey, bool updateConfig = true);
@@ -133,7 +137,7 @@ class SimpleWiFiManager {
 			MyData("Major Version", "major_version", (int64_t) 1, SWFM_OFFSET_VER_MAJOR, 1),
 			MyData("Minor Version", "minor_version", (int64_t) 0, SWFM_OFFSET_VER_MINOR, 1),
 			MyData("Enable Router", "enable_router", (bool) false, SWFM_OFFSET_ENABLE_ROUTER),
-			MyData("SSID", "ssid", (String) "", SWFM_OFFSET_SSID, 20),
+			MyData("SSID", "ssid", (String) "", SWFM_OFFSET_SSID, 30),
 			MyData("PASSWORD", "password", (String) "", SWFM_OFFSET_PASSWORD, 20),
 			MyData("Router Timeout", "router_timeout", (int64_t) 15, SWFM_OFFSET_ROUTER_TIMEOUT, 2),
 			MyData("Enable AP", "enable_ap", (bool) true, SWFM_OFFSET_ENABLE_AP),
@@ -150,31 +154,33 @@ class SimpleWiFiManager {
 		uint8_t _mdCnt;
 
 		struct WIFI_SETTING_STRUCT {
-			uint8_t headerA9;
-			uint8_t header9A;
-			uint8_t size;
-			uint8_t command;
-			uint8_t ver_major;
-			uint8_t ver_minor;
-			uint8_t filler_01[2];
-			bool enableRouter;
-			uint8_t filler_02[1];
-			char ssid[20];
-			char password[20];
-			uint8_t routerTimeout;
-			uint8_t filler_03[1];
-			bool enableAP;
-			uint8_t filler_04[1];
-			char apName[20];
-			char apKey[20];
-			bool enableServer;
-			uint8_t filler_05[1];
-			uint16_t serverPort;
-			bool enableUDP;
-			uint8_t filler_06[1];
-			uint16_t udpRxPort;
-			uint16_t udpTxPort;
-			uint8_t endEA;
+			uint8_t headerA9;		// 0
+			uint8_t header9A;		// 1
+			uint8_t size;			// 2  : 120 - 4 = 116 = 0x74
+			uint8_t command;		// 3
+			uint8_t ver_major;		// 4
+			uint8_t ver_minor;		// 5
+			uint8_t filler_01[2];	// 6
+			bool enableRouter;		// 8
+			uint8_t filler_02[1];	// 9
+			char ssid[30];			// 10
+			char password[20];		// 40
+			uint8_t routerTimeout;	// 60
+			uint8_t filler_03[1];	// 61
+			bool enableAP;			// 62
+			uint8_t filler_04[1];	// 63
+			char apName[20];		// 64
+			char apKey[20];			// 84
+			bool enableServer;		// 104
+			uint8_t filler_05[1];	// 105
+			uint16_t serverPort;	// 106
+			bool enableUDP;			// 108
+			uint8_t filler_06[1];	// 109
+			uint16_t udpRxPort;		// 110
+			uint16_t udpTxPort;		// 112
+			uint8_t filler_07[4];	// 114
+			uint8_t sum;			// 118
+			uint8_t endEA;			// 119
 		};
 
 		union WIFI_SETTING {

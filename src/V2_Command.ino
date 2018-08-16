@@ -185,6 +185,14 @@ bool V2_Command() {
 			V2_GetNetwork(cmd);
 			break;
 
+		case V2_CMD_GET_WIFI_CONFIG:
+			V2_GetWiFiConfig(cmd);
+			break;
+
+		case V2_CMD_SET_WIFI_CONFIG:
+			V2_SetWiFiConfig(cmd);
+			break;
+
 		case V2_CMD_SERVOANGLE:
 			V2_GetServoAngle(cmd);
 			break;
@@ -412,6 +420,12 @@ void V2_DefaultConfig(byte *cmd) {
 
 void V2_CheckBattery(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_CheckBattery]"));
+	if (cmd[2] != 2) {
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_SIZE);
+		return;
+	} 
+
+
 	byte result[9];
 	result[2] = 5;
 	result[3] = cmd[3];
@@ -428,6 +442,11 @@ void V2_CheckBattery(byte *cmd) {
 
 void V2_GetNetwork(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_GetNetwork]"));
+	if (cmd[2] != 2) {
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_SIZE);
+		return;
+	} 
+
 	byte result[60];
 	memset(result, 0, 60);
 	result[2] = 56;
@@ -464,6 +483,35 @@ void V2_GetNetwork(byte *cmd) {
 	V2_SendResult(result);
 }
 
+void V2_GetWiFiConfig(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_GetWiFiConfig]"));
+	if (cmd[2] != 2) {
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_SIZE);
+		return;
+	} 
+
+	byte result[SWFM_CONFIG_FILE_SIZE];
+
+	memset(result, 0, 60);
+	memcpy(result, SWFM.getConfig(), SWFM_CONFIG_FILE_SIZE);
+	result[2] = SWFM_CONFIG_FILE_SIZE - 4;
+	result[3] = cmd[3];
+	V2_SendResult(result);
+}
+
+
+void V2_SetWiFiConfig(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_SetWiFiConfig]"));
+	uint8_t result = RESULT::SUCCESS;
+
+	if (cmd[2] != (SWFM_CONFIG_FILE_SIZE - 4)) {
+		result = RESULT::ERR::PARM_SIZE;
+	} else if (!SWFM.setConfig((uint8_t *) cmd)) {
+		result = RESULT::ERR::UPDATE_CONDIG;
+	} 
+	V2_SendSingleByteResult(cmd, result);
+	return;
+}
 
 
 #pragma region V2_CMD_SERVOANGLE / V2_CMD_ONEANGLE
