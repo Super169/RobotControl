@@ -412,6 +412,11 @@ void V2_DefaultConfig(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_DefaultConfig]"));
 	config.initConfig();
 	byte result = config.writeConfig();
+	if (result == RESULT::SUCCESS) {
+		if (!SWFM.resetDefault()) {
+			result = RESULT::ERR::UPDATE_CONDIG;
+		}
+	}
 	V2_SendSingleByteResult(cmd, result);
 }
 

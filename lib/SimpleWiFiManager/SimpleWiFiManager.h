@@ -76,6 +76,7 @@ class SimpleWiFiManager {
 
 		uint8_t *getConfig();
 		bool setConfig(uint8_t *data);
+		bool resetDefault();
 
 		bool updateRouter(bool enableRouter, String ssid, String password, uint32_t long routerTimeout, bool updateConfig = true);
 		bool updateAP(bool enableAP, String APName, String APKey, bool updateConfig = true);

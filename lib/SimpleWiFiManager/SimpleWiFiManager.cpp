@@ -60,6 +60,11 @@ bool SimpleWiFiManager::setConfig(uint8_t *data) {
 	return saveConfig();
 }
 
+bool SimpleWiFiManager::resetDefault() {
+	setDefaultConfig();
+	return saveConfig();
+}
+
 bool SimpleWiFiManager::begin(int preferMode) {
 #ifdef _ENABLE_TRACE_
 	_dbg.println("SWFM->begin");
@@ -209,7 +214,7 @@ void SimpleWiFiManager::setDefaultConfig() {
 	for (int idx = 0; idx < _mdCnt; idx++) {
 		_md[idx]->reset();
 	}
-	_wifi.apName.setString(_wifi.apName.getStringDefault() + String((uint32_t) myUtil::getDeviceId()));
+	_wifi.apName.setString(defaultAPName());
 	_configReady = true;
 }
 
