@@ -53,7 +53,6 @@ GPIO-15 : Head LED
 // #define PIN_SETUP 		13		// for L's PCB
 
 void setup() {
- // wifiManager.resetSettings();
 	
 	String ip;
 
@@ -107,62 +106,6 @@ void setup() {
 
 	char buf[20];
 
-#ifdef ENABLE_SMART_CONFIG
-
-	if (config.connectRouter()) {
-		if (config.enableOLED()) {
-			myOLED.clr(2);
-			myOLED.print(0,2,"SmartConfig running");
-			myOLED.show();
-		}
-		DEBUG.printf("Try to connect router with SmartConfig\n");
-  		WiFi.mode(WIFI_STA);  // it seems SmartConfig not work in WIFI_AP_STA code
-
-		unsigned long endMs = millis() + 30000;
-			int cnt = 0;
-		// sometimes, it will have WiFi.smartConfigDone(), but not connected.  So have double loop to make sure WiFi.status() == WL_CONNECTED
-		while ((millis() < endMs) && (WiFi.status() != WL_CONNECTED)) {
-			delay(500);
-			DEBUG.print(".");
-			
-			if(cnt++ >= 10){
-			Serial.print(".");
-			WiFi.beginSmartConfig();
-			while(millis() < endMs) {
-				delay(1000);
-				if(WiFi.smartConfigDone()){
-					DEBUG.println();
-					DEBUG.println("SmartConfig Success");
-					Serial.println("SmartConfig Success");
-					break;
-				}
-			}
-			}
-		}
-		isConnected = (WiFi.status() == WL_CONNECTED);
-	}
-
-#endif	
-
-#ifdef ENABLE_WIFI_MANAGER
-
-	if (config.connectRouter()) {
-		if (config.enableOLED()) {
-			myOLED.clr(2);
-			myOLED.print(0,2,"Connecting to router");
-			myOLED.show();
-		}
-		wifiManager.setDebugOutput(false);
-		wifiManager.setAPCallback(configModeCallback);
-		wifiManager.setConfigPortalTimeout(60);
-		wifiManager.setConfigPortalTimeout(60);
-		wifiManager.setTimeout(60);
-		DEBUG.printf("Try to connect router\n");
-		isConnected = wifiManager.autoConnect(AP_Name, AP_Password);
-	}
-#endif
-
-#ifdef ENABLE_SIMPLE_WIFI_MANAGER
 	// connect router setting is defined inside Simple WiFi Manager
 	SWFM.setDebug(&Serial1);
 	SWFM.begin();
@@ -176,30 +119,6 @@ void setup() {
 	}
 	isConnected = true;
 	ip = SWFM.ip();
-#else 
-	if (isConnected) {
-		NetworkMode = NETWORK_ROUTER;
-		ip = WiFi.localIP().toString();
-		if (config.enableOLED()) myOLED.clr();
-		memset(buf, 0, 20);
-		String ssid = WiFi.SSID();
-		ssid.toCharArray(buf, 20);
-		if (config.enableOLED()) myOLED.print(0,0, buf);
-		udpClient.begin(udpReceiveport);
-	} else {
-		NetworkMode = NETWORK_AP;
-		DEBUG.println(F("Start using softAP"));
-		DEBUG.printf("Please connect to %s\n\n", AP_Name);
-		WiFi.softAP(AP_Name, AP_Password);
-		IPAddress myIP = WiFi.softAPIP();
-		ip = myIP.toString();
-		if (config.enableOLED()) {
-			myOLED.clr();
-			myOLED.print(0,0, "AP: ");
-			myOLED.print(AP_Name);
-		}
-	}
-#endif
 
 	localSegment = "";
 	if (ip.length()) {
@@ -305,12 +224,8 @@ void showNetwork() {
 
 	DEBUG.println();
 	
-	#ifdef ENABLE_SIMPLE_WIFI_MANAGER
-		DEBUG.printf("Network: %s\n",(SWFM.mode() == SWFM_MODE_ROUTER ? "Router" : (NetworkMode == NETWORK_AP ? "AP" : "NONE")));
-	#else
-		DEBUG.printf("Network: %s\n",(NetworkMode == NETWORK_ROUTER ? "Router" : (NetworkMode == NETWORK_AP ? "AP" : "NONE")));
-	#endif		
-
+	DEBUG.printf("Network: %s\n",(SWFM.mode() == SWFM_MODE_ROUTER ? "Router" : (NetworkMode == NETWORK_AP ? "AP" : "NONE")));
+	
 	switch (NetworkMode) {
 
 		case NETWORK_ROUTER:
@@ -328,11 +243,7 @@ void showNetwork() {
 
 		case NETWORK_AP:
 
-			#ifdef ENABLE_SIMPLE_WIFI_MANAGER 
-				DEBUG.printf("AP: %s - (%s)\n", SWFM.apName().c_str(), SWFM.apKey().c_str());
-			#else
-				DEBUG.printf("AP: %s - (%s)\n", AP_Name, AP_Password);
-			#endif
+			DEBUG.printf("AP: %s - (%s)\n", SWFM.apName().c_str(), SWFM.apKey().c_str());
 
 			IPAddress myIP = WiFi.softAPIP();
 			ip = myIP.toString();
@@ -347,38 +258,13 @@ void showNetwork() {
 
 }
 
-#ifdef ENABLE_WIFI_MANAGER
-void configModeCallback (WiFiManager *myWiFiManager) {
-	DEBUG.println("Fail connecting to router");
-	DEBUG.print("WiFi Manager AP Enabled, please connect to ");
-	DEBUG.println(myWiFiManager->getConfigPortalSSID());
-	DEBUG.print("Alpha 1S Host IP: ");
-	DEBUG.println(WiFi.softAPIP().toString());
-	DEBUG.println(F("Will be switched to SoftAP mode if no connection within 60 seconds....."));
-
-	// Try to display here if OLED is ready
-	// Now flash LED to alert user
-	for (int i = 0; i < 10; i++) {
-		SetHeadLed(false);
-		delay(200);
-		SetHeadLed(true);
-		delay(200);
-	}
-	SetHeadLed(false);
-	delay(200);
-}
-
-#endif
-
 unsigned long noPrompt = 0;
 unsigned long revIpTime = 0;
 
 void loop() {
 
 
-#ifdef ENABLE_SIMPLE_WIFI_MANAGER
 	SWFM.httpServerHandler();
-#endif
 
 	client = server.available();
       
