@@ -6,6 +6,7 @@ void UBT_GetServoAngle(byte *result) {
 
 	for (int id = 1; id <= config.maxServo() ; id++) {
 		int pos = 2 * (id - 1);
+#ifdef _UBT_		
 		if (servo.exists(id)) {
 			if (servo.isLocked(id)) {
 				result[pos] = servo.lastAngle(id);
@@ -18,6 +19,21 @@ void UBT_GetServoAngle(byte *result) {
 			result[pos] = 0xFF;
 			result[pos+1] = 0;
 		}
+#endif		
+		if (rs.exists(id)) {
+			if (rs.isLocked(id)) {
+				result[pos] = rs.lastAngle(id);
+				result[pos+1] = 1;
+			} else {
+				result[pos] = rs.getAngle(id);
+				result[pos+1] = 0;
+			}
+		} else {
+			result[pos] = 0xFF;
+			result[pos+1] = 0;
+		}
+
+
 	}
 
 	if (debug) {

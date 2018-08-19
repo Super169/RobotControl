@@ -1,6 +1,8 @@
 #ifndef _robot_h_
 #define _robot_h_
 
+//#define _UBT_
+
 #include "ESP8266WiFi.h"
 #include "WiFiClient.h"
 #include <WiFiUDP.h>
@@ -22,6 +24,7 @@
 #include "SimpleWiFiManager.h"
 SimpleWiFiManager SWFM;
 
+#include "RobotServo.h"
 #include "V2_Command.h"
 
 // Start a TCP Server on port 6169
@@ -131,12 +134,25 @@ ActionData actionData;
 
 char* actionDataFile = (char *) "/robot.dat";
 
-SoftwareSerial ubt_ss(12, 12, false, 256);
 
-UBTech servo(&ubt_ss, &DEBUG);  // Debug on Serial1
+struct {
+    uint8_t rx_pin          = 12;
+    uint8_t tx_pin          = 12;
+    unsigned long baud      = 115200;
+    bool inverse_logic      = false;
+    uint16_t buffer_size    = 64;
+} busConfig;
+
+SoftwareSerial robotPort(busConfig.rx_pin, busConfig.tx_pin, busConfig.inverse_logic, busConfig.buffer_size);
+RobotServo rs;
+
+UBTech servo(&robotPort, &DEBUG);  // Debug on Serial1
+
+// SoftwareSerial ubt_ss(12, 12, false, 256);
+// UBTech servo(&ubt_ss, &DEBUG);  // Debug on Serial1
 
 int servoCnt = 0;
-byte *retBuffer;
+// byte *retBuffer;
 
 byte ledMode = 0;
 

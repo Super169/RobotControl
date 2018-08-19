@@ -100,7 +100,7 @@ void setup() {
 	}
 
 	
-	retBuffer = servo.retBuffer();
+	// retBuffer = servo.retBuffer();
 
 	if (debug) DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
 
@@ -153,6 +153,15 @@ void setup() {
 
 	DEBUG.println("Starting robot servo: ");
 	
+
+	robotPort.begin(busConfig.baud);
+    rs.setEnableTxCalback(enableTxCallback);
+    rs.begin(&robotPort, &DEBUG);
+    rs.init(config.maxServo(),config.maxCommandRetry());
+    rs.detectServo();
+	rs.lock();
+
+#ifdef _UBT_
 	// servo.init(config.maxServo(), config.maxCommandWaitMs(), config.maxCommandRetry(), config.maxDetectRetry());
 	servo.init(config.maxServo(), 2,10,10);
 	// servo.init(config.maxServo(), 0);	// No retry for fast testing without all servo
@@ -168,11 +177,11 @@ void setup() {
 	servo.lockAll();
 	// TODO: change to V2 when ready
 	// V1_UBT_ReadSPIFFS(0);
+#endif
 
 	DEBUG.printf("%08ld Control board ready\n\n", millis());
 	SetHeadLed(true);
 	// digitalWrite(HEAD_LED_GPIO, HIGH);
-
 	if (config.mp3Enabled()) {
 		// Play MP3 for testing only
 		mp3.begin();
@@ -203,7 +212,7 @@ void setup() {
 		MpuInit();
 	}
 
-	servo.setLED(0, 1);
+	// servo.setLED(0, 1);  ??????
 
 	// Load default action
 	for (byte seq = 0; seq < CD_MAX_COMBO; seq++) comboTable[seq].ReadSPIFFS(seq);
@@ -434,7 +443,7 @@ void CheckSerialInput() {
 			bCnt++;
 			if (!Serial.available()) delay(1); // Try to receive a full comment in single batch
 		}
-		DEBUG.printf("\nSerial received %d bytes\n", bCnt);
+		// DEBUG.printf("\nSerial received %d bytes\n", bCnt);
 	}
 }
 
@@ -542,3 +551,10 @@ void remoteControl() {
 }
 
 
+void enableTxCallback(bool send) {
+    if (send) {
+        robotPort.enableTx(true); 
+    } else {
+        robotPort.enableTx(false);
+    }
+}
