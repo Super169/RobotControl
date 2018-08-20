@@ -15,6 +15,8 @@ class HLServo : public baseServo
 
         // Methos MUST be implemented
         //
+        byte servoType() override { return BS_TYPE_HaiLzd; }
+
         bool reset() override;
         uint32_t getVersion(byte id) override;
 

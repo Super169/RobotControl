@@ -1,7 +1,7 @@
 #ifndef _robot_h_
 #define _robot_h_
 
-//#define _UBT_
+#define _UBT_
 
 #include "ESP8266WiFi.h"
 #include "WiFiClient.h"
@@ -30,8 +30,9 @@ SimpleWiFiManager SWFM;
 // Start a TCP Server on port 6169
 uint16_t port = 6169;
 String localSegment;
-WiFiServer server(port);
-WiFiClient client;
+byte localSegmentStart;
+// WiFiServer server(port);
+// WiFiClient client;
 bool isConnected = false;
 
 // UDP related settings

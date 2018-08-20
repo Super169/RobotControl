@@ -2,10 +2,7 @@
 
 Buffer::Buffer(uint16_t size)
 {
-	_size = size;
-	if (size == 0) return;
-    _buffer = (byte *) malloc(size);
-	reset();
+	init(size);
 }
 
 Buffer::~Buffer() {
@@ -14,6 +11,14 @@ Buffer::~Buffer() {
 
 void Buffer::reset() {
 	_head = _tail = 0;
+}
+
+void Buffer::init(uint16_t size)
+{
+	_size = size;
+	if (size == 0) return;
+    _buffer = (byte *) malloc(size);
+	reset();
 }
 
 

@@ -79,47 +79,6 @@ bool myUtil::isEmpty(String data) {
 	return (data.length() == 0);
 }
 
-int myUtil::getHtmlParmPos(String data, String parmName) {
-	String specialChars = "&?";
-    int pos = 0;
-    char c;
-    String searchKey = parmName + '=';
-    while (true) {
-        pos = data.indexOf(searchKey, pos);
-        if (pos <= 0) break;
-        c = data.charAt(pos - 1);
-        // _dbg->printf("Parm: %s, pos: %d, pre-char: %02x\n", parmName.c_str(), pos, c);
-		// 
-        // if ((specialChars.indexOf(c) >= 0) || (c == '\r') || (c == '\n')) break;
-		if ((specialChars.indexOf(c) >= 0)) break;
-        pos += searchKey.length();
-    }
-    return pos;
-}
-
-String myUtil::getHtmlParmValue(String data, String parmName) {
-    int slen = data.length();
-    String value = "";
-
-    int pos = getHtmlParmPos(data, parmName);
-	if (pos < 0) return "";
-    if (pos >= 0) {
-        pos += parmName.length() + 1;  // skip: ssid= 
-        bool notFinished = true;
-        while (notFinished) {
-            char c = data.charAt(pos++);
-			// any rules for parameter values?
-            if ((c == '&') || (c == '?') || (c == '\r') || (c == '\n') || (c < 0x20) || (pos >= slen)) {
-                notFinished = false;
-            } else {
-				// TODO: better use substring after search instead of concatenation
-                value += c;
-            }
-        }
-    }
-    return value;
-}
-
 String myUtil::getInt64String(int64_t data) {
     // can be converted to String directly
     if ((data <= 2147483647) && (data >= -2147483648)) {

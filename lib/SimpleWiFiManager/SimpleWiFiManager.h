@@ -1,22 +1,22 @@
 #ifndef _SIMPLE_WIFI_MANAGER_H_
 #define _SIMPLE_WIFI_MANAGER_H_
 
-#ifdef ESP32
-	#include <ESP.H>
-	#include <WiFi.h>
-	#include <SPIFFS.h>
-#else
-	#include <ESP8266WiFi.h>
-	#define FILE_READ	"r"
-	#define FILE_WRITE	"w"	
-#endif
-
 #define _ENABLE_TRACE_
 
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <ESP8266mDNS.h>
+#include <ESP8266WebServer.h>
+#include <WiFiUDP.h>
+
 #include <FS.h>
+#define FILE_READ	"r"
+#define FILE_WRITE	"w"	
+
 #include "myUtil.h"
 #include "MyDebugger.h"
 #include "MyData.h"
+#include "Buffer.h"
 
 #define SWFM_OFFSET_A9            	0
 #define SWFM_OFFSET_9A              1
@@ -68,6 +68,7 @@ class SimpleWiFiManager {
 		void setDebug(Stream *dbg, bool enableDebug = true);
 		void enableDebug(bool value);
 
+		void setWiFiServer(uint16_t port);
 		bool begin(int preferMode = SWFM_MODE_NONE);
 		void httpServerHandler();
 		void stopServer();
@@ -104,16 +105,47 @@ class SimpleWiFiManager {
 		uint16_t serverPort() { return (uint16_t) _wifi.serverPort.getInt(); }
 		bool enableUDP() { return _wifi.enableUDP.getBool(); }
 		uint16_t udpRxPort() { return (uint16_t) _wifi.udpRxPort.getInt(); }
-		uint16_t udpTxPOrt() { return (uint16_t) _wifi.udpTxPort.getInt(); }
+		uint16_t udpTxPort() { return (uint16_t) _wifi.udpTxPort.getInt(); }
+
+		bool wifiClientConnected() { return _wifiClientConnected; }
+		size_t write(byte data);
+		size_t write(byte *data, size_t cnt);
+		size_t udpSendPacket(const char* target, const char *data);
+
+
+		uint8_t checkData();
+		Buffer buffer() { return _buffer; }
+		void resetBuffer() { _buffer.reset(); }
+		uint16_t available() { return _buffer.available(); }
+		byte peek() { return _buffer.peek(); }
+		bool peek(byte *storage, uint16_t count) { return _buffer.peek(storage, count); }
+		byte read() { return _buffer.read(); }
+		bool read(byte *storage, uint16_t count) { return _buffer.read(storage, count); }
+		bool skip(uint16_t count = 1) { return _buffer.skip(count); }
 
 	private:
 
-		std::unique_ptr<WiFiServer>	_httpServer;
+		String _chipId;
+
+		// std::unique_ptr<Buffer>				_buffer;
+		Buffer _buffer;
+		std::unique_ptr<ESP8266WebServer>	_httpServer;
+		std::unique_ptr<WiFiServer>			_wifiServer;
 
 		// Status flag
 		bool _configReady;
 		uint8_t _mode;
 		bool _serverRunning;
+
+		// WiFi Server
+		bool 		_wifiServerEnabled;
+		uint16_t 	_wifiServerPort;
+		bool		_wifiServerRunning;
+		WiFiClient	_wifiClient;
+		bool		_wifiClientConnected;
+
+		WiFiUDP		_udpClient;
+		bool		_udpClientRunning;
 
 		MyDebugger _dbg;
 
@@ -201,9 +233,12 @@ class SimpleWiFiManager {
 		
 		void dumpConfig();
 
-		bool getHttpParm(String s, MyData &data);
+		bool checkHttpArg(MyData *data);
 		
 		void httpTrField(String *s, MyData data);
 		void httpTrCheckbox(String *s,  MyData data, int colSpan = 1);
+
+		void handleNotFound();
+		void handleRoot();
 };
 #endif

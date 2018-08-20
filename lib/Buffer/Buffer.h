@@ -5,8 +5,9 @@
 
 class Buffer {
     public:
-        Buffer(uint16_t size);
+        Buffer(uint16_t size = 0);
         ~Buffer();
+		void init(uint16_t size);
 		void reset();
 		uint16_t available();
 		byte peek();

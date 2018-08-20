@@ -11,6 +11,9 @@
 #elif defined(_HLServo_)
     #include <drivers/HaiLzd/HLServo.h>
 #endif
+
+// Just a dummy class to control the interface for baseServo.
+// You can skip this class and use the servo class directly.
 class RobotServo {
     
     public:
@@ -18,14 +21,16 @@ class RobotServo {
         void setEnableTxCalback(void (*enableTxCallback)(bool)) { return _servo.setEnableTxCalback(enableTxCallback); }
 
         RobotServo();
-        bool begin(Stream *busPort, Stream *debugPort);
+        bool begin(Stream *busPort, Stream *debugPort) { return _servo.begin(busPort, debugPort); }
         ~RobotServo();
 
-        void showInfo();
-        bool init(byte maxId, byte maxRetry);
+        byte servoType() { return _servo.servoType(); }
 
-        bool end();
-        bool reset();
+        void showInfo() { return _servo.showInfo(); }
+        bool init(byte maxId, byte maxRetry) { return _servo.init(maxId, maxRetry); }
+
+        bool end() { return _servo.end(); }
+        bool reset() { return _servo.reset(); }
 
         void enableDebug(bool value) { return _servo.enableDebug(value);}
 
@@ -68,10 +73,6 @@ class RobotServo {
         #elif defined(_HLServo_)
             HLServo    _servo;
         #endif
-        bool _initialized;
-        byte _maxId = 0;
-        byte _maxRetry = 0;
-
 };
 
 #endif

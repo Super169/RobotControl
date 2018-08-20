@@ -21,6 +21,8 @@ class UBTServo : public baseServo
         // Methos MUST be implemented
         //
         // Methods without default implementation, MUST be overrided
+        byte servoType() override { return BS_TYPE_UBT; }
+
         bool reset() override;
         uint32_t getVersion(byte id) override;
 

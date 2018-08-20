@@ -4,6 +4,11 @@
 #include <ESP.h>
 #include "MyDebugger.h"
 
+#define BS_TYPE_UNKNOWN 0
+#define BS_TYPE_UBT     1
+#define BS_TYPE_HaiLzd  2
+
+
 struct BS_MOVEPARM {
     byte id;
     int16_t pos;
@@ -84,6 +89,7 @@ class baseServo {
         virtual uint16_t getAngle(byte id) { return (validId(id) ? pos2angle(getPos(id)) : _INVALID_POS); }
 
         // Methods MUST be overrided
+        virtual byte servoType() = 0;
         virtual bool reset() = 0;
         virtual uint32_t getVersion(byte id) = 0;
 

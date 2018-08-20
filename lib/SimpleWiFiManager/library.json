@@ -1,0 +1,15 @@
+{
+    "name": "SimpleWiFiManager",
+    "version": "1.0.0",
+    "keywords": [
+      "wifi", "network"
+    ],
+    "description": "Simplified WiFi Manager for ESP8266.",
+    "repository":
+    {
+        "type": "git",
+        "url": "http://super169.asuscomm.com:30000/PlatformIO/SimpleWiFiManager"
+    },
+    "frameworks": "arduino",
+    "platforms": "espressif8266"
+}

@@ -20,8 +20,6 @@ class myUtil {
 		static bool writeSPIFFS(const char *filename, const char *data);
 		static bool writeSPIFFS(const char *fileName, uint8_t *buffer, uint16_t size);
 		static bool isEmpty(String data);
-		static int getHtmlParmPos(String data, String parmName);
-		static String getHtmlParmValue(String data, String parmName);
 		inline static void clearSerialBuffer() { return clearStreamBuffer(&Serial); }
 		static void clearStreamBuffer(Stream *stream);
 		static String getInt64String(int64_t data);

@@ -19,6 +19,15 @@ SimpleWiFiManager::SimpleWiFiManager() {
     _md[_mdCnt++] = &_wifi.enableUDP;
     _md[_mdCnt++] = &_wifi.udpRxPort;
     _md[_mdCnt++] = &_wifi.udpTxPort;
+	_chipId = myUtil::getInt64String(myUtil::getDeviceId());
+	_buffer.init(256);
+
+	_wifiServerEnabled = false;
+	_wifiServerPort = 0;
+	_wifiServerRunning = false;
+	_wifiClientConnected = false;
+
+	_udpClientRunning = false;
 }
 
 SimpleWiFiManager::~SimpleWiFiManager() {
@@ -65,6 +74,11 @@ bool SimpleWiFiManager::resetDefault() {
 	return saveConfig();
 }
 
+void SimpleWiFiManager::setWiFiServer(uint16_t port) {
+	_wifiServerPort = port;
+	_wifiServerEnabled = true;
+}
+
 bool SimpleWiFiManager::begin(int preferMode) {
 #ifdef _ENABLE_TRACE_
 	_dbg.println("SWFM->begin");
@@ -81,6 +95,7 @@ bool SimpleWiFiManager::begin(int preferMode) {
 
 	if ((preferMode == SWFM_MODE_NONE) || (preferMode == SWFM_MODE_ROUTER))  {
 		if (!myUtil::isEmpty(_wifi.ssid.getString())) {
+
 			WiFi.begin(_wifi.ssid.getString().c_str(), (myUtil::isEmpty(_wifi.password.getString()) ? NULL : _wifi.password.getString().c_str()));
 			_dbg.msg("Connecting to %s", _wifi.ssid.getString().c_str());
 			unsigned long endMs = millis() + _wifi.routerTimeout.getInt() * 1000;
@@ -113,12 +128,37 @@ bool SimpleWiFiManager::begin(int preferMode) {
 
 	if (!isReady()) return false;
 
-	if (!_wifi.enableServer.getBool()) return true;
+	if (_wifi.enableServer.getBool()) {
+		if (MDNS.begin(_wifi.apName.getString().c_str())) {
+			_dbg.msg("MDNS responder started : %s", _wifi.apName.getString().c_str());
+		}
 
-	_httpServer.reset(new WiFiServer((uint16_t) _wifi.serverPort.getInt()));
-	_httpServer->begin((uint16_t) _wifi.serverPort.getInt());
-	_dbg.msg("Server running at port: %d", (uint16_t) _wifi.serverPort.getInt());
-	_serverRunning = true;
+		_httpServer.reset(new ESP8266WebServer((int) _wifi.serverPort.getInt()));
+
+		_httpServer->on(String(F("/")), std::bind(&SimpleWiFiManager::handleRoot, this));
+		_httpServer->onNotFound (std::bind(&SimpleWiFiManager::handleNotFound, this));
+
+		_httpServer->begin();
+
+		_dbg.msg("HTTP Server running at port: %d", (uint16_t) _wifi.serverPort.getInt());
+		_serverRunning = true;
+	}
+
+	if (_wifiServerEnabled) {
+		_wifiServer.reset(new WiFiServer(_wifiServerPort));
+		_wifiServer->begin();
+		_dbg.msg("WiFi Server running at port: %d", _wifiServerPort);
+		_wifiServerRunning = true;
+	}
+
+	if (_wifi.enableUDP.getBool()) {
+		uint16_t udpRxPort = (uint16_t) _wifi.udpRxPort.getInt();
+		if (udpRxPort) {
+			_udpClient.begin(udpRxPort);
+			_dbg.msg("UDP Client running at port: %d", udpRxPort);
+			_udpClientRunning = true;
+		}
+	}
 
 	return true;
 }
@@ -237,199 +277,12 @@ void SimpleWiFiManager::dumpConfig() {
 	}
 }
 
-
-bool SimpleWiFiManager::getHttpParm(String s, MyData &data) {
-	bool valChanged = false;
-	String value = myUtil::getHtmlParmValue(s, data.key());
-	_dbg.printf("Parm %s = %s\n", data.key().c_str(), value.c_str());
-	String newValue;
-	bool b_value;
-	bool old_value;
-	int64_t i64_value;
-
-	switch (data.type()) {
-
-		case MD_BOOL:
-			b_value = false;
-			old_value = data.getBool();
-			if (value.length() > 0) b_value = (value.compareTo("enable") == 0);
-			if (b_value != old_value) {
-				data.setBool(b_value);
-				newValue =  data.getPrintable();
-				valChanged = true;
-			}
-			break;
-
-		case MD_INTEGER:
-			i64_value = atoll(value.c_str());
-			if ((i64_value > 0) && (i64_value != data.getInt())) {
-				data.setInt(i64_value);
-				newValue = data.getPrintable();
-				valChanged = true;
-			}
-			break;
-
-		case MD_STRING:
-			if (data.getString().compareTo(value) != 0) {
-				data.setString(value);
-				newValue = data.getPrintable();
-				valChanged = true;
-			}
-
-	}
-	if (valChanged) {
-		_dbg.printf("%s set to \"%s\"\n", data.label().c_str(), newValue.c_str());
-	}
-	return valChanged;
-}
-
-
 void SimpleWiFiManager::httpServerHandler() {
 	if (!isReady()) return;
 	if (!isServerRunning()) return;
 
-	WiFiClient client = _httpServer->available();
-    if (client) {
-        _dbg.msg("HTTP client connected");
-        // an http request ends with a blank line
-        while (client.connected()) {
-            String data = "";
-            if (client.available()) {
-                delay(1);
-                data = client.readString();
-                _dbg.println(data);
-                _dbg.printf("Data length: %d\n", data.length());
-            }
-
-			int pos;
-			String parmList = "";
-			pos = data.indexOf("GET /?");
-			
-			if (pos >= 0) {
-				unsigned int endPos = pos + 6;
-				while (endPos < data.length()) {
-					char ch = data.charAt(endPos);
-					if ((ch == '\r') || (ch == '\n' )) {
-						break;
-					}
-					endPos++;
-				}
-				parmList = data.substring(pos, endPos - 1);
-				_dbg.printf("\n-- Parm string: %s\n\n\n", parmList.c_str());
-			}
-			
-			if (parmList.length() > 0) {
-
-				data = parmList;
-
-				bool b_value = false;
-
-				String value;
-				value = myUtil::getHtmlParmValue(data, "key");
-				if (value.length() > 0) {
-					uint64_t chipId = myUtil::getDeviceId();
-					_dbg.printf("Chip Key : %s\n", myUtil::getInt64String(chipId).c_str());
-					uint64_t key = atoll(value.c_str());
-					_dbg.printf("HTML Key : %s\n",myUtil::getInt64String(key).c_str());
-					if (chipId == key) {
-
-						bool changeSetting = false;
-
-						changeSetting |= getHttpParm(data, _wifi.enableRouter);
-						changeSetting |= getHttpParm(data, _wifi.ssid);
-						changeSetting |= getHttpParm(data, _wifi.password);
-						changeSetting |= getHttpParm(data, _wifi.routerTimeout);
-						changeSetting |= getHttpParm(data, _wifi.enableAP);
-						changeSetting |= getHttpParm(data, _wifi.apName);
-						changeSetting |= getHttpParm(data, _wifi.apKey);
-						changeSetting |= getHttpParm(data, _wifi.enableServer);
-						changeSetting |= getHttpParm(data, _wifi.serverPort);
-						changeSetting |= getHttpParm(data, _wifi.enableUDP);
-						changeSetting |= getHttpParm(data, _wifi.udpRxPort);
-						changeSetting |= getHttpParm(data, _wifi.udpTxPort);
-
-						if (changeSetting) {
-							if (saveConfig()) {
-								_dbg.printf("WiFi Setting updated.\n");
-							}
-						}
-					} else {
-						_dbg.println("Key not matched");
-					}
-				}
-			}
-
-
-			String s = "";
-			s.concat("HTTP/1.1 200 OK\n");
-			s.concat("Content-Type: text/html\n");
-			s.concat("Connection: close\n");
-			s.concat("\n");
-            s.concat("<!DOCTYPE HTML><html><head>\n");
-            s.concat("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head>\n");
-			s.concat("<h1>myRobot - WiFi Settings</h1>\n");
-			s.concat("<p>Server running at ");
-			s.concat(ip());
-			s.concat("</p>\n");
-            s.concat("<form>");
-            s.concat("<table>");
-            s.concat("<tbody>");
-
-            s.concat("<tr><td colspan=\"2\"><b>Station Mode&nbsp;&nbsp;</b></td></tr>");
-
-			httpTrCheckbox(&s, _wifi.enableRouter, 2);
-			httpTrField(&s, _wifi.ssid);
-			httpTrField(&s, _wifi.password);
-			httpTrField(&s, _wifi.routerTimeout);
-
-            s.concat("<tr><td colspan=\"2\">&nbsp;</td></tr>");
-
-            s.concat("<tr><td colspan=\"2\"><b>AP Mode&nbsp;&nbsp;</b></td></tr>");
-			
-			httpTrCheckbox(&s, _wifi.enableAP, 2);
-			httpTrField(&s, _wifi.apName);
-			httpTrField(&s, _wifi.apKey);
-			
-			s.concat("<tr><td colspan=\"2\">&nbsp;</td></tr>");
-
-            s.concat("<tr><td colspan=\"2\"><b>Settings Web Server&nbsp;&nbsp;</b></td></tr>");
-
-			httpTrCheckbox(&s, _wifi.enableServer, 2);
-			httpTrField(&s, _wifi.serverPort);
-
-            s.concat("<tr><td colspan=\"2\">&nbsp;</td></tr>");
-
-            s.concat("<tr><td colspan=\"2\"><b>Settings Web Server&nbsp;&nbsp;</b></td></tr>");
-
-			httpTrCheckbox(&s, _wifi.enableUDP, 2);
-			httpTrField(&s, _wifi.udpRxPort);
-			httpTrField(&s, _wifi.udpTxPort);
-
-            s.concat("<tr><td colspan=\"2\">&nbsp;</td></tr>");
-
-            s.concat("</tbody>\n");
-            s.concat("</table>\n");
-            s.concat("<input type=\"hidden\" name=\"key\" value=\"");
-            s.concat(myUtil::getDeviceId());
-            s.concat("\">\n");
-			s.concat("<input type=\"submit\" value=\"Update\">\n");
-            s.concat("</form>\n");
-            
-            s.concat("</html>\n");
-            // HTTP response ends with another blank line, for safety double blank line
-			s.concat("\n\n");
-
-			client.print(s);
-
-            break;        
-        }
-        // give the web browser time to receive the data
-        delay(1);
-
-        // close the connection:
-        client.stop();
-        _dbg.msg("HTTP client disconnected");
-    }
+    // _dnsServer->processNextRequest();
+	_httpServer->handleClient();
 }
 
 void SimpleWiFiManager::httpTrField(String *s, MyData data) {
@@ -507,3 +360,5 @@ bool SimpleWiFiManager::updateSettings(bool enableRouter, String ssid, String pa
 	updateUDP(enableUDP, udpRxPort, udpTxPort, false);
 	return saveConfig();							
 }
+
+

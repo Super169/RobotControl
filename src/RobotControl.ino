@@ -107,20 +107,26 @@ void setup() {
 	char buf[20];
 
 	// connect router setting is defined inside Simple WiFi Manager
+	SWFM.setWiFiServer(port);
 	SWFM.setDebug(&Serial1);
 	SWFM.begin();
+	
 	if (SWFM.mode() == SWFM_MODE_ROUTER) {
 		NetworkMode = NETWORK_ROUTER;
+		/*
 		if (SWFM.enableUDP()) {
 			udpClient.begin(SWFM.udpRxPort());
 		}
+		*/
 	} else {
 		NetworkMode = NETWORK_AP;
 	}
+
 	isConnected = true;
 	ip = SWFM.ip();
 
 	localSegment = "";
+	localSegmentStart = 0;
 	if (ip.length()) {
 		unsigned int idx = 0;
 		unsigned int dotCnt = 0;
@@ -129,10 +135,12 @@ void setup() {
 			if (ip.charAt(idx) == '.') {
 				if (++dotCnt == 2) {
 					localSegment = ip.substring(0,idx+1);
+					localSegmentStart = localSegment.c_str()[0];
 					break;
 				}
 			}
 		}
+
 	}
 	DEBUG.printf("Local segment: %s\n", localSegment.c_str());
 
@@ -149,17 +157,11 @@ void setup() {
 	DEBUG.println(ip);
 	DEBUG.printf("Port: %d\n\n", port);
 	//	RobotMaintenanceMode();
-	server.begin();
+	// server.begin();
 
 	DEBUG.println("Starting robot servo: ");
 	
 
-	robotPort.begin(busConfig.baud);
-    rs.setEnableTxCalback(enableTxCallback);
-    rs.begin(&robotPort, &DEBUG);
-    rs.init(config.maxServo(),config.maxCommandRetry());
-    rs.detectServo();
-	rs.lock();
 
 #ifdef _UBT_
 	// servo.init(config.maxServo(), config.maxCommandWaitMs(), config.maxCommandRetry(), config.maxDetectRetry());
@@ -177,6 +179,16 @@ void setup() {
 	servo.lockAll();
 	// TODO: change to V2 when ready
 	// V1_UBT_ReadSPIFFS(0);
+	
+#else
+
+	robotPort.begin(busConfig.baud);
+    rs.setEnableTxCalback(enableTxCallback);
+    rs.begin(&robotPort, &DEBUG);
+    rs.init(config.maxServo(),config.maxCommandRetry());
+    rs.detectServo();
+	rs.lock();
+
 #endif
 
 	DEBUG.printf("%08ld Control board ready\n\n", millis());
@@ -273,8 +285,35 @@ unsigned long revIpTime = 0;
 void loop() {
 
 
-	SWFM.httpServerHandler();
 
+	SWFM.httpServerHandler();
+	uint8_t cnt = SWFM.checkData();
+	if (cnt) {
+		// Check for UDP IP request: 
+		// 1) data.length >= localSegmentLength + 3 (for case of ?.?) & <= localSegmentLength + 7 (for case of ???.???)
+		// 1) first byte match
+		// 2) first n byte match segment
+		if ((cnt >= localSegment.length() + 3) &&  (cnt <= localSegment.length() + 7) && (SWFM.peek() == localSegmentStart)) {
+			char buffer[cnt+1];
+			SWFM.peek((byte *) buffer, cnt);
+			buffer[cnt] = 0;
+			if (String(buffer).startsWith(localSegment)) {
+				DEBUG.printf("ReceivedIP: %s\n", buffer);
+				udpClient.beginPacket(buffer, SWFM.udpTxPort());
+				udpClient.println(SWFM.apName().c_str());
+				udpClient.print(WiFi.localIP().toString());
+				udpClient.endPacket();
+				SWFM.resetBuffer();
+			}
+		}
+
+		while (SWFM.available()) {
+			cmdBuffer.write(SWFM.read());
+		}
+	}
+
+
+/*
 	client = server.available();
       
 	if( isConnected && !client.connected() ) {
@@ -330,7 +369,7 @@ void loop() {
 		// DEBUG.println("No Client connected, or connection lost");
 		noPrompt = millis() + 1000;
 	}
-	
+*/	
 	// Execute even no wifi connection, for USB & Bluetooth connection
 	// Don'e put it into else case, there has no harm executing more than once.
 	// Just for safety if client exists but not connected, RobotCommander can still be executed.

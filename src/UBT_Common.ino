@@ -19,7 +19,7 @@ void UBT_GetServoAngle(byte *result) {
 			result[pos] = 0xFF;
 			result[pos+1] = 0;
 		}
-#endif		
+#else	
 		if (rs.exists(id)) {
 			if (rs.isLocked(id)) {
 				result[pos] = rs.lastAngle(id);
@@ -32,6 +32,7 @@ void UBT_GetServoAngle(byte *result) {
 			result[pos] = 0xFF;
 			result[pos+1] = 0;
 		}
+#endif		
 
 
 	}

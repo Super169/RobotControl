@@ -40,10 +40,15 @@ bool UBTSV_Command() {
 
 	if (!enable_UBTSV) return true;
 
-	int cnt =  (servo.execute(cmd, result));
-	if (cnt > 0) {
-		if(client.connected())client.write(result,cnt);
-		else Serial.write(result, cnt);
+	int size =  (servo.execute(cmd, result));
+	if (size > 0) {
+		// if(client.connected())client.write(result,cnt);
+		// else Serial.write(result, cnt);
+		if (SWFM.wifiClientConnected()) {
+			SWFM.write(result, size);
+		} else {
+			Serial.write(result, size);
+		}
 	}
 
 	if (debug) DEBUG.print(F("UBT Servo Command executed\n"));

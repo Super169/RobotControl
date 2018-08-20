@@ -315,11 +315,12 @@ void V2_SendResult(byte *result) {
 	result[1] = 0x9A;
 	result[len+2] = CheckVarSum(result);
 	result[len+3] = 0xED;
-	if(client.connected()){
-		client.write(result, size);
+
+	if (SWFM.wifiClientConnected()) {
+		SWFM.write(result, size);
 	} else {
 		Serial.write(result, size);
-	}
+	}	
 }
 
 void V2_SendSingleByteResult(byte *cmd, byte data) {

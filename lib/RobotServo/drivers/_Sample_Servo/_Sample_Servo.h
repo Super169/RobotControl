@@ -15,6 +15,8 @@ class SAMPLE_Servo : public baseServo
 
         // Methos MUST be implemented
         //
+        byte servoType() override { return BS_TYPE_UNKNOWN; }
+
         bool reset() override;
         uint32_t getVersion(byte id) override;
 
