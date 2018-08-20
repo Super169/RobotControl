@@ -193,6 +193,10 @@ bool V2_Command() {
 			V2_SetWiFiConfig(cmd);
 			break;
 
+		case V2_CMD_PARTIAL_CONFIG:
+			V2_SetPartialWiFiConfig(cmd);
+			break;
+
 		case V2_CMD_SERVOANGLE:
 			V2_GetServoAngle(cmd);
 			break;
@@ -514,6 +518,33 @@ void V2_SetWiFiConfig(byte *cmd) {
 		result = RESULT::ERR::PARM_SIZE;
 	} else if (!SWFM.setConfig((uint8_t *) cmd)) {
 		result = RESULT::ERR::UPDATE_CONDIG;
+	} 
+	V2_SendSingleByteResult(cmd, result);
+	return;
+}
+
+void V2_SetPartialWiFiConfig(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_SetPartialWiFiConfig]"));
+	uint8_t result = RESULT::SUCCESS;
+
+	// data to be overwrite should has len from 1 to SWFM_CONFIG_FILE_SIZE
+	// added 3 extra bytes of {len} {cmd} {offset}, command's data length should be 4 to SWFM_CONFIG_FILE_SIZE + 3
+	// also, {offset} + {overwrite len} should <= SWFM_CONFIG_FILE_SIZE
+	if ((cmd[2] < 4) || (cmd[2] > SWFM_CONFIG_FILE_SIZE + 3)) {
+		result = RESULT::ERR::PARM_SIZE;
+	} else if (cmd[2] + cmd[4] - 3 > SWFM_CONFIG_FILE_SIZE) {
+		result = RESULT::ERR::PARM_SIZE;
+	} else {
+		byte buffer[SWFM_CONFIG_FILE_SIZE];
+		memset(buffer, 0, 60);
+		memcpy(buffer, SWFM.getConfig(), SWFM_CONFIG_FILE_SIZE);
+		uint8_t *target = buffer + cmd[4];
+		uint8_t *source = cmd + 5;
+		size_t size = cmd[2] - 3;
+		memcpy(target, source, size);
+		if (!SWFM.setConfig((uint8_t *) buffer)) {
+			result = RESULT::ERR::UPDATE_CONDIG;
+		}
 	} 
 	V2_SendSingleByteResult(cmd, result);
 	return;
