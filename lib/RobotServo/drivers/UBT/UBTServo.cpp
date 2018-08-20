@@ -109,8 +109,8 @@ bool UBTServo::checkReturn() {
 }
 
 bool UBTServo::reset() {
-    _dbg.printf("reset not yet implemented\n");
-    return 0;
+    _dbg.msg("UBTServo: Reset not yet implemented.");
+    return false;
 }
 
 uint32_t UBTServo::getVersion(byte id) {
@@ -230,4 +230,41 @@ bool UBTServo::unlock(byte id) {
 	// since the system is default to unlock, so not checking and go ahead to unlock
 	getPos(id, false);
 	return (!_isLocked[id]);
+}
+
+uint16_t UBTServo::getAdjAngle(byte id) {
+	if (!validId(id)) return 0x7F7F;
+	int tryCnt = 0;
+	while (tryCnt++ <= _maxRetry) {
+		resetCommandBuffer();
+		_buf[2] = id;
+		_buf[3] = 0xD4;
+		sendCommand();
+		if (_retCnt == 10) break;
+	}
+	if (_retCnt != 10) {
+		// What can I do if it has not return the position
+		return 0x7F7F;
+	}
+	uint16_t _adjAngle = _retBuf[6] * 256 + _retBuf[7];
+	return _adjAngle;
+}
+
+uint16 UBTServo::setAdjAngle(byte id, uint16 adjValue) {
+	if (!validId(id)) return 0x7F7F;
+	int tryCnt = 0;
+	while (tryCnt++ < _maxRetry) {
+		resetCommandBuffer();
+		_buf[2] = id;
+		_buf[3] = 0xD2;
+		_buf[6] = adjValue / 256;
+		_buf[7] = adjValue % 256;
+		sendCommand();
+		if (_retCnt == 10) break;
+	}
+	if (_retCnt != 10) {
+		// What can I do if it has not return the position
+		return 0x7F7F;
+	}
+	return getAdjAngle(id);
 }

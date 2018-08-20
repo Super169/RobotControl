@@ -24,6 +24,10 @@ bool baseServo::begin(Stream *busPort, Stream *debugPort) {
 	return true;
 }
 
+bool baseServo::end() {
+	return true;
+}
+
 bool baseServo::init(byte maxId, byte maxRetry) {
 	if (!_arrayReady) {
 		_maxId = maxId;

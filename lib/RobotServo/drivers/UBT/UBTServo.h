@@ -40,6 +40,8 @@ class UBTServo : public baseServo
         bool lock(byte id) override;
         bool unlock(byte id) override;
 
+        uint16_t getAdjAngle(byte id) override;
+        uint16_t setAdjAngle(byte id, uint16 adjValue) override;
 
         // Methods can be overrided (optional)
         //
@@ -60,6 +62,9 @@ class UBTServo : public baseServo
 
         // uint16_t lastPos(byte id)  override;
         // uint16_t lastAngle(byte id) override;
+
+        // uint16_t getAngle(byte id) override;
+        // uint16_t getAngle(byte id, bool lockAfterGet) override;
 
 
     private:

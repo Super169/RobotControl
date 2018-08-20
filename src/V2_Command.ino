@@ -339,9 +339,15 @@ void V2_SendSingleByteResult(byte *cmd, byte data) {
 
 void V2_Reset(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_Reset]"));
+#ifdef _UNT_	
 	servo.end();
 	delay(200);
 	servo.begin();
+#else
+	robotPort.end();
+	delay(200);
+	robotPort.begin(busConfig.baud);
+#endif	
 	byte showAngle = 0;
 	if (cmd[2] > 2) showAngle = cmd[4];
 	if ((showAngle) && (showAngle != '0')) {
@@ -578,12 +584,22 @@ void V2_GetOneAngle(byte *cmd) {
 	if (cmd[2] == 3) {
 		byte id = cmd[4];
 		result [4] = id;
+#ifdef _UBT_		
 		if ((id) && (id <= config.maxServo()) && (servo.exists(id))) {
 				if (servo.isLocked(id)) {
 					result[5] = servo.lastAngle(id);
+#else
+		if ((id) && (id <= config.maxServo()) && (rs.exists(id))) {
+				if (rs.isLocked(id)) {
+					result[5] = rs.lastAngle(id);
+#endif					
 					result[6] = 1;
 				} else {
+#ifdef _UBT_					
 					result[5] = servo.getPos(id);
+#else
+					result[5] = rs.getAngle(id);
+#endif					
 					result[6] = 0;
 				}
 		} else {
@@ -629,8 +645,13 @@ void V2_GetOneAdjAngle(byte *cmd) {
 		byte id = cmd[4];
 		result [4] = id;
 		if (cmd[2] > 2) id = cmd[4];
+#ifdef _UBT_
 		if ((id) && (id <= config.maxServo()) && (servo.exists(id))) {
 			uint16_t  adjAngle = servo.getAdjAngle(id);
+#else
+		if ((id) && (id <= config.maxServo()) && (rs.exists(id))) {
+			uint16_t  adjAngle = rs.getAdjAngle(id);
+#endif
 			result[5] = adjAngle / 256;
 			result[6] = adjAngle % 256;
 		} else {
@@ -652,7 +673,11 @@ void V2_SetAdjAngle(byte *cmd) {
 		byte id = cmd[4];
 		uint16_t adjSet = (cmd[5] << 8) | cmd[6];
 		DEBUG.printf("Set angle: %d\n", adjSet);
+#ifdef _UBT_
 		uint16_t adjResult = servo.setAdjAngle(id, adjSet);
+#else
+		uint16_t adjResult = rs.setAdjAngle(id, adjSet);
+#endif		
 		DEBUG.printf("Result angle: %d\n", adjResult);
 		V2_SendSingleByteResult(cmd, (adjSet == adjResult ? 0 : 2));
 	} else {
@@ -675,6 +700,7 @@ void V2_LockServo(byte *cmd, bool goLock) {
 		// All servo
 		for (int id = 1; id <= config.maxServo(); id++)  {
 			byte pos = 5 + 2 * cnt;
+#ifdef _UBT_			
 			if (servo.exists(id)) {
 				result[pos] = id;
 				if (servo.isLocked(id) && goLock) {
@@ -685,6 +711,18 @@ void V2_LockServo(byte *cmd, bool goLock) {
 				}
 				cnt++;
 			}
+#else
+			if (rs.exists(id)) {
+				result[pos] = id;
+				if (rs.isLocked(id) && goLock) {
+					// prevent lock servo if already locked, and request to lock
+					result[pos + 1] = rs.lastAngle(id);
+				} else  {
+					result[pos + 1] = rs.getAngle(id, goLock);	
+				}
+				cnt++;
+			}
+#endif			
 		}
 		result[4] = cnt;
 		if (debug) DEBUG.printf("All servo: %d\n",cnt);
@@ -706,6 +744,7 @@ void V2_LockServo(byte *cmd, bool goLock) {
 			}
 			if (id) {
 				byte pos = 5 + 2 * cnt;
+#ifdef _UBT_				
 				if (servo.exists(id)) {
 					result[pos] = id;
 					if (servo.isLocked(id) && goLock) {
@@ -716,6 +755,18 @@ void V2_LockServo(byte *cmd, bool goLock) {
 					}
 					cnt++;
 				}
+#else
+				if (rs.exists(id)) {
+					result[pos] = id;
+					if (rs.isLocked(id) && goLock) {
+						// prevent lock servo if already locked, and request to lock
+						result[pos + 1] = rs.lastAngle(id);
+					} else  {
+						result[pos + 1] = rs.getAngle(id, goLock);	
+					}
+					cnt++;
+				}
+#endif				
 			}
 		}
 		result[4] = cnt;
@@ -741,7 +792,11 @@ void V2_ServoMove(byte *cmd) {
 		moveAngle = cmd[5];
 		moveTime = cmd[6];
 		for (byte id = 1; id <= config.maxServo(); id++ ) {
+#ifdef _UBT_
 			if (servo.exists(id)) {
+#else
+			if (rs.exists(id)) {
+#endif
 				pos = 2 * (id - 1);
 				moveParm[pos] = moveAngle;
 				moveParm[pos+1] = moveTime;
@@ -752,7 +807,11 @@ void V2_ServoMove(byte *cmd) {
 		for (int i = 0; i < cnt; i++) {
 			pos = 4 + 3 * i;
 			id = cmd[pos];
+#ifdef _UBT_			
 			if ((id != 0) && servo.exists(id) && (moveParm[2*(id-1)] == 0xFF)) {
+#else
+			if ((id != 0) && rs.exists(id) && (moveParm[2*(id-1)] == 0xFF)) {
+#endif				
 				moveAngle = cmd[pos+1];
 				moveTime = cmd[pos+2];
 				pos = 2 * (id - 1);
@@ -786,7 +845,11 @@ void V2_ServoMove(byte *cmd) {
 			result[resultPos+1] = moveAngle;
 			result[resultPos+2] = moveTime;
 			if (debug) DEBUG.printf("Move servo %02d to %d [%02X], time: %d [%02X]\n", id, moveAngle, moveAngle, moveTime, moveTime);
+#ifdef _UBT_
 			servo.move(id, moveAngle, moveTime);
+#else
+			rs.goAngle(id, moveAngle, moveTime);
+#endif			
 			moveCnt++;
 		}
 	}
@@ -808,21 +871,36 @@ void V2_SetLED(byte *cmd) {
 	if ((cmd[2] == 4) && (cmd[4] == 0)) {
 		mode = (cmd[5] ? 1 : 0);
 		for (int id = 1; id <= config.maxServo(); id++) {
+#ifdef _UBT_			
 			if (servo.exists(id)) {
 				if (debug) DEBUG.printf("Turn servo %02d LED %s\n", id, (mode ? "OFF" : "ON"));
 				servo.setLED(id, mode);
 			} 
+#else			
+			if (rs.exists(id)) {
+				if (debug) DEBUG.printf("Turn servo %02d LED %s\n", id, (mode ? "OFF" : "ON"));
+				rs.setLED(id, (!mode));
+			} 
+#endif			
 		}
 	} else {
 		int cnt = (cmd[2] - 2) / 2;
 		for (int i = 0; i < cnt; i++) {
 			int pos = 4 + 2 * i;
 			id = cmd[pos];
+#ifdef _UBT_			
 			if (servo.exists(id)) {
 				mode = (cmd[pos+1] ? 1 : 0);
 				if (debug) DEBUG.printf("Turn servo %02d LED %s\n", id, (mode ? "OFF" : "ON"));
 				servo.setLED(id, mode);
 			}
+#else
+			if (rs.exists(id)) {
+				mode = (cmd[pos+1] ? 1 : 0);
+				if (debug) DEBUG.printf("Turn servo %02d LED %s\n", id, (mode ? "OFF" : "ON"));
+				rs.setLED(id, (!mode));
+			}
+#endif			
 		}
 	}
 	V2_SendSingleByteResult(cmd, 0);

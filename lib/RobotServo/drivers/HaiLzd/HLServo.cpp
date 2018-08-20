@@ -146,7 +146,7 @@ bool HLServo::getRetNum(int16_t *data, byte start, byte len, byte minLen) {
 
 bool HLServo::reset() {
     _dbg.msg("HLServo: Reset not yet implemented.");
-    return 0;
+    return false;
 }
 
 // #{id}PVER\r\n

@@ -162,8 +162,8 @@ void setup() {
 	DEBUG.println("Starting robot servo: ");
 	
 
+	// Initialization for UBTech library; should be remove later
 
-#ifdef _UBT_
 	// servo.init(config.maxServo(), config.maxCommandWaitMs(), config.maxCommandRetry(), config.maxDetectRetry());
 	servo.init(config.maxServo(), 2,10,10);
 	// servo.init(config.maxServo(), 0);	// No retry for fast testing without all servo
@@ -180,7 +180,8 @@ void setup() {
 	// TODO: change to V2 when ready
 	// V1_UBT_ReadSPIFFS(0);
 	
-#else
+	
+	// Initialization for RobotServo
 
 	robotPort.begin(busConfig.baud);
     rs.setEnableTxCalback(enableTxCallback);
@@ -189,7 +190,6 @@ void setup() {
     rs.detectServo();
 	rs.lock();
 
-#endif
 
 	DEBUG.printf("%08ld Control board ready\n\n", millis());
 	SetHeadLed(true);

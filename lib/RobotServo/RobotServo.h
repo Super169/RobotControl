@@ -44,6 +44,9 @@ class RobotServo {
         bool move(byte cnt, byte *data) { return _servo.moveX(cnt, data); }
         bool goAngle(byte id, int16_t angle, uint16_t time) { return _servo.goAngle(id, angle, time); }
         
+        uint16_t getAdjAngle(byte id) { return _servo.getAdjAngle(id); }
+		uint16_t setAdjAngle(byte id, uint16 adjValue) {return _servo.setAdjAngle(id, adjValue); }
+
         uint16_t lastPos(byte id) { return _servo.lastPos(id); }
         uint16_t lastAngle(byte id) { return _servo.lastAngle(id); }
         
@@ -51,7 +54,9 @@ class RobotServo {
         bool setLED(bool mode) { return _servo.setLED(mode); }
 
         uint16_t getPos(byte id) { return _servo.getPos(id); }
+        uint16_t getPos(byte id, bool lockAfterGet) { return _servo.getPos(id, lockAfterGet); }
         uint16_t getAngle(byte id) { return _servo.getAngle(id); }
+        uint16_t getAngle(byte id, bool lockAfterGet) { return _servo.getAngle(id, lockAfterGet); }
 
         bool isLocked(byte id) { return _servo.isLocked(id); }
         bool lock(byte id) { return _servo.lock(id); }

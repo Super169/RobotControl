@@ -53,7 +53,6 @@ class baseServo {
 
         bool init(byte maxId, byte maxRetry);
         bool setBaud(uint32_t baud);
-        bool begin();
         bool end();
         void enableDebug(bool value);
 
@@ -87,6 +86,7 @@ class baseServo {
         virtual uint16_t lastAngle(byte id) { return (validId(id) ? pos2angle(_lastPos[id]) : _INVALID_POS); }
 
         virtual uint16_t getAngle(byte id) { return (validId(id) ? pos2angle(getPos(id)) : _INVALID_POS); }
+        virtual uint16_t getAngle(byte id, bool lockAfterGet) { return (validId(id) ? pos2angle(getPos(id, lockAfterGet)) : _INVALID_POS); }
 
         // Methods MUST be overrided
         virtual byte servoType() = 0;
@@ -107,6 +107,9 @@ class baseServo {
         virtual bool lock(byte id) = 0;
         virtual bool unlock(byte id) = 0;
 
+        virtual uint16_t getAdjAngle(byte id) = 0;
+        virtual uint16_t setAdjAngle(byte id, uint16 adjValue) = 0;
+        
     private:
 
 };
