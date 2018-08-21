@@ -161,6 +161,7 @@ void setup() {
 
 	DEBUG.println("Starting robot servo: ");
 	
+#ifdef _KEEP_UBT_
 
 	// Initialization for UBTech library; should be remove later
 
@@ -179,7 +180,8 @@ void setup() {
 	servo.lockAll();
 	// TODO: change to V2 when ready
 	// V1_UBT_ReadSPIFFS(0);
-	
+
+#endif	
 	
 	// Initialization for RobotServo
 
