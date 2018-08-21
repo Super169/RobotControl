@@ -2,7 +2,11 @@
 
 void SetDebug(bool mode) {
 	debug = mode;
+#ifdef _UBT_	
 	servo.setDebug(mode);
+#else
+	rs.enableDebug(mode);
+#endif	
 	mp3.setDebug(mode);
 	config.setDebug(mode);
 }

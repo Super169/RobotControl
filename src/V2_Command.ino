@@ -339,7 +339,7 @@ void V2_SendSingleByteResult(byte *cmd, byte data) {
 
 void V2_Reset(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_Reset]"));
-#ifdef _UNT_	
+#ifdef _UBT_	
 	servo.end();
 	delay(200);
 	servo.begin();

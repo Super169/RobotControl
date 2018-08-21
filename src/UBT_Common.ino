@@ -48,10 +48,11 @@ void UBT_GetServoAngle(byte *result) {
 void UBT_GetServoAdjAngle(byte *result) {
 	for (int id = 1; id <= config.maxServo(); id++) {
 		int pos =2 * (id - 1);
-		if (servo.exists(id)) {
 #ifdef _UBT_			
+		if (servo.exists(id)) {
 			uint16  adjAngle = servo.getAdjAngle(id);
 #else
+		if (rs.exists(id)) {
 			uint16  adjAngle = rs.getAdjAngle(id);
 #endif			
 			result[pos] = adjAngle / 256;
