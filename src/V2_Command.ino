@@ -197,6 +197,10 @@ bool V2_Command() {
 			V2_SetPartialWiFiConfig(cmd);
 			break;
 
+		case V2_CMD_SERVOTYPE:
+			V2_GetServoType(cmd);
+			break;
+
 		case V2_CMD_SERVOANGLE:
 			V2_GetServoAngle(cmd);
 			break;
@@ -215,6 +219,10 @@ bool V2_Command() {
 
 		case V2_CMD_SETADJANGLE:
 			V2_SetAdjAngle(cmd);
+			break;
+
+		case V2_CMD_SETPOSMODE:
+			V2_SetPosMode(cmd);
 			break;
 
 		case V2_CMD_LOCKSERVO:
@@ -557,7 +565,13 @@ void V2_SetPartialWiFiConfig(byte *cmd) {
 }
 
 
-#pragma region V2_CMD_SERVOANGLE / V2_CMD_ONEANGLE
+#pragma region V2_CMD_SERVOTYPE / V2_CMD_SERVOANGLE / V2_CMD_ONEANGLE
+
+void V2_GetServoType(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_GetServoType]"));
+	byte servoType = rs.servoType();
+	V2_SendSingleByteResult(cmd, servoType);
+}
 
 void V2_GetServoAngle(byte *cmd) {
 	
@@ -683,6 +697,20 @@ void V2_SetAdjAngle(byte *cmd) {
 	} else {
 		V2_SendSingleByteResult(cmd, 1);
 	}
+}
+
+void V2_SetPosMode(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_SetPosMode]"));
+	byte id = cmd[4];
+	byte result = 0;
+	if (cmd[2] == 4) {
+		byte id = cmd[4];
+		byte mode = cmd[5];
+#ifndef _UBT_		
+		result = rs.setPosMode(id, mode);
+#endif		
+	}
+	V2_SendSingleByteResult(cmd, result);
 }
 
 

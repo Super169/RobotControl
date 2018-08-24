@@ -109,7 +109,8 @@ class baseServo {
 
         virtual uint16_t getAdjAngle(byte id) = 0;
         virtual uint16_t setAdjAngle(byte id, uint16 adjValue) = 0;
-        
+        virtual uint16_t setPosMode(byte id, byte mode) = 0;
+
     private:
 
 };

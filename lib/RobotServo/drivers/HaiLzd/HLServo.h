@@ -36,6 +36,7 @@ class HLServo : public baseServo
 
         uint16_t getAdjAngle(byte id) override { return 0; }
         uint16_t setAdjAngle(byte id, uint16 adjValue) override { return 0; }
+        uint16_t setPosMode(byte id, byte mode) override;
 
         // Methods can be overrided (optional)
         //

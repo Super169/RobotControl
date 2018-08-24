@@ -295,3 +295,29 @@ bool HLServo::unlockAll() {
     return true;
 
 } 
+
+
+uint16_t HLServo::setPosMode(byte id, byte mode)  {
+    if (!validId(id)) return 0;
+    if ((mode < 1) || (mode > 2)) return 0;
+    String code;
+    switch (mode) {
+        case 1:
+            // center
+            code = "CK";
+            break;
+        case 2:
+            // min
+            code = "MI";
+            break;
+        case 3:
+            // max
+            code = "MX";
+            break;
+    }
+    _buffer = "#" + String(id) + "PS" + code;
+    
+    if (!sendUntilOK()) return 0;
+
+    return mode;
+}

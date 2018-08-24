@@ -30,11 +30,13 @@ bool V2_UseGlobalTime = true;
 #define V2_CMD_SET_WIFI_CONFIG  0x0E
 #define V2_CMD_PARTIAL_CONFIG   0x0F     
 
+#define V2_CMD_SERVOTYPE        0x10
 #define V2_CMD_SERVOANGLE		0x11
 #define V2_CMD_ONEANGLE			0x12
 #define V2_CMD_SERVOADJANGLE	0x13
 #define V2_CMD_ONEADJANGLE		0x14
 #define V2_CMD_SETADJANGLE      0x15
+#define V2_CMD_SETPOSMODE       0x16
 
 #define V2_CMD_LOCKSERVO		0x21
 #define V2_CMD_UNLOCKSERVO		0x22

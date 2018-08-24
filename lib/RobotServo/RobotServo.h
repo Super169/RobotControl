@@ -47,6 +47,8 @@ class RobotServo {
         uint16_t getAdjAngle(byte id) { return _servo.getAdjAngle(id); }
 		uint16_t setAdjAngle(byte id, uint16 adjValue) {return _servo.setAdjAngle(id, adjValue); }
 
+        uint16_t setPosMode(byte id, byte mode) { return _servo.setPosMode(id, mode); }
+
         uint16_t lastPos(byte id) { return _servo.lastPos(id); }
         uint16_t lastAngle(byte id) { return _servo.lastAngle(id); }
         
