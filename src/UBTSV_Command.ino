@@ -40,12 +40,8 @@ bool UBTSV_Command() {
 
 	if (!enable_UBTSV) return true;
 
-#ifdef _UBT_
-	int size =  (servo.execute(cmd, result));
-#else
 	// TODO: how to make a generic command???
 	int size = 0;
-#endif	
 	if (size > 0) {
 		// if(client.connected())client.write(result,cnt);
 		// else Serial.write(result, cnt);

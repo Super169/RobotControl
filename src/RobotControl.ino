@@ -161,28 +161,6 @@ void setup() {
 
 	DEBUG.println("Starting robot servo: ");
 	
-#ifdef _KEEP_UBT_
-
-	// Initialization for UBTech library; should be remove later
-
-	// servo.init(config.maxServo(), config.maxCommandWaitMs(), config.maxCommandRetry(), config.maxDetectRetry());
-	servo.init(config.maxServo(), 2,10,10);
-	// servo.init(config.maxServo(), 0);	// No retry for fast testing without all servo
-
-	// clean up software serial
-	servo.begin();
-	delay(100);
-	servo.end();
-	delay(100);
-	//
-
-	servo.begin();
-	servo.lockAll();
-	// TODO: change to V2 when ready
-	// V1_UBT_ReadSPIFFS(0);
-
-#endif	
-	
 	// Initialization for RobotServo
 
 	robotPort.begin(busConfig.baud);
@@ -226,7 +204,7 @@ void setup() {
 		MpuInit();
 	}
 
-	// servo.setLED(0, 1);  ??????
+	rs.setLED(false);
 
 	// Load default action
 	for (byte seq = 0; seq < CD_MAX_COMBO; seq++) comboTable[seq].ReadSPIFFS(seq);

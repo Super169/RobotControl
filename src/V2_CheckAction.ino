@@ -100,29 +100,6 @@ void V2_CheckAction() {
 	// Move servo only if servo time > 0
 	if ((servoTime > 0) || (ledChange)) {
 		for (int id = 1; id <= config.maxServo(); id++) {
-#ifdef _UBT_			
-			if (servo.exists(id)) {
-				if (ledChange) {
-					int h = (id - 1) / 4;
-					int l = 2 * ( 3 - ((id -1) % 4));
-					byte led = (pose[AD_POFFSET_LED + h] >> l) & 0b11;
-					if ((led == 0b10) || (led == 0b11)) {
-						byte newMode = (led & 1);
-						if (newMode != servo.getLedMode(id)) {
-							servo.setLED(id, newMode);
-						}
-					}
-				}
-				if (servoTime > 0) {
-					byte angle = pose[AD_POFFSET_ANGLE + id - 1];
-					// Check for dummy action to reduce commands
-					if ((angle <= 0xF0) && ((V2_NextPose) || (servo.lastAngle(id) != angle))) {
-						servo.move(id, angle, servoTime);
-						delay(1);
-					}
-				}
-			}
-#else
 			if (rs.exists(id)) {
 				if (ledChange) {
 					int h = (id - 1) / 4;
@@ -142,7 +119,6 @@ void V2_CheckAction() {
 					}
 				}
 			}
-#endif			
 		}
 	}
 

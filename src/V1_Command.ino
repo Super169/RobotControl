@@ -137,16 +137,10 @@ void V1_PlayAction() {
 
 void V1_ResetConnection() {
 	if (debug) DEBUG.println(F("[V1_ResetConnection]"));
-#ifdef _UBT_	
-	servo.end();
-	delay(100);
-	servo.begin();
-#else
 	// bus control is not under RobotServo, should be done separately
 	robotPort.end();
 	delay(100);
 	robotPort.begin(busConfig.baud);
-#endif
 	delay(100);
 
 	byte showAngle = 0;

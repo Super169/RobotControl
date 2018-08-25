@@ -1,19 +1,12 @@
 #ifndef _robot_h_
 #define _robot_h_
 
-// #define _KEEP_UBT_
-// #define _UBT_
-
 #include "ESP8266WiFi.h"
 #include "WiFiClient.h"
 #include <WiFiUDP.h>
 
 #include <Wire.h>
 #include "OLED12864.h"
-
-#ifdef _KEEP_UBT_
-#include "UBTech.h"
-#endif
 
 #include "FS.h"
 #include "Buffer.h"
@@ -150,12 +143,6 @@ struct {
 
 SoftwareSerial robotPort(busConfig.rx_pin, busConfig.tx_pin, busConfig.inverse_logic, busConfig.buffer_size);
 RobotServo rs;
-
-#ifdef _KEEP_UBT_
-
-UBTech servo(&robotPort, &DEBUG);  // Debug on Serial1
-
-#endif
 
 // SoftwareSerial ubt_ss(12, 12, false, 256);
 // UBTech servo(&ubt_ss, &DEBUG);  // Debug on Serial1
