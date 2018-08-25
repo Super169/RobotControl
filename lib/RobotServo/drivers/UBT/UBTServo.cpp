@@ -221,7 +221,7 @@ int16_t UBTServo::getPos(byte id, bool lockAfterGet) {
 bool UBTServo::lock(byte id) {
 	if (!validId(id)) return false;
 	if (isLocked(id)) return true;
-	// uint16_t pos = getPos(id, true);
+	uint16_t pos = getPos(id, true);
 	return (isLocked(id));
 } 
 

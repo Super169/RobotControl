@@ -5,7 +5,11 @@
 //
 #include "baseServo.h"
 #define HL_RETURN_BUFFER_SIZE 	64  
-#define HL_COMMAND_WAIT_TIME	5   // 3ms is more than enough
+#define HL_COMMAND_WAIT_TIME    5       // 3ms is more than enough
+
+#define HL_SERVO_MODE           1       // 270 degree
+#define HL_POS_MAX              2278    // This is a limitation due to old version action file, if servo pos > POS_MAX, move it to POS_MAX
+#define HL_ANGLE_MAX            240     // This is a limitation due to old version action file, if servo angle > ANGLE_MAX, move it to ANGLE_MAX
 
 class HLServo : public baseServo
 {
@@ -21,7 +25,7 @@ class HLServo : public baseServo
         uint32_t getVersion(byte id) override;
 
         bool resetServo() override { return false; }
-        bool resetServo(byte id) override { return false; }
+        bool resetServo(byte id) override;
         bool move(byte id, int16_t pos, uint16_t time) override;
 
 
@@ -36,11 +40,12 @@ class HLServo : public baseServo
 
         uint16_t getAdjAngle(byte id) override { return 0; }
         uint16_t setAdjAngle(byte id, uint16 adjValue) override { return 0; }
-        uint16_t setPosMode(byte id, byte mode) override;
+        byte servoCommand(byte *cmd) override;
 
         // Methods can be overrided (optional)
         //
         void initBus() override;
+        bool initServo(byte id)  override;
         void showInfo() override;
 
         // bool validId(byte id);
@@ -67,11 +72,11 @@ class HLServo : public baseServo
         byte _retCnt = 0;
         
         inline bool sendCommand() { return sendCommand(true); }
-        bool sendCommand(bool expectReturn);
-        bool sendUntilOK();
+        bool sendCommand(bool expectReturn, unsigned long waitMs = HL_COMMAND_WAIT_TIME);
+        bool sendUntilOK(unsigned long waitMs = HL_COMMAND_WAIT_TIME);
 
         void showCommand();
-        bool checkReturn();
+        bool checkReturn(unsigned long waitMs = HL_COMMAND_WAIT_TIME);
         bool isReturnOK();
         void resetReturnBuffer();
 

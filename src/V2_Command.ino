@@ -221,8 +221,8 @@ bool V2_Command() {
 			V2_SetAdjAngle(cmd);
 			break;
 
-		case V2_CMD_SETPOSMODE:
-			V2_SetPosMode(cmd);
+		case V2_CMD_SERVOCMD:
+			V2_ServoCommand(cmd);
 			break;
 
 		case V2_CMD_LOCKSERVO:
@@ -699,17 +699,12 @@ void V2_SetAdjAngle(byte *cmd) {
 	}
 }
 
-void V2_SetPosMode(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_SetPosMode]"));
-	byte id = cmd[4];
+void V2_ServoCommand(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_ServoCommand]"));
 	byte result = 0;
-	if (cmd[2] == 4) {
-		byte id = cmd[4];
-		byte mode = cmd[5];
 #ifndef _UBT_		
-		result = rs.setPosMode(id, mode);
+		result = rs.servoCommand(cmd);
 #endif		
-	}
 	V2_SendSingleByteResult(cmd, result);
 }
 

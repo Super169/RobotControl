@@ -42,7 +42,7 @@ class UBTServo : public baseServo
 
         uint16_t getAdjAngle(byte id) override;
         uint16_t setAdjAngle(byte id, uint16 adjValue) override;
-        uint16_t setPosMode(byte id, byte mode) override { return 0; }
+        byte servoCommand(byte *cmd) override { return 0; }
 
         // Methods can be overrided (optional)
         //

@@ -93,6 +93,7 @@ bool baseServo::detectServo() {
 		if (getVersion(id)) {
 			_servo[id] = true;
 			_servoCnt++;
+			initServo(id);
 			getPos(id, true);
 		}
 	}

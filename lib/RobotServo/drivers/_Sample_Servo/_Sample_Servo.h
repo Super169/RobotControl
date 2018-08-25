@@ -36,7 +36,7 @@ class SAMPLE_Servo : public baseServo
 
         uint16_t getAdjAngle(byte id) override;
         uint16_t setAdjAngle(byte id, uint16 adjValue) override;
-        uint16_t setPosMode(byte id, byte mode) override;
+        byte servoCommand(byte *cmd) override;
 
         // Methods can be overrided (optional)
         //

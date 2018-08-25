@@ -4,7 +4,7 @@ HLServo::HLServo() {
 	_MIN_POS = 500;
 	_MAX_POS = 2500;
     _MIN_ANGLE = 0;
-    _MAX_ANGLE = 180;
+    _MAX_ANGLE = 270;
 	_INVALID_POS = -9999;
 	_MULTI_SERVO_COMMAND = true;
 }
@@ -23,6 +23,20 @@ void HLServo::initBus() {
 	checkReturn();
 	resetReturnBuffer();
 	return;
+}
+
+bool HLServo::initServo(byte id) {
+    if (!validId(id)) return false;
+
+    _buffer = "#" + String(id) + "PCSM";
+    // This operation take longer than 5ms, and will not be executed inside action, so give it longer time to execute
+    if (!sendUntilOK(500)) return false;
+
+    _buffer = "#" + String(id) + "PMOD1";
+    // This operation take longer than 5ms, and will not be executed inside action, so give it longer time to execute
+    if (sendUntilOK(500)) return true;
+
+    return false;
 }
 
 void HLServo::showInfo() {
@@ -45,7 +59,7 @@ void HLServo::resetReturnBuffer() {
     _retCnt = 0; 
 }
 
-bool HLServo::sendCommand(bool expectReturn) {
+bool HLServo::sendCommand(bool expectReturn, unsigned long waitMs) {
 
   	if (_dbg.isEnabled()) showCommand();
 
@@ -58,22 +72,22 @@ bool HLServo::sendCommand(bool expectReturn) {
     _bus->write(0x0a);
     enableTx(false);
 
-	if (expectReturn) return checkReturn();
+	if (expectReturn) return checkReturn(waitMs);
 	return true;
 
 }
 
-bool HLServo::sendUntilOK() {
+bool HLServo::sendUntilOK(unsigned long waitMs) {
     int tryCnt = 0;
     while (tryCnt++ < _maxRetry) {
-        if (sendCommand(true) && isReturnOK()) return true;
+        if (sendCommand(true, waitMs) && isReturnOK()) return true;
         delay(1);
     }
     return false;
 }
 
-bool HLServo::checkReturn() {
-    unsigned long endMs = millis() + HL_COMMAND_WAIT_TIME;
+bool HLServo::checkReturn(unsigned long waitMs) {
+    unsigned long endMs = millis() + waitMs;
     while ( (millis() < endMs) && (!_bus->available()) ) ;
     if (!_bus->available()) {
 		return false;
@@ -168,11 +182,26 @@ uint32_t HLServo::getVersion(byte id) {
 }
 
 
+// #{id}PVER\r\n
+bool HLServo::resetServo(byte id) {
+    if (!validId(id)) return false;
+
+    _buffer = "#" + String(id) + "PCLE0";
+    if (!sendUntilOK(200)) return false;
+
+    _buffer = "#" + String(id) + "PMOD" + String(HL_SERVO_MODE);
+    if (!sendUntilOK(200)) return false;
+
+    return true;
+}
+
+
 // OUT>> #{id}P{pos}T{time}
 bool HLServo::move(byte id, int16_t pos, uint16_t time)  {
     if (!validId(id)) return false;
     if (!validPos(pos)) return false;
     if (time > 50000) return false;
+    if (pos > HL_POS_MAX) pos = HL_POS_MAX;
 
     _buffer = "#" + String(id) + "P" + String(pos) + "T" + String(time);
     if (!sendCommand(false)) return false;
@@ -223,15 +252,31 @@ int16_t HLServo::getPos(byte id, bool lockAfterGet) {
     _buffer = "#" + String(id) + code;
     if (!sendCommand(true)) return _INVALID_POS;
     if (_retCnt < 9) return _INVALID_POS;
+
     int16_t value;
     if (!getRetNum(&value, 1, 3)) return _INVALID_POS;
     if (value != id) return _INVALID_POS;
+
     if (!getRetNum(&value, 5, 4)) return _INVALID_POS;
+    if (value <= _MIN_POS) {
+        // special handle for min pos (if servo is being moved outside the range)
+        if (!move(id, _MIN_POS, 0)) {
+            return _INVALID_POS;
+        }
+    } else if (value > HL_POS_MAX) {
+        value = HL_POS_MAX;
+        if (!move(id, value, 0)) {
+            return _INVALID_POS;
+        }
+    }
     if (!validPos(value)) return _INVALID_POS;
+
     _lastPos[id] = value;
 
     if (lockAfterGet) {
         lock(id);
+    } else {
+        unlock(id);
     }
     return value;
 }
@@ -297,27 +342,37 @@ bool HLServo::unlockAll() {
 } 
 
 
-uint16_t HLServo::setPosMode(byte id, byte mode)  {
+byte HLServo::servoCommand(byte *cmd)  {
+    byte id = cmd[4];
     if (!validId(id)) return 0;
-    if ((mode < 1) || (mode > 2)) return 0;
-    String code;
+
+	byte mode = cmd[5];
+    String code = "";
     switch (mode) {
         case 1:
-            // center
-            code = "CK";
+            // reset servo
+            if (resetServo(id)) return mode;
+            return 0;
             break;
         case 2:
-            // min
-            code = "MI";
+            // center
+            code = "SCK";
             break;
         case 3:
+            // min
+            code = "SMI";
+            break;
+        case 4:
             // max
-            code = "MX";
+            code = "SMX";
             break;
     }
-    _buffer = "#" + String(id) + "PS" + code;
+    if (code != "") {
+        _buffer = "#" + String(id) + "PS" + code;
     
-    if (!sendUntilOK()) return 0;
-
-    return mode;
+        // This operation take longer than 5ms, and will not be executed inside action, so give it longer time to execute
+        if (!sendUntilOK(500)) return 0;
+        return mode;
+    }
+    return 0;
 }

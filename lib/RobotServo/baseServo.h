@@ -68,6 +68,7 @@ class baseServo {
 
         // Method can be overrided
         virtual void initBus() { return; }
+        virtual bool initServo(byte id) { return true; }
         virtual void showInfo();
 
         virtual bool validId(byte id);
@@ -109,7 +110,7 @@ class baseServo {
 
         virtual uint16_t getAdjAngle(byte id) = 0;
         virtual uint16_t setAdjAngle(byte id, uint16 adjValue) = 0;
-        virtual uint16_t setPosMode(byte id, byte mode) = 0;
+        virtual byte servoCommand(byte* cmd) = 0;
 
     private:
 
