@@ -498,7 +498,7 @@ void remoteControl() {
 				break;
 
 			case '#':
-				goNext = HILZD_Command();
+				goNext = HAILZD_Command();
 				break;
 
 			case 'A':

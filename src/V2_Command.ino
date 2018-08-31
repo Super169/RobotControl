@@ -379,24 +379,26 @@ void V2_SetDevMode(byte *cmd) {
 
 void V2_CommandEnable(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_CommandEnable]"));
-	byte result[11];
+	byte result[12];
 	// Should have only 2 options:
-	//   cmd[2] = 7 : set all 5 flags
+	//   cmd[2] = 8 : set all 6 flags
 	//   cmd[2] = 2 : enquiry  (just assume all non-7 length is for enquiry)
-	if (cmd[2] == 7) {
+	if (cmd[2] == 8) {
 		enable_V1 = cmd[4];
 		enable_V2 = cmd[5];
 		enable_UBTBT = cmd[6];
 		enable_UBTCB = cmd[7];
 		enable_UBTSV = cmd[8];
+		enable_HAILZD = cmd[9];
 	} 
-	result[2] = 7;
+	result[2] = 8;
 	result[3] = cmd[3];
 	result[4] = (enable_V1 ? 1 : 0);
 	result[5] = (enable_V2 ? 1 : 0);
 	result[6] = (enable_UBTBT ? 1 : 0);
 	result[7] = (enable_UBTCB ? 1 : 0);
 	result[8] = (enable_UBTSV ? 1 : 0);
+	result[9] = (enable_HAILZD ? 1 : 0);
 
 	V2_SendResult(result);
 }

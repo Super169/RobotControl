@@ -42,42 +42,15 @@ bool UBTSV_Command() {
 
 	if (!enable_UBTSV) return true;
 
-	if (debug) DEBUG.print(F("UBT Servo Command sent\n"));
-	robotPort.enableTx(true); 
-	robotPort.write(cmd, 10);
-	robotPort.enableTx(false); 
-
-    unsigned long endMs = millis() + UBT_COMMAND_WAIT_TIME;
-    while ( (millis() < endMs) && (!robotPort.available()) ) delay(1);
-    if (!robotPort.available()) {
-		return true;
-	}
-
-	byte cnt = 0;
-	byte buffer[20];
-	while (robotPort.available()) {
-		buffer[cnt++] = robotPort.read();
-		if (cnt >= 20) break;
-		// wait 1 ms for serial data to make sure all related result received
-		if (!robotPort.available()) delay(1);
-	}
-	// Clear buffer
-	while (robotPort.available()) {
-		robotPort.read();
-		if (!robotPort.available()) delay(1);
-	}
-	
-	String sender = "Serial";
-	if (cnt > 0) {
-		if (SWFM.wifiClientConnected()) {
-			SWFM.write(buffer, cnt);
-			sender = "Network";
-		} else {
-			Serial.write(buffer, cnt);
+	if (debug) {
+		DEBUG.print(F("UBT Servo Command sent: "));
+		for (int i = 0; i < 10; i++) {
+			DEBUG.printf("%02X ", cmd[i]);
 		}
-		if (debug) DEBUG.printf("UBT Servo Command result returned via %s\n", sender.c_str());
+		DEBUG.println();
 	}
 
+	SendGenericCommand(cmd, 10);
 	return true;
 
 }
