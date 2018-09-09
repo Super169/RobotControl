@@ -1,12 +1,20 @@
 #include "robot.h"
 
+#define GENERIC_COMMAND_WAIT_TIME	200
+
 bool SendGenericCommand(byte *cmd, byte sendCnt) {
+
+	// Clear robotPort buffer
+	while (robotPort.available()) {
+		char ch = robotPort.read();
+		if (!robotPort.available()) delay(1);
+	}
 
 	robotPort.enableTx(true); 
 	robotPort.write(cmd, sendCnt);
 	robotPort.enableTx(false); 
 
-    unsigned long endMs = millis() + UBT_COMMAND_WAIT_TIME;
+    unsigned long endMs = millis() + GENERIC_COMMAND_WAIT_TIME;
     while ( (millis() < endMs) && (!robotPort.available()) ) delay(1);
     if (!robotPort.available()) {
         if (debug) DEBUG.printf("No return detected\n");

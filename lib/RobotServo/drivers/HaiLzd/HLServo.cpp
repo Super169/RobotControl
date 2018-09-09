@@ -4,7 +4,7 @@ HLServo::HLServo() {
 	_MIN_POS = 500;
 	_MAX_POS = 2500;
     _MIN_ANGLE = 0;
-    _MAX_ANGLE = 270;
+    _MAX_ANGLE = 180;
 	_INVALID_POS = -9999;
 	_MULTI_SERVO_COMMAND = true;
 }
