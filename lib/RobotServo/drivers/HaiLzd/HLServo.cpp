@@ -276,6 +276,7 @@ int16_t HLServo::getPos(byte id, bool lockAfterGet) {
 
     _lastPos[id] = value;
 
+    if (_isLocked[id] == lockAfterGet) return value;
     if (lockAfterGet) {
         lock(id);
     } else {
@@ -377,5 +378,55 @@ byte HLServo::servoCommand(byte *cmd)  {
         if (!sendUntilOK(500)) return 0;
         return mode;
     }
+    return 0;
+}
+
+byte HLServo::getServoMode(int id) {
+    int tryCnt = 0;
+    while (tryCnt++ <= _maxRetry) {
+        _buffer = "#" + String(id) + "PMOD";
+        if (sendCommand(true) && (_retCnt >= 9)) {
+            return _retBuf[8];
+        }
+    }
+    return 0;
+}
+
+// 1 - Invalid id
+// 2 - Invalid angle
+// 3 - 
+
+byte HLServo::setAngle(byte id, byte angle, byte minor) {
+
+    _dbg.msg("HLServo::setAngle(%d , %d, %d)", id, angle, minor );
+
+    if (!validId(id)) return 1;
+    if ((angle < _MIN_ANGLE) || (angle > _MAX_ANGLE)) return 2;
+
+    byte mode = getServoMode(id);
+    _dbg.msg("mode = %d", mode);
+
+    if ((mode < '1') || (mode > '4')) return 3;
+
+    _buffer = "#" + String(id) + "PSCK+0";
+    if (!sendUntilOK(500)) return 4;
+
+    _dbg.msg("SCK+0 OK");
+
+    int pwm = getPos(id);
+    int target = angle2pos(angle);
+    int delta = target - pwm;
+
+    _dbg.msg("pwm: %d ; target: %d ; delta: %d", pwm, target, delta);
+    if (delta == 0) return 0;
+
+    if (abs(delta) > 240) return 5;
+    _buffer = "#" + String(id) + "PSCK";
+    if (delta >= 0) _buffer += "+";
+    _buffer += String(delta);
+
+    _dbg.msg("Command: %s", _buffer.c_str());
+    if (!sendUntilOK(500)) return 6;
+
     return 0;
 }

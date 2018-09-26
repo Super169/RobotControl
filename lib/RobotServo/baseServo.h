@@ -89,7 +89,7 @@ class baseServo {
         virtual uint16_t getAngle(byte id) { return (validId(id) ? pos2angle(getPos(id)) : _INVALID_POS); }
         virtual uint16_t getAngle(byte id, bool lockAfterGet) { return (validId(id) ? pos2angle(getPos(id, lockAfterGet)) : _INVALID_POS); }
 
-        // Methods MUST be overrided
+                // Methods MUST be overrided
         virtual byte servoType() = 0;
         virtual bool reset() = 0;
         virtual uint32_t getVersion(byte id) = 0;
@@ -111,6 +111,8 @@ class baseServo {
         virtual uint16_t getAdjAngle(byte id) = 0;
         virtual uint16_t setAdjAngle(byte id, uint16 adjValue) = 0;
         virtual byte servoCommand(byte* cmd) = 0;
+
+        virtual byte setAngle(byte id, byte angle, byte minor) = 0;
 
     private:
 

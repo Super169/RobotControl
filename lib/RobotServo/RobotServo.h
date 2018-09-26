@@ -3,7 +3,7 @@
 
 #include "baseServo.h"
 
-// #define _UBTServo_
+//#define _UBTServo_
 #define _HLServo_
 
 #if defined(_UBTServo_)
@@ -49,6 +49,9 @@ class RobotServo {
 		uint16_t setAdjAngle(byte id, uint16 adjValue) {return _servo.setAdjAngle(id, adjValue); }
 
         byte servoCommand(byte *cmd) { return _servo.servoCommand(cmd); }
+
+        byte setAngle(byte id, byte angle, byte minor) { return _servo.setAngle(id, angle, minor); } 
+
 
         uint16_t lastPos(byte id) { return _servo.lastPos(id); }
         uint16_t lastAngle(byte id) { return _servo.lastAngle(id); }

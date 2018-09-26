@@ -7,9 +7,9 @@
 #define HL_RETURN_BUFFER_SIZE 	64  
 #define HL_COMMAND_WAIT_TIME    5       // 3ms is more than enough
 
-#define HL_SERVO_MODE           1       // 270 degree
-#define HL_POS_MAX              2278    // This is a limitation due to old version action file, if servo pos > POS_MAX, move it to POS_MAX
-#define HL_ANGLE_MAX            240     // This is a limitation due to old version action file, if servo angle > ANGLE_MAX, move it to ANGLE_MAX
+#define HL_SERVO_MODE           1       // 180 degree
+#define HL_POS_MAX              2500    // This is a limitation due to old version action file, if servo pos > POS_MAX, move it to POS_MAX
+#define HL_ANGLE_MAX            180     // This is a limitation due to old version action file, if servo angle > ANGLE_MAX, move it to ANGLE_MAX
 
 class HLServo : public baseServo
 {
@@ -32,7 +32,7 @@ class HLServo : public baseServo
         bool setLED(byte id, bool mode) override;
         bool setLED(bool mode) override;
 
-        inline int16_t getPos(byte id) override { return getPos(id, false); }
+        inline int16_t getPos(byte id) override { return getPos(id, _isLocked[id]); }
         int16_t getPos(byte id, bool lockAfterGet) override;
 
         bool lock(byte id) override;
@@ -41,6 +41,8 @@ class HLServo : public baseServo
         uint16_t getAdjAngle(byte id) override { return 0; }
         uint16_t setAdjAngle(byte id, uint16 adjValue) override { return 0; }
         byte servoCommand(byte *cmd) override;
+
+        byte setAngle(byte id, byte angle, byte minor) override;
 
         // Methods can be overrided (optional)
         //
@@ -82,6 +84,8 @@ class HLServo : public baseServo
 
         inline bool getRetNum(int16_t *data, byte start, byte len) { return getRetNum(data, start, len, len); }
         bool getRetNum(int16_t *data, byte start, byte len, byte minLen); 
+
+        byte getServoMode(int id);
 
 };
 

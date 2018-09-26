@@ -26,7 +26,8 @@ SimpleWiFiManager SWFM;
 
 #define VERSION_MAJOR   2
 #define VERSION_MINOR   1
-
+#define VERSION_SUB     1
+#define VERSION_FIX     0
 
 // Start a TCP Server on port 6169
 uint16_t port = 6169;

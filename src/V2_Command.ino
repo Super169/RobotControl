@@ -231,6 +231,10 @@ bool V2_Command() {
 			V2_ServoCommand(cmd);
 			break;
 
+		case V2_CMS_SETANGLE:
+			V2_SetAngle(cmd)			;
+			break;
+
 		case V2_CMD_LOCKSERVO:
 			V2_LockServo(cmd, true);
 			break;
@@ -351,11 +355,13 @@ void V2_SendSingleByteResult(byte *cmd, byte data) {
 
 void V2_GetVersion(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_GetVersion]"));
-	byte result[8];
-	result[2] = 4;
+	byte result[10];
+	result[2] = 6;
 	result[3] = cmd[3];
 	result[4] = VERSION_MAJOR;
 	result[5] = VERSION_MINOR;
+	result[6] = VERSION_SUB;
+	result[7] = VERSION_FIX;
 	V2_SendResult(result);	
 }
 
@@ -696,6 +702,13 @@ void V2_ServoCommand(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_ServoCommand]"));
 	byte result = 0;
 	result = rs.servoCommand(cmd);
+	V2_SendSingleByteResult(cmd, result);
+}
+
+void V2_SetAngle(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_SetAngle]"));
+	byte result = 0;
+	result = rs.setAngle(cmd[4], cmd[5], cmd[6]);
 	V2_SendSingleByteResult(cmd, result);
 }
 
