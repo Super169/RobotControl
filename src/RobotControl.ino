@@ -573,6 +573,7 @@ void remoteControl() {
 void enableTxCallback(bool send) {
     if (send) {
         robotPort.enableTx(true); 
+		delayMicroseconds(10);
     } else {
         robotPort.enableTx(false);
     }

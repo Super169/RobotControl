@@ -11,6 +11,7 @@ bool SendGenericCommand(byte *cmd, byte sendCnt) {
 	}
 
 	robotPort.enableTx(true); 
+	delayMicroseconds(10);
 	robotPort.write(cmd, sendCnt);
 	robotPort.enableTx(false); 
 
