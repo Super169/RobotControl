@@ -28,14 +28,17 @@ void HLServo::initBus() {
 bool HLServo::initServo(byte id) {
     if (!validId(id)) return false;
 
+/*
+    // Stop using initial location
     _buffer = "#" + String(id) + "PCSM";
     // This operation take longer than 5ms, and will not be executed inside action, so give it longer time to execute
     if (!sendUntilOK(500)) return false;
 
+    // Set servo to 270 degree
     _buffer = "#" + String(id) + "PMOD1";
     // This operation take longer than 5ms, and will not be executed inside action, so give it longer time to execute
     if (sendUntilOK(500)) return true;
-
+*/
     return false;
 }
 

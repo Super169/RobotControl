@@ -109,6 +109,12 @@ bool V2_Command() {
 	}
 
 	switch (cmd[3]) {
+
+		case V2_CMD_GET_VERSION:
+			V2_GetVersion(cmd);
+			return true;
+			break;
+
 		case V2_CMD_DEBUG:
 			V2_SetDebug(cmd);
 			return true;
@@ -341,6 +347,16 @@ void V2_SendSingleByteResult(byte *cmd, byte data) {
 	result[3] = cmd[3];
 	result[4] = data;
 	V2_SendResult(result);
+}
+
+void V2_GetVersion(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_GetVersion]"));
+	byte result[8];
+	result[2] = 4;
+	result[3] = cmd[3];
+	result[4] = VERSION_MAJOR;
+	result[5] = VERSION_MINOR;
+	V2_SendResult(result);	
 }
 
 #pragma region V2_CMD_RESET / V2_CMD_DEBUG / V2_CMD_DEVMODE / V2_CMD_GETCONFIG / V2_CMD_SETCONFIG

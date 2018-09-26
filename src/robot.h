@@ -24,6 +24,10 @@ SimpleWiFiManager SWFM;
 #include "RobotServo.h"
 #include "V2_Command.h"
 
+#define VERSION_MAJOR   2
+#define VERSION_MINOR   1
+
+
 // Start a TCP Server on port 6169
 uint16_t port = 6169;
 String localSegment;

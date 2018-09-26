@@ -73,6 +73,8 @@ bool V2_UseGlobalTime = true;
 #define V2_CMD_WRITESPIFFS  	0xF2
 */
 
+#define V2_CMD_GET_VERSION      0xFF
+
 bool deepDebug = true;
 
 
