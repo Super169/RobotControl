@@ -37,7 +37,7 @@ bool V2_UseGlobalTime = true;
 #define V2_CMD_ONEADJANGLE		0x14
 #define V2_CMD_SETADJANGLE      0x15
 #define V2_CMD_SERVOCMD         0x16
-#define V2_CMS_SETANGLE         0x18
+#define V2_CMD_SETANGLE         0x18
 
 #define V2_CMD_LOCKSERVO		0x21
 #define V2_CMD_UNLOCKSERVO		0x22

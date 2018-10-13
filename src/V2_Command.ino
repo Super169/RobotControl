@@ -231,7 +231,7 @@ bool V2_Command() {
 			V2_ServoCommand(cmd);
 			break;
 
-		case V2_CMS_SETANGLE:
+		case V2_CMD_SETANGLE:
 			V2_SetAngle(cmd)			;
 			break;
 
