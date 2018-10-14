@@ -82,8 +82,10 @@ void V2_CheckAction() {
 	// Play current pose here
 	// Should use float for rounding here? // or just let it truncated.
 	float fServoTimeMs = (pose[AD_POFFSET_STIME] << 8) | pose[AD_POFFSET_STIME+1];
-	int iServoTime = round(fServoTimeMs / V2_ServoTimeRatio);
-	byte servoTime = (byte) iServoTime;
+	// int iServoTime = round(fServoTimeMs / V2_ServoTimeRatio);
+	// byte servoTime = (byte) iServoTime;
+	int iServoTime = fServoTimeMs;  // For new servo library, use MS as servo time when calling move command
+	uint16_t servoTime = (uint16_t) iServoTime;
 
 	if (debug && deepDebug) DEBUG.printf("Servo Time: %f -> %d\n", fServoTimeMs, servoTime);
 
