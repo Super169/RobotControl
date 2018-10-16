@@ -94,21 +94,27 @@ bool SimpleWiFiManager::begin(int preferMode) {
 	if (isReady()) return true;
 
 	if ((preferMode == SWFM_MODE_NONE) || (preferMode == SWFM_MODE_ROUTER))  {
-		if (!myUtil::isEmpty(_wifi.ssid.getString())) {
 
-			WiFi.begin(_wifi.ssid.getString().c_str(), (myUtil::isEmpty(_wifi.password.getString()) ? NULL : _wifi.password.getString().c_str()));
-			_dbg.msg("Connecting to %s", _wifi.ssid.getString().c_str());
-			unsigned long endMs = millis() + _wifi.routerTimeout.getInt() * 1000;
-			while ((millis() < endMs) && (WiFi.status() != WL_CONNECTED)) {
-				delay(5000);
-				_dbg.write('.');
+		if (_wifi.enableRouter.getBool()) {
+
+			if (!myUtil::isEmpty(_wifi.ssid.getString())) {
+
+				WiFi.begin(_wifi.ssid.getString().c_str(), (myUtil::isEmpty(_wifi.password.getString()) ? NULL : _wifi.password.getString().c_str()));
+				_dbg.msg("Connecting to %s", _wifi.ssid.getString().c_str());
+				unsigned long endMs = millis() + _wifi.routerTimeout.getInt() * 1000;
+				while ((millis() < endMs) && (WiFi.status() != WL_CONNECTED)) {
+					delay(5000);
+					_dbg.write('.');
+				}
+				_dbg.println();
+				if (WiFi.status() == WL_CONNECTED) {
+					_mode = SWFM_MODE_ROUTER;
+					_dbg.msg("Connected to %s with IP %s", _wifi.ssid.getString().c_str(), ip().c_str());
+				}
 			}
-			_dbg.println();
-			if (WiFi.status() == WL_CONNECTED) {
-				_mode = SWFM_MODE_ROUTER;
-				_dbg.msg("Connected to %s with IP %s", _wifi.ssid.getString().c_str(), ip().c_str());
-			}
+
 		}
+
 	}
 
 	if (!isReady()) {

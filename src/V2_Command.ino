@@ -781,68 +781,81 @@ void V2_LockServo(byte *cmd, bool goLock) {
 
 #pragma region  V2_CMD_SERVOMOVE
 
+// A9 9A {len} 23 {id,angle,time_h, time_L}
 void V2_ServoMove(byte *cmd) {
-	byte moveAngle, moveTime;
+	byte moveAngle;
+	uint16_t moveTime;
 	if (debug) DEBUG.println(F("[V2_ServoMove]"));
-	int cnt = (cmd[2] - 2) / 3;
-	byte moveParm[2 * config.maxServo()];
-	memset(moveParm, 0xFF, 2 * config.maxServo());
+	int cnt = (cmd[2] - 2) / 4;
+	byte moveParm[3 * config.maxServo()];
+	memset(moveParm, 0xFF, 3 * config.maxServo());
 	int pos;
 
 	if ((cnt == 1) && (cmd[4] == 0)) {
 		moveAngle = cmd[5];
-		moveTime = cmd[6];
+		moveTime = (cmd[6] << 8) | cmd[7];
 		for (byte id = 1; id <= config.maxServo(); id++ ) {
 			if (rs.exists(id)) {
-				pos = 2 * (id - 1);
+				pos = 3 * (id - 1);
 				moveParm[pos] = moveAngle;
-				moveParm[pos+1] = moveTime;
+				moveParm[pos+1] = moveTime >> 8;
+				moveParm[pos+2] = moveTime & 0xFF;
 			}
 		}
 	} else {
 		byte id;
 		for (int i = 0; i < cnt; i++) {
-			pos = 4 + 3 * i;
+			pos = 4 + 4 * i;
 			id = cmd[pos];
-			if ((id != 0) && rs.exists(id) && (moveParm[2*(id-1)] == 0xFF)) {
+			if ((id != 0) && rs.exists(id) && (moveParm[3*(id-1)] == 0xFF)) {
 				moveAngle = cmd[pos+1];
-				moveTime = cmd[pos+2];
-				pos = 2 * (id - 1);
+				moveTime = (cmd[pos+2] << 8) | cmd[pos+3];
+				pos = 3 * (id - 1);
 				moveParm[pos] = moveAngle;
-				moveParm[pos+1] = moveTime;
+				moveParm[pos+1] = moveTime >> 8;
+				moveParm[pos+2] = moveTime & 0xFF;
 			} else {
-				if (debug) DEBUG.printf("Servo ID: %02d is invalid/duplicated\n", id);
+				if (debug) {
+					if ((id == 0) || !rs.exists(id)) {
+						DEBUG.printf("Servo ID: %02d is invalid\n", id);
+					} else if (moveParm[3*(id-1)] != 0xFF) {
+						DEBUG.printf("Servo ID: %02d is duplicated\n", id);
+					} else {
+						DEBUG.printf("Unknwon error: ID: %d , %d, %02X\n", id, rs.exists(id), moveParm[3*(id-1)] );
+					}
+				}
 			}
 		}
 	}
 	
 	if (debug) {
 		DEBUG.println("move parameters:");
-		for (int i=0; i < 2 * config.maxServo(); i++) {
+		for (int i=0; i < 3 * config.maxServo(); i++) {
 			DEBUG.printf("%02X ", moveParm[i]);
 		}
 		DEBUG.println();
 	}
 
 	int moveCnt = 0;
-	// byte result[55]; // max: A9 9A {len} {cmd} {cnt} (3 * 16) {sum} ED = 48 + 7 = 55
-	int arraySize = 3 * config.maxServo() + 7;
-	byte result[arraySize]; // max: A9 9A {len} {cmd} {cnt} (3 * 16) {sum} ED = 48 + 7 = 55
+	// byte result[55]; // max: A9 9A {len} {cmd} {cnt} (4 * 16) {sum} ED = 64 + 7 = 71
+	int arraySize = 4 * config.maxServo() + 7;
+	byte result[arraySize]; // max: A9 9A {len} {cmd} {cnt} (4 * 16) {sum} ED = 64 + 7 = 71
 	for (int id = 1; id <= config.maxServo(); id++) {
-		pos = 2 * (id - 1);
+		pos = 3 * (id - 1);
 		if (moveParm[pos] != 0xFF) {
-			int resultPos = 5 + 3 * moveCnt;
+			int resultPos = 5 + 4 * moveCnt;
 			result[resultPos] = id;
 			moveAngle = moveParm[pos];
-			moveTime = moveParm[pos+1];
+			uint16_t moveTime = (moveParm[pos+1] << 8) | moveParm[pos+2];
 			result[resultPos+1] = moveAngle;
-			result[resultPos+2] = moveTime;
+			result[resultPos+2] = moveTime >> 8;
+			result[resultPos+3] = moveTime & 0xFF;
 			if (debug) DEBUG.printf("Move servo %02d to %d [%02X], time: %d [%02X]\n", id, moveAngle, moveAngle, moveTime, moveTime);
 			rs.goAngle(id, moveAngle, moveTime);
 			moveCnt++;
 		}
 	}
-	result[2] = 3 + 3 * moveCnt;
+	result[2] = 3 + 4 * moveCnt;
 	result[3] = cmd[3];
 	result[4] = moveCnt;
 	V2_SendResult(result);
