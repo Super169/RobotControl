@@ -52,7 +52,10 @@
 //   74 - Update action name	    : A9 9A 0B 74 01 07  44 65 66 61 75 6C 74 D7 ED
 //   75 - Delete action file	    : A9 9A 03 75 00 78 ED
 
+//   81 - Check MPU					: A9 9A 02 81 83 ED
+//   82 - Get MPU					: A9 9A 02 82 84 ED
 
+//   FF - Get Version				: A9 9A 02 FF 01 ED
 
 bool V2_Command() {
 
@@ -312,15 +315,15 @@ bool V2_Command() {
 		case V2_CMD_DEL_ACTION:
 			V2_DeleteActionFile(cmd);
 			break;
-/*
-		case V2_CMD_READSPIFFS:
-			V2_ReadSPIFFS(cmd);
+
+		case V2_CMD_CHK_MPU:
+			V2_CheckMPU(cmd);
 			break;
 
-		case V2_CMD_WRITESPIFFS:
-			V2_WriteSPIFFS(cmd);
+		case V2_CMD_GET_MPU_DATA:
+			V2_GetMPUData(cmd);
 			break;
-*/
+
 		default:
 			if (debug) {
 				DEBUG.printf("Undefined command: %02X\n", cmd[3]);
@@ -1346,3 +1349,23 @@ void V2_UpdateCombo(byte *cmd) {
 
 #pragma endregion
 
+#pragma region Combo: V2_CMD_CHK_MPU / V2_CMD_GET_MPU
+
+void V2_CheckMPU(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_CheckMPU]"));
+	V2_SendSingleByteResult(cmd, (mpuExists ? RESULT::SUCCESS : RESULT::ERR::NOT_FOUND));
+}
+
+void V2_GetMPUData(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_GetMPU]"));
+	byte result[MPU_RESULT_SIZE];
+	result[2] = MPU_RESULT_SIZE - 4;
+	result[3] = cmd[3];
+	if (MpuGetData()) {
+		memcpy((byte *)(result + 4), mpuBuffer, MPU_DATA_SIZE);
+	}
+	V2_SendResult(result);
+}
+
+
+#pragma endregion

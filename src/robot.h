@@ -26,8 +26,8 @@ SimpleWiFiManager SWFM;
 
 #define VERSION_MAJOR   2
 #define VERSION_MINOR   1
-#define VERSION_SUB     1
-#define VERSION_FIX     3
+#define VERSION_SUB     2
+#define VERSION_FIX     0
 
 // Start a TCP Server on port 6169
 uint16_t port = 6169;
@@ -82,7 +82,13 @@ const char* password = "wuhulanren";
 #define TOUCH_LONG      0xFF
 
 //MPU6050 Setting
+
+#define MPU_DEBUG       false
+
+#define MPU_DATA_SIZE   14
+#define MPU_RESULT_SIZE 20
 const uint8_t MPU_addr=0x68;  // I2C address of the MPU-6050
+uint8_t mpuBuffer[MPU_DATA_SIZE];
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
 int16_t tmp;
@@ -240,8 +246,13 @@ bool HAILZD_Command();
 void ArduinoOTASetup();
 
 // Mpu6050
+bool mpuExists = false;
+
 bool MpuInit();
+bool MpuGetData();
 void MpuGetActionHandle();
+
+
 
 // Touch.ino
 uint8_t DetectTouchMotion();

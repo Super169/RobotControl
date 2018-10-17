@@ -9,6 +9,7 @@ class RESULT {
 		class ERR {
 			public:
 				static const byte  SPIFFS                   = 1;
+				static const byte  NOT_FOUND				= 2;
 				static const byte  PARM_SIZE                = 11;
 				static const byte  PARM_AID_NOT_MATCH       = 12;
 				static const byte  PARM_AD_NAME_SIZE	    = 13;

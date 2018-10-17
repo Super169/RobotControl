@@ -199,10 +199,10 @@ void setup() {
 		myOLED.show();
 	}
 
-	// Turn on 6050
-	if (config.autoStand()) {
+	// Turn on 6050 eeven not set for autoStand, MPU can be used in other area
+	//if (config.autoStand()) {
 		MpuInit();
-	}
+	//}
 
 	rs.setLED(false);
 
@@ -380,7 +380,7 @@ void CheckPosition() {
   if (millis() > nextPositionCheckMs) {
     // DEBUG.println("No Client connected, or connection lost");
       // if (EN_MPU6050) MpuGetActionHandle();
-    if (debug) DEBUG.println("MpuGetActionHandle");
+    // if (debug) DEBUG.println("MpuGetActionHandle"); // too many message will cause debug port hang
     MpuGetActionHandle();
 
     // TODO, use config for frequency

@@ -69,6 +69,9 @@ bool V2_UseGlobalTime = true;
 #define V2_CMD_UPD_ADNAME		0x74
 #define V2_CMD_DEL_ACTION		0x75
 
+#define V2_CMD_CHK_MPU          0x81
+#define V2_CMD_GET_MPU_DATA     0x82
+
 /*
 #define V2_CMD_READSPIFFS   	0xF1
 #define V2_CMD_WRITESPIFFS  	0xF2

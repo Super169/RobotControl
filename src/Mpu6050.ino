@@ -3,13 +3,50 @@
 
 bool MpuInit(){
   Wire.begin();
+  // Check if MPU available
   Wire.beginTransmission(MPU_addr);
-  Wire.write(0x6B);  // PWR_MGMT_1 register
-  Wire.write(0);     // set to zero (wakes up the MPU-6050)
-  Wire.endTransmission(true);
-  return 1;
+  uint8_t i2cError = Wire.endTransmission();
+  mpuExists = (i2cError == 0);
+  if (DEBUG) DEBUG.printf("i2c 0x%02X - %d\n",MPU_addr,i2cError);
+  if (mpuExists) {
+    Wire.beginTransmission(MPU_addr);
+    Wire.write(0x6B);  // PWR_MGMT_1 register
+    Wire.write(0);     // set to zero (wakes up the MPU-6050)
+    Wire.endTransmission(true);
+    if (DEBUG) DEBUG.println("MPU 6050 Initialized");
+  } else {
+    if (DEBUG) DEBUG.println("MPU 6050 not available");
+    return false;
+  }
+  return true;
 }
 
+
+bool MpuGetData() {
+  if (!mpuExists)  return false;
+  ax = ay = az = tmp = gx = gy = gz = 0;
+  Wire.beginTransmission(MPU_addr);
+  Wire.write(0x3B);  // starting with register 0x3B (ACCEL_XOUT_H)
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU_addr, (size_t) MPU_DATA_SIZE,true);  // request a total of 14 registers
+  memset(mpuBuffer, 0, MPU_DATA_SIZE);
+  for (int i = 0; i < MPU_DATA_SIZE; i++) {
+    if (Wire.available()) {
+      mpuBuffer[i] = Wire.read();
+    } else {
+      if (DEBUG) DEBUG.printf("Incomplete MPU data, only %d bytes returned\n", i);
+      memset(mpuBuffer, 0, MPU_DATA_SIZE);
+      return false;
+    }
+  }
+  ax = mpuBuffer[0] << 8 | mpuBuffer[1];
+  ay = mpuBuffer[2] << 8 | mpuBuffer[3];
+  az = mpuBuffer[4] << 8 | mpuBuffer[5];
+  gx = mpuBuffer[8] << 8 | mpuBuffer[9];
+  gy = mpuBuffer[10] << 8 | mpuBuffer[11];
+  gz = mpuBuffer[12] << 8 | mpuBuffer[13];
+  return true;
+}
 /*
  *  16384                                  -16383        
  *   AX              -16383    AY   16384    AZ
@@ -17,25 +54,25 @@ bool MpuInit(){
  */
 uint8_t detectTimes = 0;
 
+unsigned long lastMs = 0;
+
 void MpuGetActionHandle(){
     if (!config.autoStand()) return;
+    if (!mpuExists) return;
     actionSign = 0;
-    az = 0;
-    Wire.beginTransmission(MPU_addr);
-    Wire.write(0x3B);  // starting with register 0x3B (ACCEL_XOUT_H)
-    Wire.endTransmission(false);
-    Wire.requestFrom(MPU_addr, (size_t) 14,true);  // request a total of 14 registers
-    ax=Wire.read()<<8|Wire.read();  // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)    
-    ay=Wire.read()<<8|Wire.read();  // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
-    az=Wire.read()<<8|Wire.read();  // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
-    tmp=Wire.read()<<8|Wire.read();  // 0x41 (TEMP_OUT_H) & 0x42 (TEMP_OUT_L)
-    gx=Wire.read()<<8|Wire.read();  // 0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
-    gy=Wire.read()<<8|Wire.read();  // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
-    gz=Wire.read()<<8|Wire.read();  // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
-    // TODO: ask L why he comment out the endTransmission
-  //Wire.endTransmission(true);
     
-    if (debug) DEBUG.printf("x,y,z: %d,%d, %d ; faceUp: %d, faceDown: %d\n", ax, ay, az, config.faceUpAction(), config.faceDownAction());
+    if (!MpuGetData()) {
+      if (DEBUG) DEBUG.println("Error getting MPU Data");
+      return;
+    }
+    
+    if ((debug) && (MPU_DEBUG)) {
+      // Don't send too much, just 1 / sec
+      if (millis() - lastMs > 1000) {
+        DEBUG.printf("x,y,z: %d,%d, %d ; faceUp: %d, faceDown: %d\n", ax, ay, az, config.faceUpAction(), config.faceDownAction());
+        lastMs = millis();
+      }
+    }
 
 
    //Serial.print(" | AcZ = ");
