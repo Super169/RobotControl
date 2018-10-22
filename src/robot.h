@@ -27,7 +27,7 @@ SimpleWiFiManager SWFM;
 #define VERSION_MAJOR   2
 #define VERSION_MINOR   1
 #define VERSION_SUB     2
-#define VERSION_FIX     0
+#define VERSION_FIX     1
 
 // Start a TCP Server on port 6169
 uint16_t port = 6169;
@@ -172,7 +172,7 @@ bool devMode = false;
 
 //BoardDefine
 
-#define ROBOT_ARM_BOARD
+//#define ROBOT_ARM_BOARD
 
 #define MP3_RXD_GPIO    14
 #define MP3_TXD_GPIO    16  
