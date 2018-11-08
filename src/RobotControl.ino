@@ -156,8 +156,6 @@ void setup() {
 	DEBUG.print("Robot IP: ");
 	DEBUG.println(ip);
 	DEBUG.printf("Port: %d\n\n", port);
-	//	RobotMaintenanceMode();
-	// server.begin();
 
 	DEBUG.println("Starting robot servo: ");
 	
@@ -199,10 +197,8 @@ void setup() {
 		myOLED.show();
 	}
 
-	// Turn on 6050 eeven not set for autoStand, MPU can be used in other area
-	//if (config.autoStand()) {
-		MpuInit();
-	//}
+	// Centralize initilaize process here
+	InitEventHandler();
 
 	rs.setLED(false);
 
@@ -264,8 +260,7 @@ unsigned long revIpTime = 0;
 
 void loop() {
 
-
-
+	// Part 1 - check network input
 	SWFM.httpServerHandler();
 	uint8_t cnt = SWFM.checkData();
 	if (cnt) {
@@ -292,164 +287,27 @@ void loop() {
 		}
 	}
 
-
-/*
-	client = server.available();
-      
-	if( isConnected && !client.connected() ) {
-		char serverack = udpClient.parsePacket();
-		if (serverack)
-		{
-			char buffer[serverack+1];
-			// It's expected that updRxCnt == serverack, otherwise, some data is missing
-			// but for safety, use actual receive count in read command
-			int udpRxCnt = udpClient.read(buffer, serverack);
-			buffer[udpRxCnt] = 0x00;
-			if (String(buffer).startsWith(localSegment)) {
-				DEBUG.printf("ReceivedIP: %s\n", buffer);
-				udpClient.beginPacket(buffer,udpSendport);
-				udpClient.println(AP_Name);
-				udpClient.print(WiFi.localIP().toString());
-				udpClient.endPacket();
-			} else {
-				for (int i = 0; i < udpRxCnt; i++) cmdBuffer.write(buffer[i]);
-			}
-		}
-		else
-		{
-			// DEBUG.println(F("No Data From Udpport....."));
-		} 
-	}
-
-	// For Wifi checking, once connected, it should use the client object until disconnect, and check within client.connected()
-	if (client){
-		if (config.enableOLED()) {
-			myOLED.print(122, 1, '*');
-			myOLED.show();
-		}
-		while (client.connected()) {  
-			if (millis() > noPrompt) {
-				DEBUG.println("Client connected");
-				//Serial.println("Client connected");
-				noPrompt = millis() + 1000;
-			}
-			while (client.available()) {
-				cmdBuffer.write(client.read());
-       			// DEBUG.println(client.read());
-			}
-			// Keep running RobotCommander within the connection.
-			RobotCommander();
-		}
-		if (config.enableOLED()) {
-			myOLED.print(122, 1, ' ');
-			myOLED.show();
-		}
-	}	
-	if (millis() > noPrompt) {
-		// DEBUG.println("No Client connected, or connection lost");
-		noPrompt = millis() + 1000;
-	}
-*/	
-	// Execute even no wifi connection, for USB & Bluetooth connection
-	// Don'e put it into else case, there has no harm executing more than once.
-	// Just for safety if client exists but not connected, RobotCommander can still be executed.
-	RobotCommander();
-
-}
-
-void RobotCommander() {
-
-	// Always handle response/action first
+	// Part 2 - check serial input 
 	CheckSerialInput();
+
+	// Part 3 - processs input data
 	remoteControl();  
+
+	// Part 4 - continue current action
 	V2_CheckAction();
 
+	// Part 5 - check for robot events
+	RobotEventHandler();
+
+/*
 	CheckVoltage();
 
 	// Check auto-response action (should only play if not in action)
 	if (V2_ActionPlaying) return;
 	CheckPosition();
 	CheckTouch();  // TODO: Too many messages!
+*/
 
-}
-
-unsigned nextPositionCheckMs = 0;
-
-void CheckPosition() {
-  if (!config.autoStand()) return;
-  if (millis() > nextPositionCheckMs) {
-    // DEBUG.println("No Client connected, or connection lost");
-      // if (EN_MPU6050) MpuGetActionHandle();
-    // if (debug) DEBUG.println("MpuGetActionHandle"); // too many message will cause debug port hang
-    MpuGetActionHandle();
-
-    // TODO, use config for frequency
-    nextPositionCheckMs = millis() + (1000 / config.positionCheckFreq());
-  }
-}
-
-void CheckTouch() {
-	if (!config.enableTouch()) return;
-	//touch handle
-	
-	// uint8_t touchMotion = DetectTouchMotion();
-	uint8_t touchMotion = CheckTouchAction();
-	//if(touchMotion == TOUCH_LONG) ReserveEyeBreath();
-	//if(touchMotion == TOUCH_DOUBLE) ReserveEyeBlink();
-	EyeLedHandle();
-}
-
-// ADC_MODE(ADC_VCC);  -- only use if checking input voltage ESP.getVcc() is required.
-unsigned long nextVoltageMs = 0;
-unsigned long nextVoltageAlarmMs = 0;
-
-void CheckVoltage() {
-	if (millis() > nextVoltageMs) {
-
-		uint16_t v = analogRead(0);
-		// if (debug) DEBUG.printf("analgeRead(0): %d\n", v);
-		int iPower = GetPower(v);
-		if (config.enableOLED()) {
-
-			// Code form James
-			myOLED.printNum(104,0,iPower, 10, 3, false);
-			myOLED.print(122,0,"%");
-			myOLED.show();
-
-			// Code from L, TODO: use config to get reference voltage for conversion
-			myOLED.print(0,5,"Volt: ");
-			myOLED.printFloat((float)(analogRead(A0)/1024.0*11.0));
-			// myOLED.printNum(0,10,analogRead(A0));
-			myOLED.show();
-		}
-
-		if (v < config.alarmVoltage())	{
-			if (millis() > nextVoltageAlarmMs) {
-				nextVoltageAlarmMs += (config.voltageAlarmInterval() * 1000);
-				if (debug) DEBUG.printf("Battery low: %d (%d) \n", v, config.alarmVoltage());
-				if (config.voltageAlarmMp3()) {
-					mp3.begin();
-					mp3.stop();
-					mp3.playMp3File(config.voltageAlarmMp3());
-					mp3.end();
-				}
-			}
-		} 
-
-		nextVoltageMs = millis() + 1000;
-		// DEBUG.printf("v: %d, min: %d, max: %d, alarm: %d, power: %d%%\n\n", v, config.minVoltage(), config.maxVoltage(), config.alarmVoltage(), iPower);
-	}
-
-}
-
-// For consistence, build common function to convert A0 value to Power rate
-byte GetPower(uint16_t v) {
-	// Power in precentage instead of voltage
-	float power = ((float) (v - config.minVoltage()) / (config.maxVoltage() - config.minVoltage()) * 100.0f);
-	int iPower = (int) (power + 0.5); // round up
-	if (iPower > 100) iPower = 100;
-	if (iPower < 0) iPower = 0;
-	return (byte) iPower;
 }
 
 // move data from Serial buffer to command buffer

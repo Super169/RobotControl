@@ -103,7 +103,7 @@ void MpuGetActionHandle(){
   }
 }
 
-void MpuAutoAction(int8_t actionId){
+void MpuAutoAction(int8_t actionId) {
   V2_GoAction(actionId, false, NULL);
 }
 

@@ -15,6 +15,8 @@
 #include "MP3TF16P.h"
 #include "RobotConfig.h"
 
+#include "UTIL.h"
+
 #include "message.h"
 #include "RESULT.h"
 
@@ -23,6 +25,14 @@ SimpleWiFiManager SWFM;
 
 #include "RobotServo.h"
 #include "V2_Command.h"
+
+#include "RobotEventHandler.h"
+#include "Event_Touch.h"
+#include "Event_Mpu6050.h"
+
+#include "EyeLed.h"
+
+#include "OTA.h"
 
 #define VERSION_MAJOR   2
 #define VERSION_MINOR   1
@@ -52,7 +62,6 @@ char *AP_Name = (char *) "Alpha 1S";
 char *AP_Password = (char *) "12345678";
 
 
-
 #define DEBUG Serial1
 
 #define CMD_BUFFER_SIZE 128
@@ -61,42 +70,6 @@ Buffer cmdBuffer(CMD_BUFFER_SIZE);
 
 RobotConfig config(&DEBUG);
 
-#ifdef ENABLE_OTA
-//OTA Setting
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <WiFiUdp.h>
-#include <ArduinoOTA.h>
-const char* ssid = "wuhulanren";          
-const char* password = "wuhulanren";
-#define EN_OTA true
-#endif
-
-/*
-//Touch Setting
-*/
-#define TOUCH_NONE      0
-#define TOUCH_SINGLE    1
-#define TOUCH_DOUBLE    2
-#define TOUCH_TRIPLE    3
-#define TOUCH_LONG      0xFF
-
-//MPU6050 Setting
-
-#define MPU_DEBUG       false
-
-#define MPU_DATA_SIZE   14
-#define MPU_RESULT_SIZE 20
-const uint8_t MPU_addr=0x68;  // I2C address of the MPU-6050
-uint8_t mpuBuffer[MPU_DATA_SIZE];
-int16_t ax, ay, az;
-int16_t gx, gy, gz;
-int16_t tmp;
-int8_t actionSign;
-int8_t getFaceDown , getFaceUp;
-bool mpuActionBegin = false;
-// #define FACE_DOWN_ID 5
-// #define FACE_UP_ID 6
 
 // OLED Settings
 
@@ -177,7 +150,6 @@ bool devMode = false;
 #define MP3_RXD_GPIO    14
 #define MP3_TXD_GPIO    16  
 #define HEAD_LED_GPIO   15
-#define TOUCH_GPIO      13
 
 bool headLed = false;
 
@@ -204,22 +176,6 @@ bool V2_Command();
 #pragma endregion
 
 
-#pragma region "UTIL.ino"
-
-void SetDebug(bool mode);
-void SetHeadLed(bool status);
-
-byte CheckSum(byte *cmd);
-byte CheckVarSum(byte *cmd);
-byte CheckFullSum(byte *cmd);
-
-void clearInputBuffer();
-bool cmdSkip(bool flag);
-
-void DebugShowSkipByte();
-
-#pragma endregion
-
 // UBT_Command.ino
 void UBT_GetServoAngle(byte *result);
 void UBT_GetServoAdjAngle(byte *result);
@@ -234,38 +190,11 @@ void V1_UBT_ReadSPIFFS(byte cmdCode);
 void V2_CheckAction();
 void V2_GoAction(byte actionId, bool v2, byte *cmd);
 
-void RobotMaintenanceMode();
-
 // Command_Generic
 bool SendGenericCommand(byte *cmd, byte sendCnt);
 
 // HILZD
 bool HAILZD_Command();
 
-// OTA.ino
-void ArduinoOTASetup();
-
-// Mpu6050
-bool mpuExists = false;
-
-bool MpuInit();
-bool MpuGetData();
-void MpuGetActionHandle();
-
-
-
-// Touch.ino
-uint8_t DetectTouchMotion();
-boolean ButtonIsPressed();
-
-// TouchV2.ino
-uint8_t CheckTouchAction();
-
-// EyeLed.ino
-void ReserveEyeBlink();
-void ReserveEyeBreath();
-void EyeBlink();
-void EyeBreath();
-void EyeLedHandle();
 
 #endif
