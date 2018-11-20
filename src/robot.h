@@ -64,7 +64,7 @@ char *AP_Password = (char *) "12345678";
 
 #define DEBUG Serial1
 
-#define CMD_BUFFER_SIZE 128
+#define CMD_BUFFER_SIZE 160
 
 Buffer cmdBuffer(CMD_BUFFER_SIZE);
 

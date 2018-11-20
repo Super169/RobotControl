@@ -72,10 +72,18 @@ bool V2_UseGlobalTime = true;
 #define V2_CMD_CHK_MPU          0x81
 #define V2_CMD_GET_MPU_DATA     0x82
 
+#define V2_CMD_GET_EVENT_HEADER 0x91
+#define V2_CMD_GET_EVENT_DATA   0x92
+#define V2_CMD_SAVE_EVENT_HEADER 0x93
+#define V2_CMD_SAVE_EVENT_DATA  0x94
+
 /*
 #define V2_CMD_READSPIFFS   	0xF1
 #define V2_CMD_WRITESPIFFS  	0xF2
 */
+
+#define EVENT_HEADER_RESULT_SIZE    16
+#define EVENT_DATA_RESULT_SIZE      128
 
 #define V2_CMD_GET_VERSION      0xFF
 

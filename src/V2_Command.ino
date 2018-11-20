@@ -55,6 +55,11 @@
 //   81 - Check MPU					: A9 9A 02 81 83 ED
 //   82 - Get MPU					: A9 9A 02 82 84 ED
 
+//   91 - Get Event Header
+//   92 - Get Event Data
+//   93 - Save Event Header
+//   94 - Save Event Data
+
 //   FF - Get Version				: A9 9A 02 FF 01 ED
 
 bool V2_Command() {
@@ -322,6 +327,19 @@ bool V2_Command() {
 
 		case V2_CMD_GET_MPU_DATA:
 			V2_GetMPUData(cmd);
+			break;
+
+		case V2_CMD_GET_EVENT_HEADER:
+			V2_GetEventHeader(cmd);
+			break;
+		case V2_CMD_GET_EVENT_DATA:
+			V2_GetEventData(cmd);
+			break;
+		case V2_CMD_SAVE_EVENT_HEADER:
+			V2_SaveEventHeader(cmd);
+			break;
+		case V2_CMD_SAVE_EVENT_DATA:
+			V2_SaveEventData(cmd);
 			break;
 
 		default:
@@ -1367,5 +1385,80 @@ void V2_GetMPUData(byte *cmd) {
 	V2_SendResult(result);
 }
 
+
+#pragma endregion
+
+
+#pragma region Event: V2_CMD_GET_EVENT_HEADER
+
+void V2_GetEventHeader(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_GetEventHeader]"));
+	byte result[EVENT_HEADER_RESULT_SIZE];
+	memset(result, 0, EVENT_HEADER_RESULT_SIZE);
+	result[2] = EVENT_HEADER_RESULT_SIZE - 4;
+	result[3] = cmd[3];
+	result[5] = EVENT_HANDLER_VERSION;
+	EventHandler *eh;
+	if (cmd[4]) {
+		eh = &eBusy;
+		result[4] = 1;
+	} else {
+		eh = &eIdle;
+		result[4] = 0;
+	}
+
+	uint16_t count = eh->Count();
+	result[6] = (count & 0xFF);  // Only support 255 events at this version
+	result[7] = 0;
+	V2_SendResult(result);
+}
+
+void V2_GetEventData(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_GetEventData]"));
+	byte result[EVENT_DATA_RESULT_SIZE];
+	memset(result, 0, EVENT_DATA_RESULT_SIZE);
+	result[2] = EVENT_DATA_RESULT_SIZE - 4;
+	EventHandler *eh;
+	if (cmd[4]) {
+		 eh = &eBusy;
+		 // 91 for busy data
+		 result[3] = 0x91;
+	 } else {
+		 eh = &eIdle;
+		 // 90 for idle data
+		 result[3] = 0x90;
+	 }
+	EventHandler::EVENT* events;
+	events = eh->Events();
+	byte count = eh->Count();
+	byte startIdx = cmd[5];
+	byte sendCnt = 0;
+	if (count > startIdx) {
+		sendCnt = count - startIdx;
+		sendCnt = (sendCnt > 10 ? 10 : sendCnt);
+		byte *dest = (byte *) (result + 6);
+		byte *source = (byte *) events[startIdx].buffer;
+		memcpy(dest, source, 12 * sendCnt);
+	}
+	result[4] = startIdx;
+	result[5] = sendCnt;
+	V2_SendResult(result);
+}
+
+void V2_SaveEventHeader(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_SaveEventHeader]"));
+	byte result = 0;
+	byte mode = cmd[6];
+	if (mode == 1) {
+
+	} else if (mode == 2) {
+
+	}
+	V2_SendSingleByteResult(cmd, result);
+}
+
+void V2_SaveEventData(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_SaveEventData]"));
+}
 
 #pragma endregion
