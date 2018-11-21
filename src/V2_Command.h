@@ -84,6 +84,8 @@ bool V2_UseGlobalTime = true;
 
 #define EVENT_HEADER_RESULT_SIZE    16
 #define EVENT_DATA_RESULT_SIZE      128
+#define EVENT_DATA_BATCH_SIZE       8
+
 
 #define V2_CMD_GET_VERSION      0xFF
 

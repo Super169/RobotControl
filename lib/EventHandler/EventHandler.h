@@ -86,8 +86,8 @@ class EventHandler {
 
         EventData *_data;
         bool _reqDevice[ED_MAX_DEVICE + 1];
+        void CheckEventsRequirement();  // mark flag in _reqDevice
 
-        void CheckEventsRequirement();
         bool MatchCondition(CONDITION cod);
 
         size_t FileSize(const char *fileName);

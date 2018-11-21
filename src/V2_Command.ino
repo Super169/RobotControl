@@ -1418,15 +1418,14 @@ void V2_GetEventData(byte *cmd) {
 	byte result[EVENT_DATA_RESULT_SIZE];
 	memset(result, 0, EVENT_DATA_RESULT_SIZE);
 	result[2] = EVENT_DATA_RESULT_SIZE - 4;
+	result[3] = cmd[3];
 	EventHandler *eh;
 	if (cmd[4]) {
 		 eh = &eBusy;
-		 // 91 for busy data
-		 result[3] = 0x91;
+		 result[4] = 0x01;
 	 } else {
 		 eh = &eIdle;
-		 // 90 for idle data
-		 result[3] = 0x90;
+		 result[4] = 0x00;
 	 }
 	EventHandler::EVENT* events;
 	events = eh->Events();
@@ -1435,13 +1434,13 @@ void V2_GetEventData(byte *cmd) {
 	byte sendCnt = 0;
 	if (count > startIdx) {
 		sendCnt = count - startIdx;
-		sendCnt = (sendCnt > 10 ? 10 : sendCnt);
-		byte *dest = (byte *) (result + 6);
+		sendCnt = (sendCnt > EVENT_DATA_BATCH_SIZE ? EVENT_DATA_BATCH_SIZE : sendCnt);
+		byte *dest = (byte *) (result + 16);
 		byte *source = (byte *) events[startIdx].buffer;
 		memcpy(dest, source, 12 * sendCnt);
 	}
-	result[4] = startIdx;
-	result[5] = sendCnt;
+	result[5] = startIdx;
+	result[6] = sendCnt;
 	V2_SendResult(result);
 }
 

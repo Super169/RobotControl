@@ -34,10 +34,11 @@ SimpleWiFiManager SWFM;
 
 #include "OTA.h"
 
+// Version 2.2 - New version for event handler added
 #define VERSION_MAJOR   2
-#define VERSION_MINOR   1
-#define VERSION_SUB     2
-#define VERSION_FIX     1
+#define VERSION_MINOR   2
+#define VERSION_SUB     0
+#define VERSION_FIX     0
 
 // Start a TCP Server on port 6169
 uint16_t port = 6169;
