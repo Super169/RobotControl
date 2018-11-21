@@ -215,7 +215,7 @@ void setup() {
 
 
 	// TODO: for testing only, remove it for production
-	eIdle.LoadDummyData();
+	// eIdle.LoadDummyData();
 
 }
 

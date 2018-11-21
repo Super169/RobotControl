@@ -8,8 +8,17 @@ class RESULT {
 		
 		class ERR {
 			public:
+				// Generic error 
 				static const byte  SPIFFS                   = 1;
 				static const byte  NOT_FOUND				= 2;
+				static const byte  NOT_MATCH				= 3;
+				static const byte  NOT_READY				= 4;
+				static const byte  READ						= 5;
+				static const byte  WRITE					= 6;
+				static const byte  COPY						= 7;
+				static const byte  DATA_OVERFLOW            = 8;
+
+
 				static const byte  PARM_SIZE                = 11;
 				static const byte  PARM_AID_NOT_MATCH       = 12;
 				static const byte  PARM_AD_NAME_SIZE	    = 13;

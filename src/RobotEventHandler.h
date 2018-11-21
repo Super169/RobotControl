@@ -12,6 +12,7 @@
 EventData eData;
 EventHandler eIdle(&eData);
 EventHandler eBusy(&eData);
+EventHandler eTemp(&eData);
 
 void InitEventHandler();
 void RobotEventHandler();

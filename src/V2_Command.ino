@@ -1446,18 +1446,102 @@ void V2_GetEventData(byte *cmd) {
 
 void V2_SaveEventHeader(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_SaveEventHeader]"));
-	byte result = 0;
-	byte mode = cmd[6];
-	if (mode == 1) {
-
-	} else if (mode == 2) {
-
+	byte result = RESULT::ERR::UNKNOWN;
+	byte mode = cmd[5];	
+	byte count = cmd[6];
+	byte action = cmd[7];
+	switch (action) {
+		case 1:
+			// before sending data
+			eTemp.Reset(count);
+			result = RESULT::SUCCESS;
+			break;
+		case 2:
+			result = SaveEventHandler(cmd);
+			break;
+		default:
+			break;
 	}
 	V2_SendSingleByteResult(cmd, result);
 }
 
+byte SaveEventHandler(byte *cmd) {
+	byte mode = cmd[5];	
+	byte count = cmd[6];
+	byte action = cmd[7];	
+	// after data sent, update SPIFFS
+	if (count != eTemp.Count()) return RESULT::ERR::NOT_MATCH;
+	if (!eTemp.IsValid()) {
+		DEBUG.println("eTemp->Not valid");
+		return RESULT::ERR::NOT_READY;
+	}
+	EventHandler* eTarget;
+	eTarget = (mode ? &eBusy : &eIdle);
+	if (eTarget->Clone(eTemp)) {
+		if (eTarget->SaveData(mode ? EVENT_BUSY_FILE : EVENT_IDEL_FILE)) {
+			return RESULT::SUCCESS;
+		}
+		return RESULT::ERR::WRITE;
+	}
+	return RESULT::ERR::COPY;
+}
+
 void V2_SaveEventData(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_SaveEventData]"));
+	byte result = RESULT::ERR::UNKNOWN;
+	byte mode = cmd[4];
+	byte startIdx = cmd[5];
+	byte count = cmd[6];
+	if ((startIdx < eTemp.Count()) && (startIdx + count <= eTemp.Count())) {
+		size_t dataCnt = 12 * count;
+		byte *source = (byte *) (cmd + 16);
+		EventHandler::EVENT* events = eTemp.Events();
+		byte *dest = (byte *) events[startIdx].buffer;
+		memcpy(dest, source, dataCnt);
+
+		/*
+		if (debug) {
+			DEBUG.printf("--Source----\n");
+			for (int i = 0; i < count; i++) {
+				for (int j = 0; j < 12; j++) {
+					DEBUG.printf("%02X ", source[i * 12 + j]);
+				}
+				DEBUG.printf("\n");
+			}
+			DEBUG.printf("------\n");
+
+			DEBUG.printf("--Dest----\n");
+			for (int i = 0; i < count; i++) {
+				for (int j = 0; j < 12; j++) {
+					DEBUG.printf("%02X ", dest[i * 12 + j]);
+				}
+				DEBUG.printf("\n");
+			}
+			DEBUG.printf("------\n");
+
+			eTemp.DumpEvents(&DEBUG);
+		}
+		*/
+		result = RESULT::SUCCESS;
+	} else {
+		result = RESULT::ERR::DATA_OVERFLOW;
+	}
+	V2_SendSingleByteResult(cmd, result);
 }
+
+/*
+
+TODO: Error after sending the folloiwng data
+
+A9 9A 0C 93 00 01 05 01 00 00 00 00 00 00 A6 ED
+
+A9 9A 7C 94 00 00 05 00 00 00 00 00 00 00 00 00 00 02 04 00 00 03 90 01 00 00 00 00 00 01 01 00 02 03 C0 C7 01 0F 00 00 00 01 01 00 02 03 C0 C7 01 05 00 00 00 01 01 00 02 02 40 38 01 06 00 00 00 01 02 00 00 01 01 00 01 0B 00 00 00 01 02 00 00 01 02 00 01 0C 00 00 00 01 02 00 00 01 03 00 01 0D 00 00 00 01 02 00 00 01 04 00 01 0E 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 B6 ED 
+
+A9 9A 0C 93 00 01 05 02 00 00 00 00 00 00 A7 ED
+
+A9 9A 0C 93 01 01 05 01 00 00 00 00 00 00 A7 ED
+
+
+*/
 
 #pragma endregion

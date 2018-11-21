@@ -70,6 +70,13 @@ class EventHandler {
         EventHandler(EventData *data);
         ~EventHandler();
 
+        void ReleaseMemory();
+        void SetCount(uint8_t count);
+        void Reset(uint8_t count);
+        bool FillData(uint8_t startIdx, uint8_t count, byte *buffer);
+        bool Clone(EventHandler source);
+        bool IsValid();
+
         bool LoadData(String filename);
         void LoadDummyData();
         bool SaveData(String filename);
@@ -78,6 +85,8 @@ class EventHandler {
         EVENT CheckEvents();
         uint16_t Count() { return _evtCount; }
         EVENT *Events() { return _events; }
+
+        void DumpEvents(Stream *output);
 
     private:
         uint16_t _evtCount;
