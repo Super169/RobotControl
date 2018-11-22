@@ -52,11 +52,11 @@ void EventHandler::Reset(uint8_t count) {
 
 /*
 */
-bool EventHandler::Clone(EventHandler source) {
+bool EventHandler::Clone(EventHandler *source) {
     ReleaseMemory();
-    SetCount(source.Count());
+    SetCount(source->Count());
     size_t size = _evtCount * sizeof(EVENT);
-    memcpy((void *) _events, (void *) source.Events(), size);
+    memcpy((void *) _events, (void *) source->Events(), size);
     return true;
 }
 

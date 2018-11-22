@@ -1477,7 +1477,28 @@ byte SaveEventHandler(byte *cmd) {
 	}
 	EventHandler* eTarget;
 	eTarget = (mode ? &eBusy : &eIdle);
-	if (eTarget->Clone(eTemp)) {
+
+
+	
+	DEBUG.printf("\n----------\nData dump before clone:\n");
+	DEBUG.printf("eTemp: \n");
+	eTemp.DumpEvents(&DEBUG);
+	DEBUG.printf("eTarget: \n");
+	eTarget->DumpEvents(&DEBUG);
+	DEBUG.printf("----------\n");
+	
+
+	if (eTarget->Clone(&eTemp)) {
+
+
+		DEBUG.printf("\n----------\nData dump after clone:\n");
+		DEBUG.printf("eTemp: \n");
+		eTemp.DumpEvents(&DEBUG);
+		DEBUG.printf("eTarget: \n");
+		eTarget->DumpEvents(&DEBUG);
+		DEBUG.printf("----------\n");
+
+
 		if (eTarget->SaveData(mode ? EVENT_BUSY_FILE : EVENT_IDEL_FILE)) {
 			return RESULT::SUCCESS;
 		}

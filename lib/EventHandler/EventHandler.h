@@ -74,7 +74,7 @@ class EventHandler {
         void SetCount(uint8_t count);
         void Reset(uint8_t count);
         bool FillData(uint8_t startIdx, uint8_t count, byte *buffer);
-        bool Clone(EventHandler source);
+        bool Clone(EventHandler *source);
         bool IsValid();
 
         bool LoadData(String filename);
