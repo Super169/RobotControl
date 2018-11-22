@@ -1,6 +1,9 @@
 #ifndef _robot_h_
 #define _robot_h_
 
+
+#define DISABLE_BATTERY_CHECK
+
 #include "ESP8266WiFi.h"
 #include "WiFiClient.h"
 #include <WiFiUDP.h>

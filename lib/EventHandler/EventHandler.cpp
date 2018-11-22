@@ -112,14 +112,17 @@ bool EventHandler::SaveData(String filename) {
 }
 
 
-bool EventHandler::DeleteFile(const char *fileName) {
+bool EventHandler::DeleteFile(const char *fileName, bool mustExists) {
 	if (!SPIFFS.begin()) return false;
     bool success = false;
     if (SPIFFS.exists(fileName)) {
         if (SPIFFS.remove(fileName)) {
             success = true;
         }
+    } else {
+        if (!mustExists) success = true;
     }
+    SPIFFS.end();
     return success;
 }
 

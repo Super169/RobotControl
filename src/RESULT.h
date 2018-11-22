@@ -17,6 +17,7 @@ class RESULT {
 				static const byte  WRITE					= 6;
 				static const byte  COPY						= 7;
 				static const byte  DATA_OVERFLOW            = 8;
+				static const byte  VERSION_NOT_MATCH		= 9;
 
 
 				static const byte  PARM_SIZE                = 11;

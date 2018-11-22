@@ -12,7 +12,9 @@ void InitEventHandler() {
 
 void RobotEventHandler() {
 
+	#ifndef DISABLE_BATTERY_CHECK
    	CheckVoltage();
+	#endif
 
 	// Check auto-response action (should only play if not in action)
 	if (V2_ActionPlaying) return;

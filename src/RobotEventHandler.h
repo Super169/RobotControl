@@ -9,6 +9,17 @@
 
 #define EVENT_HANDLER_VERSION  1
 
+#define EH_OFFSET_MODE          4
+#define EH_OFFSET_VERSION       5
+#define EH_OFFSET_COUNT         6
+#define EH_OFFSET_ACTION        7
+
+#define ED_OFFSET_MODE          4
+#define ED_OFFSET_STARTIDX      5
+#define ED_OFFSET_COUNT         6
+
+
+
 EventData eData;
 EventHandler eIdle(&eData);
 EventHandler eBusy(&eData);
@@ -20,5 +31,7 @@ void CheckPosition();
 void CheckTouch();
 void CheckVoltage() ;
 byte GetPower(uint16_t v);
+
+
 
 #endif

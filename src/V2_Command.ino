@@ -371,6 +371,9 @@ void V2_SendSingleByteResult(byte *cmd, byte data) {
 	result[2] = 3;
 	result[3] = cmd[3];
 	result[4] = data;
+	if (debug) {
+		DEBUG.printf("SendSingleByteResult: %d\n", data);
+	}
 	V2_SendResult(result);
 }
 
@@ -1397,19 +1400,18 @@ void V2_GetEventHeader(byte *cmd) {
 	memset(result, 0, EVENT_HEADER_RESULT_SIZE);
 	result[2] = EVENT_HEADER_RESULT_SIZE - 4;
 	result[3] = cmd[3];
-	result[5] = EVENT_HANDLER_VERSION;
+	result[EH_OFFSET_VERSION] = EVENT_HANDLER_VERSION;
 	EventHandler *eh;
-	if (cmd[4]) {
+	if (cmd[EH_OFFSET_MODE]) {
 		eh = &eBusy;
-		result[4] = 1;
+		result[EH_OFFSET_MODE] = 1;
 	} else {
 		eh = &eIdle;
-		result[4] = 0;
+		result[EH_OFFSET_MODE] = 0;
 	}
-
 	uint16_t count = eh->Count();
-	result[6] = (count & 0xFF);  // Only support 255 events at this version
-	result[7] = 0;
+	result[EH_OFFSET_COUNT] = (count & 0xFF);  // Only support 255 events at this version
+	result[EH_OFFSET_ACTION] = 0;
 	V2_SendResult(result);
 }
 
@@ -1420,17 +1422,17 @@ void V2_GetEventData(byte *cmd) {
 	result[2] = EVENT_DATA_RESULT_SIZE - 4;
 	result[3] = cmd[3];
 	EventHandler *eh;
-	if (cmd[4]) {
+	if (cmd[ED_OFFSET_MODE]) {
 		 eh = &eBusy;
-		 result[4] = 0x01;
+		 result[ED_OFFSET_MODE] = 0x01;
 	 } else {
 		 eh = &eIdle;
-		 result[4] = 0x00;
+		 result[ED_OFFSET_MODE] = 0x00;
 	 }
 	EventHandler::EVENT* events;
 	events = eh->Events();
 	byte count = eh->Count();
-	byte startIdx = cmd[5];
+	byte startIdx = cmd[ED_OFFSET_STARTIDX];
 	byte sendCnt = 0;
 	if (count > startIdx) {
 		sendCnt = count - startIdx;
@@ -1439,36 +1441,41 @@ void V2_GetEventData(byte *cmd) {
 		byte *source = (byte *) events[startIdx].buffer;
 		memcpy(dest, source, 12 * sendCnt);
 	}
-	result[5] = startIdx;
-	result[6] = sendCnt;
+	result[ED_OFFSET_STARTIDX] = startIdx;
+	result[ED_OFFSET_COUNT] = sendCnt;
 	V2_SendResult(result);
 }
 
 void V2_SaveEventHeader(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_SaveEventHeader]"));
 	byte result = RESULT::ERR::UNKNOWN;
-	byte mode = cmd[5];	
-	byte count = cmd[6];
-	byte action = cmd[7];
-	switch (action) {
-		case 1:
-			// before sending data
-			eTemp.Reset(count);
-			result = RESULT::SUCCESS;
-			break;
-		case 2:
-			result = SaveEventHandler(cmd);
-			break;
-		default:
-			break;
+	byte mode = cmd[EH_OFFSET_MODE];	
+	byte version = cmd[EH_OFFSET_VERSION];	
+	byte count = cmd[EH_OFFSET_COUNT];
+	byte action = cmd[EH_OFFSET_ACTION];
+	if (version == EVENT_HANDLER_VERSION) {
+		switch (action) {
+			case 1:
+				// before sending data
+				eTemp.Reset(count);
+				result = RESULT::SUCCESS;
+				break;
+			case 2:
+				result = SaveEventHandler(cmd);
+				break;
+			default:
+				break;
+		}
+	} else {
+		result = RESULT::ERR::VERSION_NOT_MATCH;
 	}
 	V2_SendSingleByteResult(cmd, result);
 }
 
 byte SaveEventHandler(byte *cmd) {
-	byte mode = cmd[5];	
-	byte count = cmd[6];
-	byte action = cmd[7];	
+	byte mode = cmd[EH_OFFSET_MODE];	
+	byte count = cmd[EH_OFFSET_COUNT];
+	byte action = cmd[EH_OFFSET_ACTION];	
 	// after data sent, update SPIFFS
 	if (count != eTemp.Count()) return RESULT::ERR::NOT_MATCH;
 	if (!eTemp.IsValid()) {
@@ -1479,25 +1486,25 @@ byte SaveEventHandler(byte *cmd) {
 	eTarget = (mode ? &eBusy : &eIdle);
 
 
-	
+	/*
 	DEBUG.printf("\n----------\nData dump before clone:\n");
 	DEBUG.printf("eTemp: \n");
 	eTemp.DumpEvents(&DEBUG);
 	DEBUG.printf("eTarget: \n");
 	eTarget->DumpEvents(&DEBUG);
 	DEBUG.printf("----------\n");
-	
+	*/
 
 	if (eTarget->Clone(&eTemp)) {
 
-
+		/*
 		DEBUG.printf("\n----------\nData dump after clone:\n");
 		DEBUG.printf("eTemp: \n");
 		eTemp.DumpEvents(&DEBUG);
 		DEBUG.printf("eTarget: \n");
 		eTarget->DumpEvents(&DEBUG);
 		DEBUG.printf("----------\n");
-
+		*/
 
 		if (eTarget->SaveData(mode ? EVENT_BUSY_FILE : EVENT_IDEL_FILE)) {
 			return RESULT::SUCCESS;
@@ -1510,9 +1517,9 @@ byte SaveEventHandler(byte *cmd) {
 void V2_SaveEventData(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_SaveEventData]"));
 	byte result = RESULT::ERR::UNKNOWN;
-	byte mode = cmd[4];
-	byte startIdx = cmd[5];
-	byte count = cmd[6];
+	byte mode = cmd[ED_OFFSET_MODE];
+	byte startIdx = cmd[ED_OFFSET_STARTIDX];
+	byte count = cmd[ED_OFFSET_COUNT];
 	if ((startIdx < eTemp.Count()) && (startIdx + count <= eTemp.Count())) {
 		size_t dataCnt = 12 * count;
 		byte *source = (byte *) (cmd + 16);
@@ -1552,7 +1559,7 @@ void V2_SaveEventData(byte *cmd) {
 
 /*
 
-TODO: Error after sending the folloiwng data
+Sample transaction for saving event data
 
 A9 9A 0C 93 00 01 05 01 00 00 00 00 00 00 A6 ED
 

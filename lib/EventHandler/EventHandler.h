@@ -101,7 +101,7 @@ class EventHandler {
 
         size_t FileSize(const char *fileName);
         bool ReadFile(const char *fileName, uint8_t *buffer, size_t size);
-        bool DeleteFile(const char *fileName);
+        bool DeleteFile(const char *fileName, bool mustExists = false);
         bool WriteFile(const char *fileName, uint8_t *buffer, size_t size);
 };
 
