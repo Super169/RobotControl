@@ -3,6 +3,8 @@
 
 
 #define DISABLE_BATTERY_CHECK
+#define NEW_EVENT_HANDLER
+
 
 #include "ESP8266WiFi.h"
 #include "WiFiClient.h"

@@ -21,6 +21,7 @@
 
 #define ED_MAX_DEVICE       6
 #define ED_DATA_SIZE        64
+#define ED_CONTROL_SIZE     8
 
 
 class EventData {
@@ -39,6 +40,10 @@ class EventData {
         ~EventData();
 
         bool IsValid(uint8_t device, uint8_t devId, uint8_t target);
+        bool IsReady(uint8_t device, uint8_t devId, uint8_t target);
+        bool MarkReady(uint8_t device, uint8_t devId, uint8_t target, bool ready);
+        void Clear();
+
 
         bool SetData(uint8_t device, uint8_t devId, uint8_t target, int16_t value);
         int16_t GetData(uint8_t device, uint8_t devId, uint8_t target);
@@ -60,13 +65,20 @@ class EventData {
 
         uint8_t DeviceDataSize(uint8_t device);
 
+        void DumpData(Stream *output);
+
     private:
         const uint8_t _offset[ED_MAX_DEVICE + 1] = {0, ED_OFFSET_MPU, ED_OFFSET_TOUCH, ED_OFFSET_PSXBUTTON, ED_OFFSET_BATTERY_R, ED_OFFSET_BATTERY_L, ED_OFFSET_GPIO };
         const uint8_t _size[ED_MAX_DEVICE + 1] = {0, ED_SIZE_MPU, ED_SIZE_TOUCH, ED_SIZE_PSXBUTTON, ED_SIZE_BATTERY_R, ED_SIZE_BATTERY_L, ED_SIZE_GPIO};
 
         int16_t _data[ED_DATA_SIZE];
+        // Use bool array instead of bit control table at this moment, 64 bytes is OK
+        // byte _ready[ED_CONTROL_SIZE];
+        bool    _ready[ED_DATA_SIZE];
 
         uint8_t Offset(uint8_t device, uint8_t devId, uint8_t target);
+
+        void ShowValue(Stream *output, uint8_t idx, uint8_t mode = 0);
 
 };
 

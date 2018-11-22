@@ -86,6 +86,7 @@ bool EventHandler::LoadData(String filename) {
     _events =  (EVENT *) malloc(size);
     */
     memcpy((void *) _events, (void *) buffer, size);
+    CheckEventsRequirement();
     return true;
 }
 
@@ -201,17 +202,17 @@ void EventHandler::DumpEvents(Stream *output) {
 
 
 bool EventHandler::MatchCondition(CONDITION cond) {
-    if (!_data->IsValid(cond.data.device, cond.data.devId, cond.data.target)) return false;
+    if (!_data->IsReady(cond.data.device, cond.data.devId, cond.data.target)) return false;
     int16_t value = _data->GetData(cond.data.device, cond.data.devId, cond.data.target);
     switch (cond.data.checkMode) {
         case (uint8_t) CHECK_MODE::match:
-            if (value == ED_INVALID_DATA) return false;
+            // if (value == ED_INVALID_DATA) return false;
             return value == cond.data.value;
         case (uint8_t) CHECK_MODE::greater:
-            if (value == ED_INVALID_DATA) return false;
+            // if (value == ED_INVALID_DATA) return false;
             return value > cond.data.value;
         case (uint8_t) CHECK_MODE::less:
-            if (value == ED_INVALID_DATA) return false;
+            // if (value == ED_INVALID_DATA) return false;
             return value < cond.data.value;
         case (uint8_t) CHECK_MODE::button:
             uint16_t status = (value & cond.data.value);
