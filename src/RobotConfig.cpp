@@ -170,11 +170,14 @@ void RobotConfig::setTouchAction(uint8_t id, uint8_t value) {
 
 bool RobotConfig::enableTouch() {
 	if (!_data[RC_ENABLE_TOUCH]) return false;
+    return true;  // For new event handler, touch enabled if events required.
+    /*
 	bool enabled = false;
 	for (uint8_t id = 0; id < RC_TOUCH_ACTION_CNT; id++) {
 		enabled |= _data[RC_TOUCH_ACTION + id];
 	}
 	return enabled;
+    */
 }
 
 uint8_t RobotConfig::touchAction(uint8_t id) {

@@ -1,7 +1,7 @@
 #ifndef _BASE_SERVO_H_
 #define _BASE_SERVO_H_
 
-#include <ESP.h>
+#include <ESP8266WiFi.h>
 #include "MyDebugger.h"
 
 #define BS_TYPE_UNKNOWN 0

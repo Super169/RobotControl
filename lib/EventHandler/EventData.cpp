@@ -83,7 +83,7 @@ void EventData::ShowValue(Stream *output, uint8_t idx, uint8_t mode) {
                 output->printf("%04X ", _data[idx]);
                 break;
             case 2: // Binary
-                output->printf("%16B ", _data[idx]);
+                output->printf("%16b ", _data[idx]);
                 break;
             default: // DEC 
                 output->printf("%d ", _data[idx]);

@@ -53,10 +53,14 @@ void RobotEventHandler() {
 		uint8_t touchMotion = CheckTouchAction();
 		if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
 			eData.SetData(EventData::DEVICE::touch, 0, 0, touchMotion);
+			if (touchMotion) {
+				DEBUG.printf("### Touch motion: %d\n", touchMotion);
+			}
 		}
 	}
 
 	// MPU 6050
+	/*
 	if (millis() > nextMpuCheckMs) {
 		if (mpuExists && eActive->IsRequired((uint8_t) EventData::DEVICE::mpu)) {
 			if (MpuGetData()) {
@@ -67,9 +71,38 @@ void RobotEventHandler() {
 		}
 		nextMpuCheckMs = millis() + (1000 / config.positionCheckFreq());
 	}
+	*/
 
 	// Battery
 	if (millis() > nextBatteryMs) {
+
+		if (config.enableTouch()) {
+			DEBUG.printf("Toutch enabled!\n");
+			if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
+				DEBUG.printf("Toutch required!\n");
+			} else {
+				DEBUG.printf("Toutch not required!\n");
+			}
+		} else {
+			DEBUG.printf("Touch not enabled!\n");
+		}
+
+		if (mpuExists && eActive->IsRequired((uint8_t) EventData::DEVICE::mpu)) {
+			DEBUG.printf("MPU is required\n");
+			if (MpuGetData()) {
+				DEBUG.printf("-> x: %d , y: %d , z: %d \n", ax, ay, az);
+				eData.SetData(EventData::DEVICE::mpu, 0, 0, ax);
+				eData.SetData(EventData::DEVICE::mpu, 0, 1, ay);
+				eData.SetData(EventData::DEVICE::mpu, 0, 2, az);
+			} else {
+				DEBUG.printf("Fail reading MPU data\n");
+			}
+		} else {
+			DEBUG.printf("MPU %sexists\n",  (mpuExists ? "" : "not "));
+			DEBUG.printf("MPU %srequired", (eActive->IsRequired((uint8_t) EventData::DEVICE::mpu) ? "" : "not "));
+		}
+
+
 		if (eActive->IsRequired((uint8_t) EventData::DEVICE::battery_level) ||
 			eActive->IsRequired((uint8_t) EventData::DEVICE::battery_reading)) {
 			uint16_t v = analogRead(0);

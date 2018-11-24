@@ -7,7 +7,11 @@ bool MpuInit(){
   Wire.beginTransmission(MPU_addr);
   uint8_t i2cError = Wire.endTransmission();
   mpuExists = (i2cError == 0);
-  if (DEBUG) DEBUG.printf("i2c 0x%02X - %d\n",MPU_addr,i2cError);
+  if (DEBUG) {
+    DEBUG.printf("\n====================\n");
+    DEBUG.printf("i2c 0x%02X - %d\n",MPU_addr,i2cError);
+    DEBUG.printf("\n====================\n");
+  }
   if (mpuExists) {
     Wire.beginTransmission(MPU_addr);
     Wire.write(0x6B);  // PWR_MGMT_1 register

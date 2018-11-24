@@ -3,6 +3,8 @@
 
 #include "EventData.h"
 #include "EventHandler.h"
+#include "EdsPsxButton.h"
+
 
 #define EVENT_IDEL_FILE "/alpha/event/idle.event"
 #define EVENT_BUSY_FILE "/alpha/event/busy.event"

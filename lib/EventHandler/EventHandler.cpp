@@ -57,6 +57,7 @@ bool EventHandler::Clone(EventHandler *source) {
     SetCount(source->Count());
     size_t size = _evtCount * sizeof(EVENT);
     memcpy((void *) _events, (void *) source->Events(), size);
+    CheckEventsRequirement();
     return true;
 }
 
