@@ -5,6 +5,12 @@ void InitEventHandler() {
 	//if (config.autoStand()) {
 		MpuInit();
 	//}
+	
+	ssbPort.begin(ssbConfig.baud);
+
+	ssb.Begin(&ssbPort, &DEBUG);
+	edsPsxButton.Begin(&ssb, &DEBUG);
+
 	eIdle.LoadData(EVENT_IDEL_FILE);
 	eBusy.LoadData(EVENT_BUSY_FILE);
 
@@ -44,6 +50,10 @@ void RobotEventHandler() {
 		eActive = &eBusy;
 	} else {
 		eActive = &eIdle;
+	}
+
+	if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
+		edsPsxButton.GetData();
 	}
 
 	// Touch
@@ -119,6 +129,8 @@ void RobotEventHandler() {
 		showResult = true;
 		nextBatteryMs = millis() + 5000;
 	}
+
+
 
 
 	// Condition checking

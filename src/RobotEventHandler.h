@@ -20,12 +20,23 @@
 #define ED_OFFSET_STARTIDX      5
 #define ED_OFFSET_COUNT         6
 
+struct {
+    uint8_t rx_pin          = 14;
+    uint8_t tx_pin          = 14;
+    unsigned long baud      = 115200;
+    bool inverse_logic      = false;
+    uint16_t buffer_size    = SSB_BUFFER_SIZE;
+} ssbConfig;
 
+SoftwareSerial ssbPort(ssbConfig.rx_pin, ssbConfig.tx_pin, ssbConfig.inverse_logic, ssbConfig.buffer_size);
 
 EventData eData;
 EventHandler eIdle(&eData);
 EventHandler eBusy(&eData);
 EventHandler eTemp(&eData);
+
+SSBoard ssb;
+EdsPsxButton edsPsxButton(&eData);
 
 void InitEventHandler();
 void RobotEventHandler();

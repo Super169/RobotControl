@@ -19,7 +19,9 @@ class EventDataSource {
         uint8_t _Device = 0;
         uint8_t _DevId = 0;
 
-        void SetNextReportTime() { _nextReportMs = millis() + _reportInterval; }
+        void SetNextReportTime() { 
+            _nextReportMs = millis() + _reportInterval; 
+        }
 
     public:
         EventDataSource() {}
@@ -27,9 +29,9 @@ class EventDataSource {
 
         bool IsEnabled() { return _isEnabled; }
         bool IsReady() { return (_isEnabled && (millis() > _nextReportMs)); }
-        virtual void Initialize(EventData *data);
-        virtual void GetData();
-        virtual void PostHandler();
+        // virtual void Initialize(EventData *data) = 0;
+        virtual void GetData() = 0;
+        virtual void PostHandler() = 0;
 
     private:
 

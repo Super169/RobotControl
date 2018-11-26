@@ -2,6 +2,7 @@
 #define _EDS_PSX_BUTTON_H_
 
 #include "EventDataSource.h"
+#include "SSBoard.h"
 
 /*
 *   Event Data Source for PSX Button
@@ -11,18 +12,17 @@
 */
 
 class EdsPsxButton : public EventDataSource {
-
     public:
-        EdsPsxButton(Stream *busPort, Stream *debugPort);
+        EdsPsxButton(EventData *data);
         ~EdsPsxButton();
 
-        void Initialize(EventData *data) override;
+        // void Initialize(EventData *data) override;
+        void Begin(SSBoard *ssb, Stream *debugPort);
         void GetData() override;
         void PostHandler() override;
 
     private:
-        Stream *_bus = NULL;
-
+        SSBoard *_ssb;
 };
 
 #endif
