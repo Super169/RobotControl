@@ -140,10 +140,12 @@ void MP3TF16P::playFolderFile(byte folder, byte seq) {
 	sendCommand();    
 }
 
-void MP3TF16P::playMp3File(byte seq) {
+// 7E FF 06 12 00 xx xx ?? ?? EF
+void MP3TF16P::playMp3File(uint16_t seq) {
 	resetCommandBuffer();
 	_buf[3] = 0x12;
-	_buf[6] = seq;
+	_buf[5] = seq >> 8;
+	_buf[6] = seq & 0xFF;
 	sendCommand();    
 }
 

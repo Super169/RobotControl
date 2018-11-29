@@ -146,6 +146,11 @@ bool EventHandler::IsRequired(uint8_t device) {
     return false;
 }
 
+bool EventHandler::LastEventRelated(uint8_t device) {
+    if (device <= ED_MAX_DEVICE) return _lastEventRelated[device];
+    return false;
+}
+
 void EventHandler::CheckEventsRequirement() {
     
     for (int i = 0; i < ED_MAX_DEVICE + 1; i++) _reqDevice[i] = false;
@@ -162,6 +167,7 @@ void EventHandler::CheckEventsRequirement() {
 EventHandler::EVENT EventHandler::CheckEvents() {
     EVENT event;
     memset((void *) event.buffer, 0, sizeof(EVENT));
+    for (int i = 0; i < ED_MAX_DEVICE + 1; i++) _lastEventRelated[i] = false;
 
     bool skipEvent = false;
     for (uint16_t i = 0; i < _evtCount; i++) {
@@ -174,6 +180,17 @@ EventHandler::EVENT EventHandler::CheckEvents() {
                     // just for safety, make a copy of event object for return
                     // Or it can just return _events[i];
                     memcpy((void *) event.buffer, (void *) _events[i].buffer, sizeof(EVENT));
+                    // Check events for related devices
+                    _lastEventRelated[i] = true;
+                    uint16_t j = i - 1;
+                    while (j >= 0) {
+                        if (_events[j].data.type == (uint8_t) EVENT_TYPE::preCond) {
+                            _lastEventRelated[j] = true;
+                        } else {
+                            break;
+                        }
+                        j--;
+                    }
                     return event;
                 }
             } else {

@@ -47,17 +47,35 @@ bool SSBoard::IsReturnCompleted() {
     } 
     // At least 6 byte: A8 8A 02 {cmd} {sum} ED
     if (_retBuf.available() < 6) return false;
-    byte count 
-    
-
-}
-
-bool SSBoard::SendCommand(bool expectReturn) {
-    _buf[0] = 0xA8;
-    _buf[1] = 0x8A;
-    byte count = _buf[2];
+    byte count = _retBuf.peek(2);
+    if (_retBuf.available() < count + 4) return false;
+    if (_retBuf.peek(count + 3) != 0xED) {
+        // Skip header and check again later
+        _retBuf.skip(2);
+        return false;
+    }
+    // checksume
 	uint16_t sum = 0;
 	for (int i = 0; i < count; i++) {
+		sum += _buf[2 + i];
+	}
+    byte checkSum = sum & 0xFF;
+    if (checkSum != _retBuf.peek(count + 2)) {
+        // Skip header and check again later
+        _retBuf.skip(2);
+        return false;
+    }
+    return true;
+}
+
+bool SSBoard::SendCommand(byte *cmd, bool expectReturn) {
+    _buf[0] = 0xA8;
+    _buf[1] = 0x8A;
+    byte count = cmd[2];
+    _buf[2] = cmd[2];
+	uint16_t sum = 0;
+	for (int i = 0; i < count; i++) {
+        _buf[2 + i] = cmd[2 + i];
 		sum += _buf[2 + i];
 	}
     _buf[count+2] = sum;
@@ -92,12 +110,17 @@ bool SSBoard::CheckReturn() {
         _dbg.printf("%08ld SSB IN>>>", millis());
     }
 	// 10 ms is almost good for 10byte data
+    bool returnCompleted = false;
 	delay(10);
     while (_bus->available()) {
         ch =  (byte) _bus->read();
         _retBuf.write(ch);
         if (_enableDebug) {
 			_dbg.printf(" %02X", ch);
+        }
+        if (IsReturnCompleted()) {
+            returnCompleted = true;
+            break;
         }
 		// extra delay to make sure transaction completed 
 		// ToDo: check data end?
@@ -106,5 +129,5 @@ bool SSBoard::CheckReturn() {
 		if (!_bus->available()) delay(2);
     }
     if (_enableDebug) _dbg.printf("\n");
-    return true;
+    return returnCompleted;
 }

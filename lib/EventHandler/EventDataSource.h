@@ -12,6 +12,8 @@ class EventDataSource {
         MyDebugger _dbg;
 
         bool _isEnabled = false;
+        bool _enableDebug = true;
+        bool _lastDataReady = false;
         unsigned long _lastReportMS = 0;
         unsigned long _reportInterval = 1000;   // by default, each sensor will be reported once per second
         unsigned long _nextReportMs = 0;
@@ -31,7 +33,7 @@ class EventDataSource {
         bool IsReady() { return (_isEnabled && (millis() > _nextReportMs)); }
         // virtual void Initialize(EventData *data) = 0;
         virtual void GetData() = 0;
-        virtual void PostHandler() = 0;
+        virtual void PostHandler(bool eventMatched, bool isRelated) = 0;
 
     private:
 

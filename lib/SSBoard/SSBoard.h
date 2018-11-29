@@ -20,6 +20,7 @@ class SSBoard {
         void Begin(Stream *busPort, Stream *debugPort);
         void SetEnableTxCalback(void (*enableTxCallback)(bool));
 
+        bool SendCommand(byte *cmd, bool expectReturn);
         Buffer *ReturnBuffer() { return &_retBuf; }
 
     private:
@@ -38,9 +39,8 @@ class SSBoard {
 
         void ShowCommand();
         void ClearRxBuffer();
-        bool SendCommand(bool expectReturn);
         bool CheckReturn();
-        void IsReturnCompleted();
+        bool IsReturnCompleted();
 };
 
 #endif

@@ -92,4 +92,10 @@ bool V2_UseGlobalTime = true;
 bool deepDebug = true;
 
 
+void ActionStopPlay();
+void ActionPlayAction(byte actionId);
+void ActionMp3Stop();
+void ActionMp3PlayMp3(byte fileSeq);
+void ActionMp3PlayFile(byte folderSeq, byte fileSeq);
+
 #endif

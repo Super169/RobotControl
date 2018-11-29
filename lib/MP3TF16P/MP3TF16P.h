@@ -31,7 +31,7 @@ class MP3TF16P {
         inline void pause()         { sendSingleByteCommand(0x0E); }
         void playFolderFile(byte folder, byte seq); // 0x0F
         inline void playAllLoop()   { sendSingleByteCommand(0x11); }
-        void playMp3File(byte seq); // 0x12
+        void playMp3File(uint16_t seq); // 0x12
         void playAdFile(byte seq);  // 0x13
         inline void stopPlayAd()    { sendSingleByteCommand(0x15); }
         inline void stop()          { sendSingleByteCommand(0x16); }

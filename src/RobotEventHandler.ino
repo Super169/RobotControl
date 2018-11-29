@@ -52,6 +52,7 @@ void RobotEventHandler() {
 		eActive = &eIdle;
 	}
 
+	// This part can be changed to use a loop if all data source changed to EventDataSource type
 	if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
 		edsPsxButton.GetData();
 	}
@@ -151,7 +152,9 @@ void RobotEventHandler() {
 	*/
 
 	// Action	
+	bool eventMatched = false;
 	if (event.data.type) {
+		eventMatched = true;
 		switch (action.data.type) {
 
             case (uint8_t) EventHandler::ACTION_TYPE::na:
@@ -159,19 +162,28 @@ void RobotEventHandler() {
 	
             case (uint8_t) EventHandler::ACTION_TYPE::playAction:
                 if (debug) DEBUG.printf("Play action %d \n", action.data.parm_1);
+				ActionPlayAction(action.data.parm_1);
                 break;
 
             case (uint8_t) EventHandler::ACTION_TYPE::stopAction:
-                if (debug) DEBUG.println("Stop action");
+                if (debug) DEBUG.printf("Stop action\n");
+				ActionStopPlay();
                 break;
 
             case (uint8_t) EventHandler::ACTION_TYPE::mp3PlayMp3:
                 if (debug) DEBUG.printf("Play mp3 %d\n", action.u16data.parm_u16);
+				ActionMp3PlayMp3(action.u16data.parm_u16);
                 break;
 
             case (uint8_t) EventHandler::ACTION_TYPE::mp3PlayFile:
                 if (debug) DEBUG.printf("Play mp3 at  %d : %d \n", action.data.parm_1, action.data.parm_2);
+				ActionMp3PlayFile(action.data.parm_1, action.data.parm_2);
                 break;
+
+			case (uint8_t) EventHandler::ACTION_TYPE::mp3Stop:
+                if (debug) DEBUG.printf("Stop play MP3\n");
+				ActionMp3Stop();
+
 
             case (uint8_t) EventHandler::ACTION_TYPE::gpio:
                 if (debug) DEBUG.printf("Set gpio %d to %s\n", action.data.parm_1, 
@@ -184,6 +196,9 @@ void RobotEventHandler() {
 		}
 	}
 
+	if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
+		edsPsxButton.PostHandler(eventMatched, eActive->LastEventRelated((uint8_t) EventData::DEVICE::touch));
+	}
 
 #else
 

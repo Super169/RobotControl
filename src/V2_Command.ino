@@ -949,6 +949,8 @@ void V2_Mp3PlayFile(byte *cmd) {
 	if (!config.mp3Enabled()) return;
 	byte folderSeq = cmd[4];
 	byte fileSeq = cmd[5];
+	ActionMp3PlayFile(folderSeq, fileSeq);
+	/*
 	mp3.begin();
 	if (folderSeq == 0xff) {
 		mp3.playFile(fileSeq);
@@ -956,6 +958,7 @@ void V2_Mp3PlayFile(byte *cmd) {
 		mp3.playFolderFile(folderSeq, fileSeq);
 	}
 	mp3.end();
+	*/
 	V2_SendSingleByteResult(cmd, 0);
 }
 
@@ -963,9 +966,12 @@ void V2_Mp3PlayMp3(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_Mp3PlayMp3]"));
 	if (!config.mp3Enabled()) return;
 	byte fileSeq = cmd[4];
+	ActionMp3PlayMp3((uint16_t) fileSeq);
+	/*
 	mp3.begin();
 	mp3.playMp3File(fileSeq);
 	mp3.end();
+	*/
 	V2_SendSingleByteResult(cmd, 0);
 }
 
@@ -1573,3 +1579,44 @@ A9 9A 0C 93 01 01 05 01 00 00 00 00 00 00 A7 ED
 */
 
 #pragma endregion
+
+
+/* Commond action shared with EventHandler
+
+
+*/
+void ActionPlayAction(byte actionId) {
+	byte cmd[] = {0x9A, 0x9A, 0x03, 0x41, actionId , 0x00 ,0xED};
+	V2_GoAction(actionId, false, cmd);
+}
+
+void ActionStopPlay() {
+	V2_ResetAction();
+	ActionMp3Stop();
+}
+
+void ActionMp3PlayMp3(uint16_t fileSeq) {
+	mp3.begin();
+	mp3.playMp3File(fileSeq);
+	mp3.end();
+}
+
+void ActionMp3PlayFile(byte folderSeq, byte fileSeq) {
+	mp3.begin();
+	if (folderSeq == 0xff) {
+		mp3.playFile(fileSeq);
+	} else {
+		mp3.playFolderFile(folderSeq, fileSeq);
+	}
+	mp3.end();
+}
+
+void ActionMp3Stop() {
+	V2_ResetAction();
+	if (config.mp3Enabled()) {
+		mp3.begin();
+		mp3.stop();
+		mp3.end();
+	}	
+}
+
