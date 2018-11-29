@@ -10,6 +10,7 @@ void InitEventHandler() {
 
 	ssb.Begin(&ssbPort, &DEBUG);
 	edsPsxButton.Begin(&ssb, &DEBUG);
+	edsBattery.Begin(config.minVoltage(), config.maxVoltage(), config.voltageAlarmInterval() * 1000, &DEBUG);
 
 	eIdle.LoadData(EVENT_IDEL_FILE);
 	eBusy.LoadData(EVENT_BUSY_FILE);
@@ -55,6 +56,11 @@ void RobotEventHandler() {
 	// This part can be changed to use a loop if all data source changed to EventDataSource type
 	if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
 		edsPsxButton.GetData();
+	}
+
+	if (eActive->IsRequired((uint8_t) EventData::DEVICE::battery)) {
+		edsBattery.GetData();
+	} else {
 	}
 
 	// Touch
@@ -114,19 +120,7 @@ void RobotEventHandler() {
 		}
 
 
-		if (eActive->IsRequired((uint8_t) EventData::DEVICE::battery_level) ||
-			eActive->IsRequired((uint8_t) EventData::DEVICE::battery_reading)) {
-			uint16_t v = analogRead(0);
-			DEBUG.printf("Battery reading: %d\n", v);
-			eData.SetData(EventData::DEVICE::battery_reading, 0, 0, v);
-			if (eActive->IsRequired((uint8_t) EventData::DEVICE::battery_level)) {
-				int iPower = GetPower(v);
-				DEBUG.printf("Battery level: %d\n", iPower);
-				eData.SetData(EventData::DEVICE::battery_level, 0, 0, iPower);
-			}
-		} else {
-			DEBUG.printf("Battery is not required: %d\n", eActive->Count());
-		}
+
 		showResult = true;
 		nextBatteryMs = millis() + 5000;
 	}
@@ -199,6 +193,12 @@ void RobotEventHandler() {
 	if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
 		edsPsxButton.PostHandler(eventMatched, eActive->LastEventRelated((uint8_t) EventData::DEVICE::touch));
 	}
+
+
+	if (eActive->IsRequired((uint8_t) EventData::DEVICE::battery)) {
+		edsBattery.PostHandler(eventMatched, eActive->LastEventRelated((uint8_t) EventData::DEVICE::battery));
+	}
+
 
 #else
 

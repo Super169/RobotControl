@@ -18,6 +18,7 @@ void EdsPsxButton::Begin(SSBoard *ssb, Stream *debugPort, byte devId) {
     _dbg.setOutput(debugPort);
     _Device = (uint8_t) EventData::DEVICE::psx_button;
     _DevId = devId;
+    _isEnabled = true;
 }
 
 void EdsPsxButton::GetData() {

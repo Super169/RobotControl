@@ -7,15 +7,13 @@
 #define ED_SIZE_MPU         3
 #define ED_SIZE_TOUCH       1
 #define ED_SIZE_PSXBUTTON   1
-#define ED_SIZE_BATTERY_R   1
-#define ED_SIZE_BATTERY_L   1
+#define ED_SIZE_BATTERY     2
 #define ED_SIZE_GPIO        20
 
 #define ED_OFFSET_MPU       0
 #define ED_OFFSET_TOUCH     3
 #define ED_OFFSET_PSXBUTTON 4
-#define ED_OFFSET_BATTERY_R 5
-#define ED_OFFSET_BATTERY_L 6
+#define ED_OFFSET_BATTERY   5
 #define ED_OFFSET_GPIO      7
 
 
@@ -29,11 +27,15 @@ class EventData {
     public:
 
         enum class DEVICE : uint8_t {
-            mpu = 1, touch = 2, psx_button = 3, battery_reading = 4, battery_level = 5, gpio = 6
+            mpu = 1, touch = 2, psx_button = 3, battery = 4, gpio = 5
         };
 
         enum class MPU_TARGET : uint8_t {
-            x = 1, y = 2, z = 3
+            x = 0, y = 1, z = 2
+        };
+
+        enum class BATTERY_TARGET : uint8_t {
+            reading = 0, level = 1
         };
 
         EventData();
@@ -68,8 +70,8 @@ class EventData {
         void DumpData(Stream *output);
 
     private:
-        const uint8_t _offset[ED_MAX_DEVICE + 1] = {0, ED_OFFSET_MPU, ED_OFFSET_TOUCH, ED_OFFSET_PSXBUTTON, ED_OFFSET_BATTERY_R, ED_OFFSET_BATTERY_L, ED_OFFSET_GPIO };
-        const uint8_t _size[ED_MAX_DEVICE + 1] = {0, ED_SIZE_MPU, ED_SIZE_TOUCH, ED_SIZE_PSXBUTTON, ED_SIZE_BATTERY_R, ED_SIZE_BATTERY_L, ED_SIZE_GPIO};
+        const uint8_t _offset[ED_MAX_DEVICE + 1] = {0, ED_OFFSET_MPU, ED_OFFSET_TOUCH, ED_OFFSET_PSXBUTTON, ED_OFFSET_BATTERY, ED_OFFSET_GPIO };
+        const uint8_t _size[ED_MAX_DEVICE + 1] = {0, ED_SIZE_MPU, ED_SIZE_TOUCH, ED_SIZE_PSXBUTTON, ED_SIZE_BATTERY, ED_SIZE_GPIO};
 
         int16_t _data[ED_DATA_SIZE];
         // Use bool array instead of bit control table at this moment, 64 bytes is OK

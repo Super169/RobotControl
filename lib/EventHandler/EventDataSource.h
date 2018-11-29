@@ -5,6 +5,10 @@
 #include "EventData.h"
 #include "MyDebugger.h"
 
+// Default setting for continue check and delay check
+#define EDS_CONTINUE_CHECK_MS   10
+#define EDS_DELAY_CHECK_MS      1000
+
 class EventDataSource {
 
     protected:

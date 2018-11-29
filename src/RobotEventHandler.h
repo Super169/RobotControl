@@ -4,6 +4,7 @@
 #include "EventData.h"
 #include "EventHandler.h"
 #include "EdsPsxButton.h"
+#include "EdsBattery.h"
 
 
 #define EVENT_IDEL_FILE "/alpha/event/idle.event"
@@ -37,6 +38,7 @@ EventHandler eTemp(&eData);
 
 SSBoard ssb;
 EdsPsxButton edsPsxButton(&eData);
+EdsBattery edsBattery(&eData);
 
 void InitEventHandler();
 void RobotEventHandler();
