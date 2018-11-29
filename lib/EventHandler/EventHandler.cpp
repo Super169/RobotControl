@@ -182,7 +182,8 @@ EventHandler::EVENT EventHandler::CheckEvents() {
                     memcpy((void *) event.buffer, (void *) _events[i].buffer, sizeof(EVENT));
                     // Check events for related devices
                     _lastEventRelated[i] = true;
-                    uint16_t j = i - 1;
+                    
+                    int16_t j = i - 1;
                     while (j >= 0) {
                         if (_events[j].data.type == (uint8_t) EVENT_TYPE::preCond) {
                             _lastEventRelated[j] = true;
@@ -191,6 +192,7 @@ EventHandler::EVENT EventHandler::CheckEvents() {
                         }
                         j--;
                     }
+                    
                     return event;
                 }
             } else {

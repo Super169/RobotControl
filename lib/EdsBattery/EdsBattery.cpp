@@ -25,19 +25,17 @@ void EdsBattery::GetData() {
     int iPower = GetPower(v);
 
     _dbg.msg("Battery: %d, %d, %d", _Device, _DevId, (uint8_t) EventData::BATTERY_TARGET::reading);
-    _dbg.msg("Battery reading: %d", v);
+    _dbg.msg("Battery reading: %d (%d - %d)", v, _minVoltage, _maxVoltage);
     _dbg.msg("Battery level: %d", iPower);
 
-    _data->SetData(_Device, _DevId, (uint8_t) EventData::BATTERY_TARGET::reading, v);
-    _dbg.msg("\n\n\nSetData completed\n\n");
 
-/*
+
+    _data->SetData(_Device, _DevId, (uint8_t) EventData::BATTERY_TARGET::reading, v);
     _data->SetData(_Device, _DevId, (uint8_t) EventData::BATTERY_TARGET::level, iPower);
     _lastDataReady = true;
     _lastReportMS = millis();
     _lastReportReading = v;
     _lastReportLevel = iPower;
-*/    
 }
 
 byte EdsBattery::GetPower(uint16_t v) {

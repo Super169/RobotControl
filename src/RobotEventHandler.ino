@@ -147,6 +147,7 @@ void RobotEventHandler() {
 
 	// Action	
 	bool eventMatched = false;
+	
 	if (event.data.type) {
 		eventMatched = true;
 		switch (action.data.type) {
@@ -198,7 +199,6 @@ void RobotEventHandler() {
 	if (eActive->IsRequired((uint8_t) EventData::DEVICE::battery)) {
 		edsBattery.PostHandler(eventMatched, eActive->LastEventRelated((uint8_t) EventData::DEVICE::battery));
 	}
-
 
 #else
 
