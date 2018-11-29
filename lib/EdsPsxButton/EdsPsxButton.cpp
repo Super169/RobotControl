@@ -19,6 +19,8 @@ void EdsPsxButton::Begin(SSBoard *ssb, Stream *debugPort, byte devId) {
     _Device = (uint8_t) EventData::DEVICE::psx_button;
     _DevId = devId;
     _isEnabled = true;
+
+    _dbg.enableDebug(false);
 }
 
 void EdsPsxButton::GetData() {
@@ -30,10 +32,10 @@ void EdsPsxButton::GetData() {
         // Data returned: A8 8A 0B 01 ?? ?? ?? {1} {2} ....
         uint16_t data;
         byte *button = (byte *) &data;
-        button[0] = result->peek(7);
-        button[1] = result->peek(8);
+        button[0] = result->peek(8);
+        button[1] = result->peek(7);
         _data->SetData(_Device, _DevId, 0, data);
-        _dbg.msg("PSX Button: %02X %02X => %04X", button[0], button[1], data);
+        if (data != 0xFFFF) _dbg.msg("PSX Button: %02X %02X => %04X", button[0], button[1], data);
         _lastDataReady = true;
         _lastReportMS = millis();
         _lastReportValue = data;
@@ -45,11 +47,9 @@ void EdsPsxButton::GetData() {
 *   PostHandler
 *       Can wait longer if data reported and handled
 */
-
 void EdsPsxButton::PostHandler(bool eventMatched, bool isRelated) {
+    if (!IsReady()) return;
     if ((_lastDataReady) && (isRelated)) {
         _nextReportMs = millis() + EPB_DELAY_CHECK_MS;
-    } else {
-        _nextReportMs = millis() + EPB_CONTINUE_CHECK_MS;
     }
 }

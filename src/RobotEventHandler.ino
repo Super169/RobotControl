@@ -9,6 +9,7 @@ void InitEventHandler() {
 	ssbPort.begin(ssbConfig.baud);
 
 	ssb.Begin(&ssbPort, &DEBUG);
+	ssb.SetEnableTxCalback(EnableSsbTxCallBack);
 	edsPsxButton.Begin(&ssb, &DEBUG);
 	edsBattery.Begin(config.minVoltage(), config.maxVoltage(), config.voltageAlarmInterval() * 1000, &DEBUG);
 
@@ -54,7 +55,7 @@ void RobotEventHandler() {
 	}
 
 	// This part can be changed to use a loop if all data source changed to EventDataSource type
-	if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
+	if (eActive->IsRequired((uint8_t) EventData::DEVICE::psx_button)) {
 		edsPsxButton.GetData();
 	}
 
@@ -96,9 +97,9 @@ void RobotEventHandler() {
 		if (config.enableTouch()) {
 			DEBUG.printf("Toutch enabled!\n");
 			if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
-				DEBUG.printf("Toutch required!\n");
+				DEBUG.printf("Touch required!\n");
 			} else {
-				DEBUG.printf("Toutch not required!\n");
+				DEBUG.printf("Touch not required!\n");
 			}
 		} else {
 			DEBUG.printf("Touch not enabled!\n");
@@ -129,16 +130,36 @@ void RobotEventHandler() {
 
 
 	// Condition checking
+	/*
+	if (eData.IsReady((uint8_t) EventData::DEVICE::psx_button, 0, 0)) {
+		uint16_t data = eData.GetData(EventData::DEVICE::psx_button, 0, 0);
+		if (data != 0xFFFF) {
+			DEBUG.printf("PSB Button: %04X\n", data);
+			eData.DumpData(&DEBUG);
+		}
+	}
+	*/
+
+	// TODO: Force button check
+	/*
+	uint16_t data;
+	byte *button = (byte *) &data;
+	button[0] = 0xFB;
+	button[1] = 0xFF;
+	eData.SetData(EventData::DEVICE::psx_button, 0, 0, data);
+	*/
+	// ------------------------------------------------------------
 
 	EventHandler::EVENT event = eActive->CheckEvents();
     EventHandler::ACTION action = event.data.action;
 
+	/*
 	if (showResult) {
 		eData.DumpData(&DEBUG);
 		eActive->DumpEvents(&DEBUG);
 		DEBUG.printf("Event matched: %d\n", event.data.type);
 	}
-
+	*/
 	// Post checking control 
 	/*
 	*	Need to think about how to prevent keep triggering the same event as condition may not changed
@@ -149,6 +170,13 @@ void RobotEventHandler() {
 	bool eventMatched = false;
 	
 	if (event.data.type) {
+
+		eData.DumpData(&DEBUG);
+		eActive->DumpEvents(&DEBUG);
+		DEBUG.printf("Event matched: %d\n", event.data.type);
+		
+
+
 		eventMatched = true;
 		switch (action.data.type) {
 
@@ -191,8 +219,8 @@ void RobotEventHandler() {
 		}
 	}
 
-	if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
-		edsPsxButton.PostHandler(eventMatched, eActive->LastEventRelated((uint8_t) EventData::DEVICE::touch));
+	if (eActive->IsRequired((uint8_t) EventData::DEVICE::psx_button)) {
+		edsPsxButton.PostHandler(eventMatched, eActive->LastEventRelated((uint8_t) EventData::DEVICE::psx_button));
 	}
 
 
@@ -295,4 +323,14 @@ byte GetPower(uint16_t v) {
 	if (iPower > 100) iPower = 100;
 	if (iPower < 0) iPower = 0;
 	return (byte) iPower;
+}
+
+
+void EnableSsbTxCallBack(bool send) {
+    if (send) {
+        ssbPort.enableTx(true); 
+		delayMicroseconds(10);
+    } else {
+        ssbPort.enableTx(false);
+    }
 }

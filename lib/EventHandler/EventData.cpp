@@ -68,7 +68,7 @@ void EventData::DumpData(Stream *output) {
     output->printf("\nTouch: ");
     ShowValue(output, 3, 0);
     output->printf("\nPSX: ");
-    ShowValue(output, 4, 2);
+    ShowValue(output, 4, 1);
     output->printf("\nBattery Reading: ");
     ShowValue(output, 5, 0);
     output->printf("\nBattery Level: ");
@@ -77,10 +77,12 @@ void EventData::DumpData(Stream *output) {
 }
 
 void EventData::ShowValue(Stream *output, uint8_t idx, uint8_t mode) {
+    uint16_t u16;
     if (_ready[idx]) {
         switch (mode) {
             case 1: // HEX
-                output->printf("%04X ", _data[idx]);
+                u16 = _data[idx];
+                output->printf("%04X ", u16);
                 break;
             case 2: // Binary
                 output->printf("%16b ", _data[idx]);

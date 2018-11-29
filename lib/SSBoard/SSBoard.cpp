@@ -25,11 +25,12 @@ void SSBoard::EnableTx(bool mode) {
 
 void SSBoard::ShowCommand()  {
     if (!_enableDebug) return;
-    _dbg.printf("%08ld: SSBoard OUT>>", millis());
-    for (int i = 0; i < 10; i++) {
-        _dbg.printf(" %02X", _buf[i]);
+    _dbg.msgh("SSB OUT>>");
+    byte count = _buf[2] + 4;
+    for (int i = 0; i < count; i++) {
+        _dbg.msgf(" %02X", _buf[i]);
     }
-    _dbg.printf("\n");
+    _dbg.msgf("\n");
 }
 
 
@@ -57,10 +58,11 @@ bool SSBoard::IsReturnCompleted() {
     // checksume
 	uint16_t sum = 0;
 	for (int i = 0; i < count; i++) {
-		sum += _buf[2 + i];
+		sum += _retBuf.peek(2 + i);
 	}
     byte checkSum = sum & 0xFF;
     if (checkSum != _retBuf.peek(count + 2)) {
+        // _dbg.msg("Sum not match: %02X vs %02X", checkSum, _retBuf.peek(count + 2));
         // Skip header and check again later
         _retBuf.skip(2);
         return false;
@@ -86,7 +88,7 @@ bool SSBoard::SendCommand(byte *cmd, bool expectReturn) {
 	ClearRxBuffer();
 	_bus->flush();
 	EnableTx(true);
-	_bus->write(_buf, 10);
+	_bus->write(_buf, count + 4);
 	EnableTx(false);
 	if (expectReturn) return CheckReturn();
 	ClearRxBuffer();
@@ -94,20 +96,20 @@ bool SSBoard::SendCommand(byte *cmd, bool expectReturn) {
 }
 
 bool SSBoard::CheckReturn() {
-    if (_enableDebug) _dbg.msg("SSB CheckReturn", millis());
+    // if (_enableDebug) _dbg.msg("SSB CheckReturn");
     unsigned long startMs = millis();
     ResetReturnBuffer();
     byte ch;
     while ( ((millis() - startMs) < SSB_COMMAND_WAIT_TIME) && (!_bus->available()) ) delay(1);
 	// unsigned long endMs = millis();
-	// if (_enableDebug) _dbg.printf("SSB wait return from %d to %d\n", startMs, endMs);
+	// if (_enableDebug) _dbg.msgf("SSB wait return from %d to %d\n", startMs, endMs);
 
     if (!_bus->available()) {
 	    if (_enableDebug) _dbg.msg("SSB no return after %d ms", SSB_COMMAND_WAIT_TIME);
 		return false;
 	}
     if (_enableDebug) {
-        _dbg.printf("%08ld SSB IN>>>", millis());
+        _dbg.msgh("SSB IN>>>");
     }
 	// 10 ms is almost good for 10byte data
     bool returnCompleted = false;
@@ -116,7 +118,7 @@ bool SSBoard::CheckReturn() {
         ch =  (byte) _bus->read();
         _retBuf.write(ch);
         if (_enableDebug) {
-			_dbg.printf(" %02X", ch);
+			_dbg.msgf(" %02X", ch);
         }
         if (IsReturnCompleted()) {
             returnCompleted = true;
@@ -128,6 +130,6 @@ bool SSBoard::CheckReturn() {
 		//       1ms is already more than enough.
 		if (!_bus->available()) delay(2);
     }
-    if (_enableDebug) _dbg.printf("\n");
+    if (_enableDebug) _dbg.msgf("\n");
     return returnCompleted;
 }

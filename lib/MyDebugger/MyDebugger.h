@@ -25,6 +25,8 @@ class MyDebugger : public Stream {
 		void flush() { return; }
 
 		void msg(const char * format, ...) __attribute__ ((format (printf, 2, 3)));
+		void msgf(const char * format, ...) __attribute__ ((format (printf, 2, 3)));
+		void msgh(const char * format, ...) __attribute__ ((format (printf, 2, 3)));  // Shoudl be combined with msg, but need to change program, do it in next version
 
 		size_t write(uint8_t byte);
 		using Print::write;		// Since Strem has not define for write, must bring from Print

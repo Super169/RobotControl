@@ -26,7 +26,7 @@ class SSBoard {
     private:
         Stream *_bus = NULL;
         MyDebugger _dbg;
-        bool _enableDebug = true;
+        bool _enableDebug = false;
         
         void (*_enableTxCallback)(bool) = NULL;
         void EnableTx(bool);

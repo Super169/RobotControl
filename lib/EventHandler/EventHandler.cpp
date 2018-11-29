@@ -235,7 +235,8 @@ bool EventHandler::MatchCondition(CONDITION cond) {
             // if (value == ED_INVALID_DATA) return false;
             return value < cond.data.value;
         case (uint8_t) CHECK_MODE::button:
-            uint16_t status = (value & cond.data.value);
+            uint16_t status = (value & ~cond.data.value);
+            // Serial1.printf("----------- Check button: %04X vs %04X => %04X\n", value, cond.data.value, status);
             return (status == 0);
     }
     return false;
