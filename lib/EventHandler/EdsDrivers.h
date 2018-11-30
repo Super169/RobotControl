@@ -3,5 +3,6 @@
 
 #include <drivers/EdsBattery/EdsBattery.h>
 #include <drivers/EdsPsxButton/EdsPsxButton.h>
+#include <drivers/EdsTouch/EdsTouch.h>
 
 #endif

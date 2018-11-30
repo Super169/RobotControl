@@ -25,19 +25,17 @@ class EventDataSource {
         uint8_t _Device = 0;
         uint8_t _DevId = 0;
 
-        void SetNextReportTime() { 
-            _nextReportMs = millis() + _reportInterval; 
-        }
+        void SetNextReportTime();
 
     public:
         EventDataSource() {}
         ~EventDataSource() {}
 
-        bool IsEnabled() { return _isEnabled; }
-        bool IsReady() { return (_isEnabled && (millis() > _nextReportMs)); }
-        // virtual void Initialize(EventData *data) = 0;
+        bool IsEnabled();
+        bool IsReady();
+        void Begin(bool isEnabled, Stream *debugPort, byte devId = 0);
         virtual void GetData() = 0;
-        virtual void PostHandler(bool eventMatched, bool isRelated) = 0;
+        virtual void PostHandler(bool eventMatched, bool isRelated);
 
     private:
 

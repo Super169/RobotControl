@@ -13,13 +13,8 @@ void EdsPsxButton::Initialize(EventData *data) {
 }
 */
 
-void EdsPsxButton::Begin(SSBoard *ssb, Stream *debugPort, byte devId) {
+void EdsPsxButton::Setup(SSBoard *ssb) {
     _ssb = ssb;
-    _dbg.setOutput(debugPort);
-    _Device = (uint8_t) EventData::DEVICE::psx_button;
-    _DevId = devId;
-    _isEnabled = true;
-
     _dbg.enableDebug(false);
 }
 

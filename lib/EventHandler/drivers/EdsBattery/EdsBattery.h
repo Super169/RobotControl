@@ -18,7 +18,7 @@ class EdsBattery : public EventDataSource {
         ~EdsBattery();
 
         // void Initialize(EventData *data) override;
-        void Begin(uint16_t minVoltage, uint16_t maxVoltage, uint16_t alarmIntervalMs, Stream *debugPort, byte devId = 0);
+        void Setup(uint16_t minVoltage, uint16_t maxVoltage, uint16_t alarmIntervalMs);
         void GetData() override;
         void PostHandler(bool eventMatched, bool isRelated) override;
 

@@ -7,14 +7,10 @@ EdsBattery::EdsBattery(EventData *data) {
 EdsBattery::~EdsBattery() {
 }
 
-void EdsBattery::Begin(uint16_t minVoltage, uint16_t maxVoltage, uint16_t alarmtIntervalMs, Stream *debugPort, byte devId) {
+void EdsBattery::Setup(uint16_t minVoltage, uint16_t maxVoltage, uint16_t alarmtIntervalMs) {
     _minVoltage = minVoltage;
     _maxVoltage = maxVoltage;
     _alarmIntervalMs = alarmtIntervalMs;
-    _dbg.setOutput(debugPort);
-    _Device = (uint8_t) EventData::DEVICE::battery;
-    _DevId = devId;
-    _isEnabled = true;
 
     _dbg.enableDebug(false);    // Disable debug
 }

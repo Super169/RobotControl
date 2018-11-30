@@ -34,9 +34,12 @@ EventHandler eIdle(&eData);
 EventHandler eBusy(&eData);
 EventHandler eTemp(&eData);
 
+#define TOUCH_GPIO  13
+
 SSBoard ssb;
 EdsPsxButton edsPsxButton(&eData);
 EdsBattery edsBattery(&eData);
+EdsTouch edsTouch(&eData);
 
 void InitEventHandler();
 void RobotEventHandler();
