@@ -42,7 +42,7 @@ void RobotEventHandler() {
 *	4) Action
 *
 */
-	bool showResult = false;
+	// bool showResult = false;
 
 	// Data Collection
 	eData.Clear();
@@ -122,7 +122,7 @@ void RobotEventHandler() {
 
 
 
-		showResult = true;
+		// showResult = true;
 		nextBatteryMs = millis() + 5000;
 	}
 
@@ -140,14 +140,14 @@ void RobotEventHandler() {
 	}
 	*/
 
-	// TODO: Force button check
-	/*
+	// TODO: Dummy testing for PSX
+	
 	uint16_t data;
 	byte *button = (byte *) &data;
 	button[0] = 0xFB;
 	button[1] = 0xFF;
 	eData.SetData(EventData::DEVICE::psx_button, 0, 0, data);
-	*/
+	
 	// ------------------------------------------------------------
 
 	EventHandler::EVENT event = eActive->CheckEvents();

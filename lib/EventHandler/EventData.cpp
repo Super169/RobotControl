@@ -68,7 +68,7 @@ void EventData::DumpData(Stream *output) {
     output->printf("\nTouch: ");
     ShowValue(output, 3, 0);
     output->printf("\nPSX: ");
-    ShowValue(output, 4, 1);
+    ShowValue(output, 4, 2);
     output->printf("\nBattery Reading: ");
     ShowValue(output, 5, 0);
     output->printf("\nBattery Level: ");
@@ -85,7 +85,21 @@ void EventData::ShowValue(Stream *output, uint8_t idx, uint8_t mode) {
                 output->printf("%04X ", u16);
                 break;
             case 2: // Binary
-                output->printf("%16b ", _data[idx]);
+                u16 = _data[idx];
+                // char buffer[33];
+                // itoa(u16, buffer, 2);
+                // output->printf("%04X [%s] : ", u16, buffer);
+                // Split to 4 digits group for easy reading
+                output->printf("%04X [", u16);
+                for (int i = 0; i < 4; i++) {
+                    for (int j = 0; j < 4; j++) {
+                        int pos = 15 - (i * 4 + j);
+                        uint16_t mask = 1 << pos;
+                        output->printf(((u16 & mask) == 0 ? "0" : "1"));
+                    }
+                    if (i < 3) output->printf(" ");
+                }
+                output->printf("]");
                 break;
             default: // DEC 
                 output->printf("%d ", _data[idx]);
