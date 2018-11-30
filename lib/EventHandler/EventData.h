@@ -69,6 +69,9 @@ class EventData {
 
         void DumpData(Stream *output);
 
+        uint8_t Offset(uint8_t device, uint8_t devId, uint8_t target);
+
+
     private:
         const uint8_t _offset[ED_MAX_DEVICE + 1] = {0, ED_OFFSET_MPU, ED_OFFSET_TOUCH, ED_OFFSET_PSXBUTTON, ED_OFFSET_BATTERY, ED_OFFSET_GPIO };
         const uint8_t _size[ED_MAX_DEVICE + 1] = {0, ED_SIZE_MPU, ED_SIZE_TOUCH, ED_SIZE_PSXBUTTON, ED_SIZE_BATTERY, ED_SIZE_GPIO};
@@ -78,7 +81,6 @@ class EventData {
         // byte _ready[ED_CONTROL_SIZE];
         bool    _ready[ED_DATA_SIZE];
 
-        uint8_t Offset(uint8_t device, uint8_t devId, uint8_t target);
 
         void ShowValue(Stream *output, uint8_t idx, uint8_t mode = 0);
 

@@ -15,7 +15,7 @@ class EventDataSource {
         EventData *_data = NULL;
         MyDebugger *_dbg;
 
-        bool _isEnabled = false;
+        bool _isEnabled = true;
         bool _enableDebug = true;
         bool _lastDataReady = false;
         unsigned long _lastReportMS = 0;
@@ -34,7 +34,7 @@ class EventDataSource {
 
         bool IsEnabled();
         bool IsReady();
-        virtual void GetData() = 0;
+        virtual bool GetData() = 0;
         virtual void PostHandler(bool eventMatched, bool isRelated);
 
     private:

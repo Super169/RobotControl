@@ -13,7 +13,6 @@ bool EventDataSource::IsReady() {
 void EventDataSource::Config(EventData *data, MyDebugger *dbg, byte devId) {
     _data = data;
     _dbg = dbg;
-    _Device = (uint8_t) EventData::DEVICE::touch;
     _DevId = devId;
 }
 

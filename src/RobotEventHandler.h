@@ -1,7 +1,6 @@
 #ifndef _ROBOTEVENTHANDLER_H_
 #define _ROBOTEVENTHANDLER_H_
 
-#include "robot.h"
 #include "EventData.h"
 #include "EventHandler.h"
 #include "EdsDrivers.h"
@@ -20,6 +19,9 @@
 #define ED_OFFSET_STARTIDX      5
 #define ED_OFFSET_COUNT         6
 
+
+#define EVENT_HANDLER_ELAPSE_MS 10
+
 struct {
     uint8_t rx_pin          = 14;
     uint8_t tx_pin          = 14;
@@ -30,6 +32,10 @@ struct {
 
 SoftwareSerial ssbPort(ssbConfig.rx_pin, ssbConfig.tx_pin, ssbConfig.inverse_logic, ssbConfig.buffer_size);
 
+
+// Too bad, cannot put them here as it cannot reconized the _dbg in robot.h, so have to move to robot.h
+// After Eds moved to robot.h, eData also need to mov e to robot.h, so all moved to robot.h
+
 //EventData eData;
 //EventHandler eIdle(&eData);
 //EventHandler eBusy(&eData);
@@ -37,7 +43,7 @@ SoftwareSerial ssbPort(ssbConfig.rx_pin, ssbConfig.tx_pin, ssbConfig.inverse_log
 
 #define TOUCH_GPIO  13
 
-SSBoard ssb;
+//SSBoard ssb;
 //EdsPsxButton edsPsxButton(&eData, _dbg);
 //EdsBattery edsBattery(&eData, _dbg);
 //EdsTouch edsTouch(&eData, _dbg);
@@ -48,6 +54,7 @@ void CheckPosition();
 void CheckTouch();
 void CheckVoltage() ;
 byte GetPower(uint16_t v);
+
 
 
 

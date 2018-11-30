@@ -11,8 +11,14 @@ void InitEventHandler() {
 	ssb.Begin(&ssbPort, &DEBUG);
 	ssb.SetEnableTxCalback(EnableSsbTxCallBack);
 
+	_dbg->msg("edsPsxButton.Setup(&ssb): GPIO: %d, BAUD: %ld, BUffer: %d", ssbConfig.tx_pin, ssbConfig.baud, ssbConfig.buffer_size);
 	edsPsxButton.Setup(&ssb);
-	edsBattery.Setup(config.minVoltage(), config.maxVoltage(), config.voltageAlarmInterval() * 1000);
+	
+	// TODO: add normal check ms to config object
+	_dbg->msg("edsBattery.Setup(%d, %d, %d, %d)", config.minVoltage(), config.maxVoltage(), 5000,config.voltageAlarmInterval() * 1000);
+	edsBattery.Setup(config.minVoltage(), config.maxVoltage(), 5000, config.voltageAlarmInterval() * 1000);
+
+	_dbg->msg("edsTouch.Setup(%d, %d, %d)", TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
 	edsTouch.Setup(TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
 
 	eIdle.LoadData(EVENT_IDEL_FILE);
@@ -21,11 +27,16 @@ void InitEventHandler() {
 }
 
 
+unsigned long nextHandlerMs = 0;
+
+
 unsigned long nextMpuCheckMs = 0;
 unsigned long nextTouchCheckMs = 0;
-unsigned long nextBatteryMs = 0;
+unsigned long nextShowMpuMs = 0;
 
 void RobotEventHandler() {
+
+if (millis() < nextHandlerMs) return;
 
 #ifdef NEW_EVENT_HANDLER
 /*
@@ -44,7 +55,7 @@ void RobotEventHandler() {
 *	4) Action
 *
 */
-	// bool showResult = false;
+	bool showResult = false;
 
 	// Data Collection
 	eData.Clear();
@@ -58,110 +69,50 @@ void RobotEventHandler() {
 
 	// This part can be changed to use a loop if all data source changed to EventDataSource type
 	if (eActive->IsRequired((uint8_t) EventData::DEVICE::psx_button)) {
-		edsPsxButton.GetData();
+		if (edsPsxButton.GetData()) showResult = true;
 	}
 
 	if (eActive->IsRequired((uint8_t) EventData::DEVICE::battery)) {
-		edsBattery.GetData();
-	} else {
-	}
+		if (edsBattery.GetData()) showResult = true;
+	} 
 
-	// Touch
-	// To make touch works for counting number of touch, it must be executed all the time
-	// Maybe the reporting frequency has to be handled in post chekcing control once touch event is handled
-	if (config.enableTouch()) {
-		uint8_t touchMotion = CheckTouchAction();
-		if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
-			eData.SetData(EventData::DEVICE::touch, 0, 0, touchMotion);
-			if (touchMotion) {
-				DEBUG.printf("### Touch motion: %d\n", touchMotion);
-			}
-		}
+	if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
+		if (edsTouch.GetData()) showResult = true;
 	}
-
-	// MPU 6050
-	/*
+	
+	// TODO: Study if it should move MpuGetData() to EsdMpu6050
 	if (millis() > nextMpuCheckMs) {
+
 		if (mpuExists && eActive->IsRequired((uint8_t) EventData::DEVICE::mpu)) {
+			// DEBUG.printf("MPU is required\n");
 			if (MpuGetData()) {
 				eData.SetData(EventData::DEVICE::mpu, 0, 0, ax);
 				eData.SetData(EventData::DEVICE::mpu, 0, 1, ay);
 				eData.SetData(EventData::DEVICE::mpu, 0, 2, az);
-			}
-		}
-		nextMpuCheckMs = millis() + (1000 / config.positionCheckFreq());
-	}
-	*/
-
-	// Battery
-	if (millis() > nextBatteryMs) {
-
-		if (config.enableTouch()) {
-			DEBUG.printf("Toutch enabled!\n");
-			if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
-				DEBUG.printf("Touch required!\n");
-			} else {
-				DEBUG.printf("Touch not required!\n");
-			}
-		} else {
-			DEBUG.printf("Touch not enabled!\n");
-		}
-
-		if (mpuExists && eActive->IsRequired((uint8_t) EventData::DEVICE::mpu)) {
-			DEBUG.printf("MPU is required\n");
-			if (MpuGetData()) {
-				DEBUG.printf("-> x: %d , y: %d , z: %d \n", ax, ay, az);
-				eData.SetData(EventData::DEVICE::mpu, 0, 0, ax);
-				eData.SetData(EventData::DEVICE::mpu, 0, 1, ay);
-				eData.SetData(EventData::DEVICE::mpu, 0, 2, az);
+				if (millis() > nextShowMpuMs) {
+					DEBUG.printf("-> x: %d , y: %d , z: %d \n", ax, ay, az);
+					showResult = true;
+					nextShowMpuMs = millis() + 5000;
+				}
 			} else {
 				DEBUG.printf("Fail reading MPU data\n");
 			}
 		} else {
-			DEBUG.printf("MPU %sexists\n",  (mpuExists ? "" : "not "));
-			DEBUG.printf("MPU %srequired", (eActive->IsRequired((uint8_t) EventData::DEVICE::mpu) ? "" : "not "));
+			// DEBUG.printf("MPU %sexists\n",  (mpuExists ? "" : "not "));
+			// DEBUG.printf("MPU %srequired", (eActive->IsRequired((uint8_t) EventData::DEVICE::mpu) ? "" : "not "));
 		}
-
-
-
-		// showResult = true;
-		nextBatteryMs = millis() + 5000;
+		nextMpuCheckMs = millis() + (1000 / config.positionCheckFreq());
 	}
 
 
 
 
 	// Condition checking
-	/*
-	if (eData.IsReady((uint8_t) EventData::DEVICE::psx_button, 0, 0)) {
-		uint16_t data = eData.GetData(EventData::DEVICE::psx_button, 0, 0);
-		if (data != 0xFFFF) {
-			DEBUG.printf("PSB Button: %04X\n", data);
-			eData.DumpData(&DEBUG);
-		}
-	}
-	*/
-
-	// TODO: Dummy testing for PSX
-	
-	uint16_t data;
-	byte *button = (byte *) &data;
-	button[0] = 0xFB;
-	button[1] = 0xFF;
-	eData.SetData(EventData::DEVICE::psx_button, 0, 0, data);
-	
-	// ------------------------------------------------------------
 
 	EventHandler::EVENT event = eActive->CheckEvents();
     EventHandler::ACTION action = event.data.action;
 
-	/*
-	if (showResult) {
-		eData.DumpData(&DEBUG);
-		eActive->DumpEvents(&DEBUG);
-		DEBUG.printf("Event matched: %d\n", event.data.type);
-	}
-	*/
+
 	// Post checking control 
 	/*
 	*	Need to think about how to prevent keep triggering the same event as condition may not changed
@@ -173,12 +124,12 @@ void RobotEventHandler() {
 	
 	if (event.data.type) {
 
+		_dbg->msg("##########");
 		eData.DumpData(&DEBUG);
 		eActive->DumpEvents(&DEBUG);
-		DEBUG.printf("Event matched: %d\n", event.data.type);
+		_dbg->msg("###### Event matched: %d", event.data.type);
+		_dbg->msg("##########\n\n");
 		
-
-
 		eventMatched = true;
 		switch (action.data.type) {
 
@@ -208,16 +159,26 @@ void RobotEventHandler() {
 			case (uint8_t) EventHandler::ACTION_TYPE::mp3Stop:
                 if (debug) DEBUG.printf("Stop play MP3\n");
 				ActionMp3Stop();
+				break;
 
 
             case (uint8_t) EventHandler::ACTION_TYPE::gpio:
                 if (debug) DEBUG.printf("Set gpio %d to %s\n", action.data.parm_1, 
                                                     (action.data.parm_2 ? "HIGH" : "LOW"));
+				digitalWrite(action.data.parm_1, action.data.parm_2);
                 break;
 
             default:
                 if (debug) DEBUG.printf("Unknown action %d \n", action.data.type);
                 break;			
+		}
+	} else {
+		if (showResult) {
+			_dbg->msg("----------");
+			eData.DumpData(&DEBUG);
+			eActive->DumpEvents(&DEBUG);
+			_dbg->msg("No Event matched");
+			_dbg->msg("----------\n\n");
 		}
 	}
 
@@ -228,6 +189,14 @@ void RobotEventHandler() {
 
 	if (eActive->IsRequired((uint8_t) EventData::DEVICE::battery)) {
 		edsBattery.PostHandler(eventMatched, eActive->LastEventRelated((uint8_t) EventData::DEVICE::battery));
+	}
+
+	if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
+		edsTouch.PostHandler(eventMatched, eActive->LastEventRelated((uint8_t) EventData::DEVICE::touch));
+	}
+
+	if (eActive->IsRequired((uint8_t) EventData::DEVICE::mpu)) {
+		edsMpu6050.PostHandler(eventMatched, eActive->LastEventRelated((uint8_t) EventData::DEVICE::mpu));
 	}
 
 #else
@@ -244,6 +213,8 @@ void RobotEventHandler() {
 	CheckTouch();  // TODO: Too many messages!
 
 #endif
+
+nextHandlerMs = millis() + EVENT_HANDLER_ELAPSE_MS;
 
 }
 

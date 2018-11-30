@@ -4,5 +4,6 @@
 #include <drivers/EdsBattery/EdsBattery.h>
 #include <drivers/EdsPsxButton/EdsPsxButton.h>
 #include <drivers/EdsTouch/EdsTouch.h>
+#include <drivers/EdsMpu6050/EdsMpu6050.h>
 
 #endif

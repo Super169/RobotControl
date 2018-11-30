@@ -16,7 +16,7 @@ class EdsMpu6050 : public EventDataSource {
         ~EdsMpu6050();
 
         void Setup(uint8_t i2cAddr = 0x68);
-        void GetData() override;
+        bool GetData() override;
         // void PostHandler(bool eventMatched, bool isRelated) override;
 
     private:

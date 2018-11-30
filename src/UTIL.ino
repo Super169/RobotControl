@@ -2,6 +2,7 @@
 
 void SetDebug(bool mode) {
 	debug = mode;
+	_dbg->enableDebug(mode);
 	rs.enableDebug(mode);
 	mp3.setDebug(mode);
 	config.setDebug(mode);

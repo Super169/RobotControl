@@ -42,8 +42,8 @@ SimpleWiFiManager SWFM;
 
 // Version 2.2 - New version for event handler added
 #define VERSION_MAJOR   2
-#define VERSION_MINOR   2
-#define VERSION_SUB     0
+#define VERSION_MINOR   1
+#define VERSION_SUB     99
 #define VERSION_FIX     0
 
 // Start a TCP Server on port 6169
@@ -74,15 +74,18 @@ char *AP_Password = (char *) "12345678";
 MyDebugger debugger;
 MyDebugger *_dbg = &debugger;
 
+// Event Handling
+
 EventData eData;
 EventHandler eIdle(&eData);
 EventHandler eBusy(&eData);
 EventHandler eTemp(&eData);
 
+SSBoard ssb;
 EdsPsxButton edsPsxButton(&eData, _dbg);
 EdsBattery edsBattery(&eData, _dbg);
 EdsTouch edsTouch(&eData, _dbg);
-
+EdsMpu6050 edsMpu6050(&eData, _dbg);
 
 #define CMD_BUFFER_SIZE 160
 

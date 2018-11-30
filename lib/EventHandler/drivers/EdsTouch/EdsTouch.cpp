@@ -2,6 +2,7 @@
 
 
 EdsTouch::EdsTouch(EventData *data, MyDebugger *dbg, byte devId) {
+    _Device = (uint8_t) EventData::DEVICE::touch;
     Config(data, dbg, devId);
 }
 
@@ -86,12 +87,27 @@ uint8_t EdsTouch::CheckTouchAction() {
 }
 
 
-void EdsTouch::GetData() {
-
-
-
+bool EdsTouch::GetData() {
+    _lastDataReady = false;
+    if (!IsReady()) return false;
+    uint8_t touchAction = CheckTouchAction();
+    _data->SetData(_Device, _DevId, 0, touchAction);
+    _lastDataReady = true;
+    _lastReportValue = touchAction;
+    _lastReportMS = millis();
+    return (touchAction != 0);
 }
 
+void EdsTouch::PostHandler(bool eventMatched, bool isRelated) {
+    if (!IsReady()) return;
+    // wait longer if 
+    //   - button pressed, and no event required or handled: i.e. !eventMatched
+    if ((_lastDataReady) && (_lastReportValue != 0) && ((!eventMatched) || (isRelated))) {
+        _nextReportMs = millis() + EDS_DELAY_CHECK_MS;
+    } else {
+        _nextReportMs = millis() + EDS_CONTINUE_CHECK_MS;
+    }
+}
 
 
 
