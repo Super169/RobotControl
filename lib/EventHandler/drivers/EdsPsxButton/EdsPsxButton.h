@@ -1,6 +1,8 @@
 #ifndef _EDS_PSX_BUTTON_H_
 #define _EDS_PSX_BUTTON_H_
 
+// Keyword: EPB_
+
 #include "EventHandler.h"
 #include "EventDataSource.h"
 #include "SSBoard.h"
@@ -19,7 +21,7 @@
 
 class EdsPsxButton : public EventDataSource {
     public:
-        EdsPsxButton(EventData *data);
+        EdsPsxButton(EventData *data, MyDebugger *dbg, byte devId = 0);
         ~EdsPsxButton();
 
         // void Initialize(EventData *data) override;

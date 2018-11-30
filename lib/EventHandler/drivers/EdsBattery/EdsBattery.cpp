@@ -1,7 +1,7 @@
 #include "EdsBattery.h"
 
-EdsBattery::EdsBattery(EventData *data) {
-    _data = data;
+EdsBattery::EdsBattery(EventData *data, MyDebugger *dbg, byte devId) {
+    Config(data, dbg, devId);
 }
 
 EdsBattery::~EdsBattery() {
@@ -12,7 +12,7 @@ void EdsBattery::Setup(uint16_t minVoltage, uint16_t maxVoltage, uint16_t alarmt
     _maxVoltage = maxVoltage;
     _alarmIntervalMs = alarmtIntervalMs;
 
-    _dbg.enableDebug(false);    // Disable debug
+    _dbg->enableDebug(false);    // Disable debug
 }
 
 void EdsBattery::GetData() {
@@ -22,9 +22,9 @@ void EdsBattery::GetData() {
     uint16_t v = analogRead(0);
     int iPower = GetPower(v);
 
-    _dbg.msg("Battery: %d, %d, %d", _Device, _DevId, (uint8_t) EventData::BATTERY_TARGET::reading);
-    _dbg.msg("Battery reading: %d (%d - %d)", v, _minVoltage, _maxVoltage);
-    _dbg.msg("Battery level: %d", iPower);
+    _dbg->msg("Battery: %d, %d, %d", _Device, _DevId, (uint8_t) EventData::BATTERY_TARGET::reading);
+    _dbg->msg("Battery reading: %d (%d - %d)", v, _minVoltage, _maxVoltage);
+    _dbg->msg("Battery level: %d", iPower);
 
     _data->SetData(_Device, _DevId, (uint8_t) EventData::BATTERY_TARGET::reading, v);
     _data->SetData(_Device, _DevId, (uint8_t) EventData::BATTERY_TARGET::level, iPower);

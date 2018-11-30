@@ -1,7 +1,7 @@
 #include "EdsPsxButton.h"
 
-EdsPsxButton::EdsPsxButton(EventData *data) {
-    _data = data;
+EdsPsxButton::EdsPsxButton(EventData *data, MyDebugger *dbg, byte devId) {
+    Config(data, dbg, devId);
 }
 
 EdsPsxButton::~EdsPsxButton() {
@@ -15,7 +15,7 @@ void EdsPsxButton::Initialize(EventData *data) {
 
 void EdsPsxButton::Setup(SSBoard *ssb) {
     _ssb = ssb;
-    _dbg.enableDebug(false);
+    _dbg->enableDebug(false);
 }
 
 void EdsPsxButton::GetData() {
@@ -30,7 +30,7 @@ void EdsPsxButton::GetData() {
         button[0] = result->peek(8);
         button[1] = result->peek(7);
         _data->SetData(_Device, _DevId, 0, data);
-        if (data != 0xFFFF) _dbg.msg("PSX Button: %02X %02X => %04X", button[0], button[1], data);
+        if (data != 0xFFFF) _dbg->msg("PSX Button: %02X %02X => %04X", button[0], button[1], data);
         _lastDataReady = true;
         _lastReportMS = millis();
         _lastReportValue = data;

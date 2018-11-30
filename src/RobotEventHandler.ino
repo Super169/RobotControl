@@ -15,13 +15,6 @@ void InitEventHandler() {
 	edsBattery.Setup(config.minVoltage(), config.maxVoltage(), config.voltageAlarmInterval() * 1000);
 	edsTouch.Setup(TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
 
-
-	edsPsxButton.Begin(true, &DEBUG);
-
-	edsBattery.Begin(true, &DEBUG);
-
-	edsTouch.Begin(true, &DEBUG);
-	
 	eIdle.LoadData(EVENT_IDEL_FILE);
 	eBusy.LoadData(EVENT_BUSY_FILE);
 

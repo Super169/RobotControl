@@ -1,8 +1,8 @@
 #include "EdsTouch.h"
 
 
-EdsTouch::EdsTouch(EventData *data) {
-    _data = data;
+EdsTouch::EdsTouch(EventData *data, MyDebugger *dbg, byte devId) {
+    Config(data, dbg, devId);
 }
 
 EdsTouch::~EdsTouch() {
@@ -13,11 +13,11 @@ void EdsTouch::Setup(uint8_t gpioPin, unsigned long touchDetectPeriod, unsigned 
     _touchDetectPeriod = touchDetectPeriod;
     _touchReleasePeriod = touchReleasePeriod;
     pinMode(_gpioPin, INPUT);
-    _dbg.enableDebug(true); 
+    _dbg->enableDebug(true); 
 }
 
 void EdsTouch::ResetTouchAction() {
-    _dbg.msg("EdsTouch::ResetTouchAction\n");
+    _dbg->msg("EdsTouch::ResetTouchAction\n");
     _touchStartMs = 0;
     _touchReleaseMs = 0;
     _touchCount = 0;
@@ -31,7 +31,7 @@ bool EdsTouch::IsTouchPressed() {
 
 uint8_t EdsTouch::CheckTouchAction() {
 
-    uint8_t retCode = TOUCH_NONE;
+    uint8_t retCode = ETU_TOUCH_NONE;
     if (!IsReady()) return retCode;
 
     unsigned long currMs = millis();    // for safety, use same time in ms for all checking later
@@ -57,21 +57,21 @@ uint8_t EdsTouch::CheckTouchAction() {
                 if (_touchCount == 1) {
                     if (currStatus) {
                         // Long hold
-                        _dbg.msg("EdsTouch: Long hold");
-                        retCode = TOUCH_LONG;
+                        _dbg->msg("EdsTouch: Long hold");
+                        retCode = ETU_TOUCH_LONG;
                     } else {
                         // Single click
-                        _dbg.msg("EdsTouch: Single click");
-                        retCode = TOUCH_SINGLE;
+                        _dbg->msg("EdsTouch: Single click");
+                        retCode = ETU_TOUCH_SINGLE;
                     }
                 } else if (_touchCount == 2) {
                     // double click
-                    _dbg.msg("EdsTouch: Double click\n");
-                    retCode = TOUCH_DOUBLE;
+                    _dbg->msg("EdsTouch: Double click\n");
+                    retCode = ETU_TOUCH_DOUBLE;
                 } else {
                     // triple click
-                    _dbg.msg("EdsTouch: Triple click\n");
-                    retCode = TOUCH_TRIPLE;
+                    _dbg->msg("EdsTouch: Triple click\n");
+                    retCode = ETU_TOUCH_TRIPLE;
                 }
             } else {
                 // must release for reasonable time to stop action

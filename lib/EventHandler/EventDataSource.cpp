@@ -10,9 +10,9 @@ bool EventDataSource::IsReady() {
     return (_isEnabled && (millis() > _nextReportMs)); 
 }
 
-void EventDataSource::Begin(bool isEnabled, Stream *debugPort, byte devId) {
-    _isEnabled = isEnabled;
-    _dbg.setOutput(debugPort);
+void EventDataSource::Config(EventData *data, MyDebugger *dbg, byte devId) {
+    _data = data;
+    _dbg = dbg;
     _Device = (uint8_t) EventData::DEVICE::touch;
     _DevId = devId;
 }

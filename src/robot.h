@@ -20,6 +20,7 @@
 #include "MP3TF16P.h"
 #include "RobotConfig.h"
 
+#include "MyDebugger.h"
 #include "UTIL.h"
 
 #include "message.h"
@@ -69,6 +70,19 @@ char *AP_Password = (char *) "12345678";
 
 
 #define DEBUG Serial1
+
+MyDebugger debugger;
+MyDebugger *_dbg = &debugger;
+
+EventData eData;
+EventHandler eIdle(&eData);
+EventHandler eBusy(&eData);
+EventHandler eTemp(&eData);
+
+EdsPsxButton edsPsxButton(&eData, _dbg);
+EdsBattery edsBattery(&eData, _dbg);
+EdsTouch edsTouch(&eData, _dbg);
+
 
 #define CMD_BUFFER_SIZE 160
 

@@ -2,17 +2,17 @@
 #define _EDS_TOUCH_H_
 
 
-// Keyword: EBAT
+// Keyword: ETU_
 
 #include "EventHandler.h"
 #include "EventDataSource.h"
 #include "SSBoard.h"
 
-#define TOUCH_NONE      0
-#define TOUCH_SINGLE    1
-#define TOUCH_DOUBLE    2
-#define TOUCH_TRIPLE    3
-#define TOUCH_LONG      0xFF
+#define ETU_TOUCH_NONE      0
+#define ETU_TOUCH_SINGLE    1
+#define ETU_TOUCH_DOUBLE    2
+#define ETU_TOUCH_TRIPLE    3
+#define ETU_TOUCH_LONG      0xFF
 
 /*
 *   Event Data Source for Battery
@@ -21,7 +21,7 @@
 
 class EdsTouch : public EventDataSource {
     public:
-        EdsTouch(EventData *data);
+        EdsTouch(EventData *data, MyDebugger *dbg, byte devId = 0);
         ~EdsTouch();
 
         void Setup(uint8_t gpioPin, unsigned long touchDetectPeriod, unsigned touchReleasePeriod);

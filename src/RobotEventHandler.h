@@ -1,6 +1,7 @@
 #ifndef _ROBOTEVENTHANDLER_H_
 #define _ROBOTEVENTHANDLER_H_
 
+#include "robot.h"
 #include "EventData.h"
 #include "EventHandler.h"
 #include "EdsDrivers.h"
@@ -29,17 +30,17 @@ struct {
 
 SoftwareSerial ssbPort(ssbConfig.rx_pin, ssbConfig.tx_pin, ssbConfig.inverse_logic, ssbConfig.buffer_size);
 
-EventData eData;
-EventHandler eIdle(&eData);
-EventHandler eBusy(&eData);
-EventHandler eTemp(&eData);
+//EventData eData;
+//EventHandler eIdle(&eData);
+//EventHandler eBusy(&eData);
+//EventHandler eTemp(&eData);
 
 #define TOUCH_GPIO  13
 
 SSBoard ssb;
-EdsPsxButton edsPsxButton(&eData);
-EdsBattery edsBattery(&eData);
-EdsTouch edsTouch(&eData);
+//EdsPsxButton edsPsxButton(&eData, _dbg);
+//EdsBattery edsBattery(&eData, _dbg);
+//EdsTouch edsTouch(&eData, _dbg);
 
 void InitEventHandler();
 void RobotEventHandler();

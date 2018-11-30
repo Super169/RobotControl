@@ -14,7 +14,7 @@
 
 class EdsBattery : public EventDataSource {
     public:
-        EdsBattery(EventData *data);
+        EdsBattery(EventData *data, MyDebugger *dbg, byte devId = 0);
         ~EdsBattery();
 
         // void Initialize(EventData *data) override;

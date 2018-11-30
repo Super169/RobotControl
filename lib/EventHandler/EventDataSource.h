@@ -13,7 +13,7 @@ class EventDataSource {
 
     protected:
         EventData *_data = NULL;
-        MyDebugger _dbg;
+        MyDebugger *_dbg;
 
         bool _isEnabled = false;
         bool _enableDebug = true;
@@ -25,6 +25,7 @@ class EventDataSource {
         uint8_t _Device = 0;
         uint8_t _DevId = 0;
 
+        void Config(EventData *data, MyDebugger *dbg, byte devId = 0);
         void SetNextReportTime();
 
     public:
@@ -33,7 +34,6 @@ class EventDataSource {
 
         bool IsEnabled();
         bool IsReady();
-        void Begin(bool isEnabled, Stream *debugPort, byte devId = 0);
         virtual void GetData() = 0;
         virtual void PostHandler(bool eventMatched, bool isRelated);
 
