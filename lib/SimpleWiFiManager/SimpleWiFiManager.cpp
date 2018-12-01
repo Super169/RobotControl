@@ -226,20 +226,24 @@ void SimpleWiFiManager::mdFromArray() {
 
 void SimpleWiFiManager::mdToArray() {
 	memset(_file.buffer, 0, SWFM_FILE_BUFFER_SIZE);
-	_dbg.println("\n----------");
-	for (int idx = 0; idx < SWFM_CONFIG_FILE_SIZE; idx++) {
-		_dbg.printf(" %02x", _file.buffer[idx]);
-	}
-	_dbg.println("\n----------");
 
-	for (int idx = 0; idx < _mdCnt; idx++) {
-		_md[idx]->toBuffer(_file.buffer);
+	if (_dbg.isEnabled()) {
+		_dbg.msg("\nSimpleWiFiManager::mdToArray");
+		_dbg.println("\n--Before--");
+		for (int idx = 0; idx < SWFM_CONFIG_FILE_SIZE; idx++) {
+			_dbg.printf("%02x ", _file.buffer[idx]);
+		}
+		_dbg.println("\n----------");
+
+		for (int idx = 0; idx < _mdCnt; idx++) {
+			_md[idx]->toBuffer(_file.buffer);
+		}
+		_dbg.println("\n--After---");
+		for (int idx = 0; idx < SWFM_CONFIG_FILE_SIZE; idx++) {
+			_dbg.printf("%02x ", _file.buffer[idx]);
+		}
+		_dbg.println("\n----------");
 	}
-	_dbg.println("\n----------");
-	for (int idx = 0; idx < SWFM_CONFIG_FILE_SIZE; idx++) {
-		_dbg.printf(" %02x", _file.buffer[idx]);
-	}
-	_dbg.println("\n----------");
 
 	_file.buffer[SWFM_OFFSET_A9] = 0xA9;
 	_file.buffer[SWFM_OFFSET_9A] = 0x9A;

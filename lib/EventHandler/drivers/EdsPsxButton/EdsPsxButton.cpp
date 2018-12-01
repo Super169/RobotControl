@@ -16,7 +16,6 @@ void EdsPsxButton::Initialize(EventData *data) {
 
 void EdsPsxButton::Setup(SSBoard *ssb) {
     _ssb = ssb;
-    _dbg->enableDebug(false);
 }
 
 bool EdsPsxButton::GetData() {

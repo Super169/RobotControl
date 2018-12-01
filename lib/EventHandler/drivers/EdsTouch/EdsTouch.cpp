@@ -14,7 +14,6 @@ void EdsTouch::Setup(uint8_t gpioPin, unsigned long touchDetectPeriod, unsigned 
     _touchDetectPeriod = touchDetectPeriod;
     _touchReleasePeriod = touchReleasePeriod;
     pinMode(_gpioPin, INPUT);
-    _dbg->enableDebug(true); 
 }
 
 void EdsTouch::ResetTouchAction() {

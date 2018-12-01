@@ -90,12 +90,12 @@ if (millis() < nextHandlerMs) return;
 				eData.SetData(EventData::DEVICE::mpu, 0, 1, ay);
 				eData.SetData(EventData::DEVICE::mpu, 0, 2, az);
 				if (millis() > nextShowMpuMs) {
-					DEBUG.printf("-> x: %d , y: %d , z: %d \n", ax, ay, az);
+					if (debug) DEBUG.printf("-> x: %d , y: %d , z: %d \n", ax, ay, az);
 					showResult = true;
 					nextShowMpuMs = millis() + 5000;
 				}
 			} else {
-				DEBUG.printf("Fail reading MPU data\n");
+				if (debug) DEBUG.printf("Fail reading MPU data\n");
 			}
 		} else {
 			// DEBUG.printf("MPU %sexists\n",  (mpuExists ? "" : "not "));
@@ -124,11 +124,13 @@ if (millis() < nextHandlerMs) return;
 	
 	if (event.data.type) {
 
-		_dbg->msg("##########");
-		eData.DumpData(&DEBUG);
-		eActive->DumpEvents(&DEBUG);
-		_dbg->msg("###### Event matched: %d", event.data.type);
-		_dbg->msg("##########\n\n");
+		if (debug) {
+			_dbg->msg("##########");
+			eData.DumpData(&DEBUG);
+			eActive->DumpEvents(&DEBUG);
+			_dbg->msg("###### Event matched: %d", event.data.type);
+			_dbg->msg("##########\n\n");
+		}
 		
 		eventMatched = true;
 		switch (action.data.type) {
@@ -182,7 +184,7 @@ if (millis() < nextHandlerMs) return;
                 break;			
 		}
 	} else {
-		if (showResult) {
+		if (debug && showResult) {
 			_dbg->msg("----------");
 			eData.DumpData(&DEBUG);
 			eActive->DumpEvents(&DEBUG);

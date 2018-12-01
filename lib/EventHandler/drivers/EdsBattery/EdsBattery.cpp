@@ -13,8 +13,6 @@ void EdsBattery::Setup(uint16_t minVoltage, uint16_t maxVoltage, uint16_t normal
     _maxVoltage = maxVoltage;
     _normalCheckMs = normalCheckMs;
     _alarmIntervalMs = alarmtIntervalMs;
-
-    _dbg->enableDebug(false);    // Disable debug
 }
 
 bool EdsBattery::GetData() {

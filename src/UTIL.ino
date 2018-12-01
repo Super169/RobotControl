@@ -6,6 +6,7 @@ void SetDebug(bool mode) {
 	rs.enableDebug(mode);
 	mp3.setDebug(mode);
 	config.setDebug(mode);
+	SWFM.enableDebug(mode);
 }
 
 
