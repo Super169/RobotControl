@@ -44,7 +44,7 @@ SimpleWiFiManager SWFM;
 #define VERSION_MAJOR   2
 #define VERSION_MINOR   1
 #define VERSION_SUB     99
-#define VERSION_FIX     2
+#define VERSION_FIX     3
 
 // Start a TCP Server on port 6169
 uint16_t port = 6169;
@@ -230,5 +230,8 @@ bool SendGenericCommand(byte *cmd, byte sendCnt);
 // HILZD
 bool HAILZD_Command();
 
+
+// System Action
+void ActionPlaySystemAction(byte systemActionId);
 
 #endif

@@ -144,7 +144,6 @@ if (millis() < nextHandlerMs) return;
 				break;
 
 
-			
             case (uint8_t) EventHandler::ACTION_TYPE::playAction:
                 if (debug) DEBUG.printf("Play action %d \n", action.data.parm_1);
 				ActionPlayAction(action.data.parm_1);
@@ -178,6 +177,11 @@ if (millis() < nextHandlerMs) return;
                 break;
 
 			
+            case (uint8_t) EventHandler::ACTION_TYPE::system_action:
+                if (debug) DEBUG.printf("Play system action %d \n", action.data.parm_1);
+				ActionPlaySystemAction(action.data.parm_1);
+                break;
+
 
             default:
                 if (debug) DEBUG.printf("Unknown action %d \n", action.data.type);
