@@ -28,7 +28,8 @@ bool EdsPsxButton::GetData() {
     if (!_ssb->SendCommand((byte *) cmd, true)) return false;
     
     unsigned long diff = millis() - startMs;
-    // _dbg->msg("It taks %d ms to read PSX", diff);
+    //_dbg->msg("It taks %d ms to read PSX", diff); 
+
     Buffer *result = _ssb->ReturnBuffer();
     // Data returned: A8 8A 0B 01 ?? ?? ?? {1} {2} ....
     uint16_t data;
@@ -53,7 +54,7 @@ void EdsPsxButton::PostHandler(bool eventMatched, bool isRelated) {
     // wait longer if 
     //   - button pressed, and no event required or handled: i.e. !eventMatched
     if ((_lastDataReady) && (_lastReportValue != 0xFFFF) && ((!eventMatched) || (isRelated))) {
-        _nextReportMs = millis() + EDS_DELAY_CHECK_MS;
+        _nextReportMs = millis() + 100;
     } else {
         _nextReportMs = millis() + EDS_CONTINUE_CHECK_MS;
     }

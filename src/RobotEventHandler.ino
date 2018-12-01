@@ -136,6 +136,13 @@ if (millis() < nextHandlerMs) return;
             case (uint8_t) EventHandler::ACTION_TYPE::na:
                 break;
 	
+			case (uint8_t) EventHandler::ACTION_TYPE::headLed:
+                if (debug) _dbg->msg("Set head led %d \n", action.data.parm_1);
+				ActionSetHeadLed(action.data.parm_1);
+				break;
+
+
+			
             case (uint8_t) EventHandler::ACTION_TYPE::playAction:
                 if (debug) DEBUG.printf("Play action %d \n", action.data.parm_1);
 				ActionPlayAction(action.data.parm_1);
@@ -167,6 +174,8 @@ if (millis() < nextHandlerMs) return;
                                                     (action.data.parm_2 ? "HIGH" : "LOW"));
 				digitalWrite(action.data.parm_1, action.data.parm_2);
                 break;
+
+			
 
             default:
                 if (debug) DEBUG.printf("Unknown action %d \n", action.data.type);

@@ -10,7 +10,7 @@
 *
 */
 #define SSB_BUFFER_SIZE 64
-#define SSB_COMMAND_WAIT_TIME 1000
+#define SSB_COMMAND_WAIT_TIME 20
 
 class SSBoard {
     public:

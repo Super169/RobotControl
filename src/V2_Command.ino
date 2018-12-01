@@ -1585,6 +1585,12 @@ A9 9A 0C 93 01 01 05 01 00 00 00 00 00 00 A7 ED
 
 
 */
+
+void ActionSetHeadLed(byte mode) {
+	bool status = (mode == 0x01);
+	SetHeadLed(status);	
+}
+
 void ActionPlayAction(byte actionId) {
 	byte cmd[] = {0x9A, 0x9A, 0x03, 0x41, actionId , 0x00 ,0xED};
 	V2_GoAction(actionId, false, cmd);

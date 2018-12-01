@@ -91,7 +91,7 @@ bool V2_UseGlobalTime = true;
 
 bool deepDebug = true;
 
-
+void ActionSetHeadLed(byte mode);
 void ActionStopPlay();
 void ActionPlayAction(byte actionId);
 void ActionMp3Stop();
