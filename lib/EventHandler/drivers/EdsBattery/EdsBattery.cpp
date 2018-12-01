@@ -16,8 +16,9 @@ void EdsBattery::Setup(uint16_t minVoltage, uint16_t maxVoltage, uint16_t normal
 }
 
 bool EdsBattery::GetData() {
-    _lastDataReady = false;
+    _thisDataReady = false;
     if (!IsReady()) return false;
+    _lastDataReady = false;
     
     uint16_t v = analogRead(0);
     int iPower = GetPower(v);
@@ -31,6 +32,7 @@ bool EdsBattery::GetData() {
     _data->SetData(_Device, _DevId, (uint8_t) EventData::BATTERY_TARGET::reading, v);
     _data->SetData(_Device, _DevId, (uint8_t) EventData::BATTERY_TARGET::level, iPower);
     _lastDataReady = true;
+    _thisDataReady = true;
     _lastReportMS = millis();
     _lastReportReading = v;
     _lastReportLevel = iPower;
@@ -51,7 +53,7 @@ byte EdsBattery::GetPower(uint16_t v) {
 */
 void EdsBattery::PostHandler(bool eventMatched, bool isRelated) {
     if (!IsReady()) return;
-    if (_lastDataReady && isRelated) {
+    if (_thisDataReady && isRelated) {
         _nextReportMs = millis() + _alarmIntervalMs;
     } else {
         _nextReportMs = millis() + _normalCheckMs;

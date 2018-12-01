@@ -58,9 +58,10 @@ bool MP3TF16P::sendCommand(bool expectReturn) {
 
 	clearRxBuffer();
 	_ss->flush();
-	//  _ss->enableTx(true);
+	//_ss->enableTx(true);
+	//delay(1);
 	_ss->write(_buf, 10);
-	// _ss->enableTx(false);
+	//_ss->enableTx(false);
 	if (expectReturn) return checkReturn();
 	clearRxBuffer();
 	return true;
@@ -130,6 +131,7 @@ void MP3TF16P::setVol(byte vol) {
 	_buf[3] = 0x06;
 	_buf[6] = vol;
 	sendCommand();    
+	_vol = vol;
 }
 
 void MP3TF16P::playFolderFile(byte folder, byte seq) {
@@ -157,6 +159,9 @@ void MP3TF16P::playAdFile(byte seq) {
 }
 
 uint8_t MP3TF16P::getVol() {
+	return _vol;
+	// Function will return local record instead of reading from MP3 module as it has been changed to single wire mode, no return from MP3 module
+	/*
 	resetCommandBuffer();
 	_buf[3] = 0x43;
 	sendCommand(true);
@@ -166,6 +171,7 @@ uint8_t MP3TF16P::getVol() {
 		}
 	}
 	return 0xFF;
+	*/
 }
 
 void MP3TF16P::adjVol(int diff) {

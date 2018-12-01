@@ -87,11 +87,13 @@ uint8_t EdsTouch::CheckTouchAction() {
 
 
 bool EdsTouch::GetData() {
-    _lastDataReady = false;
+    _thisDataReady = false;
     if (!IsReady()) return false;
+    _lastDataReady = false;
     uint8_t touchAction = CheckTouchAction();
     _data->SetData(_Device, _DevId, 0, touchAction);
     _lastDataReady = true;
+    _thisDataReady = true;
     _lastReportValue = touchAction;
     _lastReportMS = millis();
     return (touchAction != 0);
@@ -101,7 +103,7 @@ void EdsTouch::PostHandler(bool eventMatched, bool isRelated) {
     if (!IsReady()) return;
     // wait longer if 
     //   - button pressed, and no event required or handled: i.e. !eventMatched
-    if ((_lastDataReady) && (_lastReportValue != 0) && ((!eventMatched) || (isRelated))) {
+    if ((_thisDataReady) && (_lastReportValue != 0) && ((!eventMatched) || (isRelated))) {
         _nextReportMs = millis() + EDS_DELAY_CHECK_MS;
     } else {
         _nextReportMs = millis() + EDS_CONTINUE_CHECK_MS;

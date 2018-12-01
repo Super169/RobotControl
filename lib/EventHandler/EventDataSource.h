@@ -17,8 +17,21 @@ class EventDataSource {
 
         bool _isEnabled = true;
         bool _enableDebug = true;
+        /*
+            _lastDataReady vs _thisDataReady
+            In most situation, _lastDataReady should be the same as _thisDataReady as the current value will be updated to last value.
+            But for some special case, it need to check if the previous value has been handled, and it may skip current reading under some condition.
+            E.g. PSX Button
+               Since it will keep checking the button status, while this status will repeat for 1s if no other button pressed.
+               When it checked again within 1s, it need to ignore this button, but it need to keep the status of some value handled.
+               In this case, _lastDataReady is true, but _thisDataReady is false.
+        */
         bool _lastDataReady = false;
+        bool _thisDataReady = false;
+
+
         unsigned long _lastReportMS = 0;
+        bool _lastValueHandled = false;
         unsigned long _reportInterval = 1000;   // by default, each sensor will be reported once per second
         unsigned long _nextReportMs = 0;
 

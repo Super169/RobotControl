@@ -58,6 +58,7 @@ class MP3TF16P {
         byte _buf[MP3_COMMAND_BUFFER_SIZE];
         byte _retBuf[MP3_RETURN_BUFFER_SIZE];  
         byte _retCnt;
+        byte _vol = 0xFF;
 
 };
 

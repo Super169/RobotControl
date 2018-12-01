@@ -10,7 +10,7 @@
 #define EPB_NO_BUTTON           0xFFFF
 #define EPB_CONTINUE_CHECK_MS   10
 #define EPB_DELAY_CHECK_MS      1000
-
+#define EPB_IGNORE_REPEAT_TIME  2000
 
 /*
 *   Event Data Source for PSX Button

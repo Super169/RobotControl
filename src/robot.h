@@ -170,16 +170,19 @@ bool devMode = false;
 
 //#define ROBOT_ARM_BOARD
 
-#define MP3_RXD_GPIO    14
-#define MP3_TXD_GPIO    16  
+// #define MP3_RXD_GPIO    14
+// #define MP3_TXD_GPIO    16  
 #define HEAD_LED_GPIO   15
 
 bool headLed = false;
 
+// Disable RX pin by passing -1 as rx_pin
+// Do use single wire mode, it seems not work with MP3 module.
+//
 struct {
-    uint8_t rx_pin          = 16;
-    uint8_t tx_pin          = 16;
-    unsigned long baud      = 115200;
+    int8_t rx_pin           = -1;
+    int8_t tx_pin           = 16;
+    unsigned long baud      = 9600;
     bool inverse_logic      = false;
     uint16_t buffer_size    = 64;
 } mp3Config;
@@ -187,7 +190,7 @@ struct {
 SoftwareSerial mp3_ss(mp3Config.rx_pin, mp3Config.tx_pin, mp3Config.inverse_logic, mp3Config.buffer_size);
 MP3TF16P mp3(&mp3_ss, &DEBUG);
 
-uint8_t mp3_Vol = 0xff;
+uint8_t mp3_Vol = 0xFF;
 
 #pragma endregion
 
