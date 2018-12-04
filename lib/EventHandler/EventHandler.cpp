@@ -160,7 +160,11 @@ bool EventHandler::LastEventRelated(uint8_t device) {
 }
 
 bool EventHandler::IsPending(uint8_t device) {
-    if (device <= ED_MAX_DEVICE) return (_eventLastMs[device]);
+    for (int i = 0; i < _evtCount; i++) {
+        if (_events[i].data.condition.data.device == device) {
+            if (_eventLastMs[device]) return true;
+        }
+    }
     return false;
 }
 
@@ -202,9 +206,9 @@ EventHandler::EVENT EventHandler::CheckEvents() {
                     _lastEventRelated[condDevice] = true;
                     // Reste lastMs once handled
                     #ifdef EH_DEBUG
-                    Serial1.printf("%08ld Release last ms for %d\n", millis(), condDevice);
+                    Serial1.printf("%08ld [%d] Release last ms for %d\n", millis(), i, condDevice);
                     #endif
-                    _eventLastMs[condDevice] = 0;
+                    _eventLastMs[i] = 0;
                     
                     int16_t j = i - 1;
                     while (j >= 0) {
@@ -212,9 +216,9 @@ EventHandler::EVENT EventHandler::CheckEvents() {
                             condDevice = _events[j].data.condition.data.device;
                             _lastEventRelated[condDevice] = true;
                             #ifdef EH_DEBUG
-                            Serial1.printf("%08ld [%d] Threadhold met, release last ms for %d\n", millis(), condDevice, condDevice);
+                            Serial1.printf("%08ld [%d] Also release last ms for %d\n", millis(), j,  condDevice);
                             #endif
-                            _eventLastMs[condDevice] = 0;
+                            _eventLastMs[j] = 0;
                         } else {
                             break;
                         }
@@ -234,6 +238,10 @@ EventHandler::EVENT EventHandler::CheckEvents() {
     return event;
 }
 
+void EventHandler::ResetEventLastMs() {
+    size_t size = _evtCount * sizeof(unsigned long);
+    memset(_eventLastMs, 0, size);   
+}
 
 void EventHandler::DumpEvents(Stream *output) {
     output->printf("\nEventHandler::DumpEvents:\n");
@@ -273,23 +281,28 @@ bool EventHandler::MatchCondition(uint16_t idx, CONDITION cond) {
         byte condDevice = cond.data.device;
         uint16_t threadhold = _data->Threadhold(condDevice);
         if (threadhold) {
-            if (_eventLastMs[condDevice]) {
-                match = millis() > (_eventLastMs[condDevice] + threadhold);
+            if (_eventLastMs[idx]) {
+                match = millis() > (_eventLastMs[idx] + threadhold);
                 #ifdef EH_DEBUG
                 if (match) {
-                    Serial1.printf("%08ld [%d] Threadhold matched: %08ld + %d\n", 
-                                   millis(), condDevice, _eventLastMs[condDevice], threadhold);
+                    Serial1.printf("%08ld [%d] Device %d: Threadhold matched: %08ld + %d\n", 
+                                   millis(), idx, condDevice, _eventLastMs[idx], threadhold);
                 }
                 #endif
             } else {
                 match = false;
-                _eventLastMs[condDevice] = millis();
+                _eventLastMs[idx] = millis();
                 #ifdef EH_DEBUG
-                Serial1.printf("%08ld [%d] Pending threadthod: %08ld + %d\n", millis(), condDevice, _eventLastMs[condDevice], threadhold);
+                Serial1.printf("%08ld [%d] Device %d: Pending threadthod: %08ld + %d\n", millis(), idx, condDevice, _eventLastMs[idx], threadhold);
                 #endif
             }
         }
     } else {
+        #ifdef EH_DEBUG
+        if (_eventLastMs[idx]) {
+            Serial1.printf("%08ld [%d] Device %d: Reset threadthod due to not match\n", millis(), idx, cond.data.device);
+        }
+        #endif
         _eventLastMs[idx] = 0;
     }
     return match;

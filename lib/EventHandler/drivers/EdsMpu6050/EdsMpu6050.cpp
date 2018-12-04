@@ -11,10 +11,11 @@ EdsMpu6050::~EdsMpu6050() {
 }
 
 void EdsMpu6050::Setup(uint8_t i2cAddr, uint16_t threadhold, uint16_t elapseMs) {
-    _dbg->msg("EdsMpu6050::Setup(0x%02X)", i2cAddr);
+    _dbg->msg("EdsMpu6050::Setup(0x%02X, threadhold: %d, elapse: %d)", i2cAddr, threadhold, elapseMs);
     _i2cAddr = i2cAddr;
     _threadhold = threadhold;
-    _elapseMs = elapseMs;
+    _continueCheckMs  = elapseMs;
+    _delayCheckMs = EMPU_DELAY_CHECK_MS;
 
     _data->SetThreadhold(_Device, threadhold);
 
@@ -28,6 +29,7 @@ void EdsMpu6050::Setup(uint8_t i2cAddr, uint16_t threadhold, uint16_t elapseMs) 
         Wire.write(0x6B);  // PWR_MGMT_1 register
         Wire.write(0);     // set to zero (wakes up the MPU-6050)
         Wire.endTransmission(true);
+        _dbg->msg("MPU6050 initialized.");
     } else {
         _dbg->msg("MPU6050 is not available.");
     }
@@ -45,9 +47,11 @@ bool EdsMpu6050::GetData() {
     return true;
 }
 
+/*
 void EdsMpu6050::PostHandler(bool eventMatched, bool isRelated, bool pending) {
     _nextReportMs = millis() + _elapseMs;    
 }
+*/
 
 // public function for using outside EDS
 bool EdsMpu6050::GetMpuData() {

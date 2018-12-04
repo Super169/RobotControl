@@ -10,6 +10,7 @@
 #define EMPU_DEFAULT_ADDR   0x68
 #define EMPU_DATA_SIZE      14
 #define EMPU_RESULT_SIZE    20
+#define EMPU_DELAY_CHECK_MS 5000
 
 class EdsMpu6050 : public EventDataSource {
     public:
@@ -18,9 +19,10 @@ class EdsMpu6050 : public EventDataSource {
 
         void Setup(uint8_t i2cAddr, uint16_t threadhold, uint16_t elapseMs);
         bool GetData() override;
-        void PostHandler(bool eventMatched, bool isRelated, bool pending) override;
+        // void PostHandler(bool eventMatched, bool isRelated, bool pending) override;
 
         bool GetMpuData();
+        uint8_t *MpuBuffer() { return (uint8_t *) _mpuBuffer; }
 
         inline int16_t ax() { return _ax; }
         inline int16_t ay() { return _ay; }
@@ -38,7 +40,6 @@ class EdsMpu6050 : public EventDataSource {
         int16_t _tmp;
         int8_t  _actionSign;
         uint16_t _threadhold;
-        uint16_t _elapseMs;
 };
 
 

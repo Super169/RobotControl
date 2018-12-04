@@ -83,3 +83,9 @@ void EdsPsxButton::PostHandler(bool eventMatched, bool isRelated, bool pending) 
         _nextReportMs = millis() + EDS_CONTINUE_CHECK_MS;
     }
 }
+
+void EdsPsxButton::Shock() {
+    if (!IsAvailable()) return;
+    byte cmd[] = {0xA8, 0x8A, 0x02, 0x02, 0x04, 0xED};
+    _ssb->SendCommand((byte *) cmd, false); 
+}

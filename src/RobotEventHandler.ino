@@ -3,7 +3,7 @@
 void InitEventHandler() {
 	// Turn on 6050 even not set for autoStand, MPU can be used in other area
 	//if (config.autoStand()) {
-		MpuInit();
+//		MpuInit();
 	//}
 	
 	ssbPort.begin(ssbConfig.baud);
@@ -11,8 +11,8 @@ void InitEventHandler() {
 	ssb.Begin(&ssbPort, &DEBUG);
 	ssb.SetEnableTxCalback(EnableSsbTxCallBack);
 
-	_dbg->msg("edsMpu6050.Setup(0x%02X)", EDS_MPU6050_I2CADDR);
-	edsMpu6050.Setup(EDS_MPU6050_I2CADDR, config.mpuCheckFreq(), (1000 / config.positionCheckFreq()));
+	_dbg->msg("edsMpu6050.Setup(0x%02X, %d, %d)", EDS_MPU6050_I2CADDR, (1000 / config.positionCheckFreq()), config.mpuCheckFreq());
+	edsMpu6050.Setup(EDS_MPU6050_I2CADDR, (1000 / config.positionCheckFreq()), config.mpuCheckFreq());
 
 	_dbg->msg("edsTouch.Setup(%d, %d, %d)", EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
 	edsTouch.Setup(EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
@@ -44,10 +44,13 @@ unsigned long nextHandlerMs = 0;
 unsigned long nextMpuCheckMs = 0;
 unsigned long nextTouchCheckMs = 0;
 unsigned long nextShowMpuMs = 0;
+unsigned long nextShowMs = 0;
+
+bool lastPlaying = false;
 
 void RobotEventHandler() {
 
-if (millis() < nextHandlerMs) return;
+	if (millis() < nextHandlerMs) return;
 
 #ifdef NEW_EVENT_HANDLER
 /*
@@ -74,9 +77,18 @@ if (millis() < nextHandlerMs) return;
 	EventHandler *eActive;
 	if (V2_ActionPlaying) {
 		eActive = &eBusy;
+		if (lastPlaying) {
+			// status changed, need to reset everything if possble
+			eIdle.ResetEventLastMs();
+		}
 	} else {
 		eActive = &eIdle;
+		if (lastPlaying) {
+			// status changed, need to reset everything if possble
+			eBusy.ResetEventLastMs();
+		}
 	}
+	lastPlaying = V2_ActionPlaying;
 
 	// This part can be changed to use a loop if all data source changed to EventDataSource type
 
@@ -106,6 +118,7 @@ if (millis() < nextHandlerMs) return;
 		}
 	}
 	
+	/*
 	
 	// TODO: Study if it should move MpuGetData() to EsdMpu6050
 	if (millis() > nextMpuCheckMs) {
@@ -131,7 +144,7 @@ if (millis() < nextHandlerMs) return;
 		nextMpuCheckMs = millis() + (1000 / config.positionCheckFreq());
 	}
 
-
+	*/
 
 
 	// Condition checking
@@ -160,9 +173,11 @@ if (millis() < nextHandlerMs) return;
 		}
 		
 		eventMatched = true;
+		bool validAction = true;
 		switch (action.data.type) {
 
             case (uint8_t) EventHandler::ACTION_TYPE::na:
+				validAction = false;
                 break;
 	
 			case (uint8_t) EventHandler::ACTION_TYPE::headLed:
@@ -212,7 +227,12 @@ if (millis() < nextHandlerMs) return;
 
             default:
                 if (debug) DEBUG.printf("Unknown action %d \n", action.data.type);
+				validAction = false;
                 break;			
+		}
+		// if (validAction)  {
+		if ((validAction) && eActive->LastEventRelated((uint8_t) EventData::DEVICE::psx_button))  {
+			edsPsxButton.Shock();
 		}
 	} else {
 		if (debug && showResult) {
@@ -222,6 +242,13 @@ if (millis() < nextHandlerMs) return;
 			_dbg->msg("No Event matched");
 			_dbg->msg("----------\n\n");
 		}
+	}
+
+
+	if (showResult && (millis() > nextShowMs )) {
+		if (V2_ActionPlaying)
+		eData.DumpData(&Serial1);
+		nextShowMs = millis() + 1000;
 	}
 
 
@@ -263,6 +290,7 @@ if (millis() < nextHandlerMs) return;
 	}
 	
 
+
 #else
 
 	// Old version with direct setting
@@ -278,7 +306,7 @@ if (millis() < nextHandlerMs) return;
 
 #endif
 
-nextHandlerMs = millis() + EVENT_HANDLER_ELAPSE_MS;
+	nextHandlerMs = millis() + EVENT_HANDLER_ELAPSE_MS;
 
 }
 

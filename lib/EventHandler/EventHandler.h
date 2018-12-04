@@ -88,6 +88,7 @@ class EventHandler {
         uint16_t Count() { return _evtCount; }
         EVENT *Events() { return _events; }
 
+        void ResetEventLastMs();
         void DumpEvents(Stream *output);
 
     private:

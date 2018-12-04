@@ -1380,20 +1380,24 @@ void V2_UpdateCombo(byte *cmd) {
 
 void V2_CheckMPU(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_CheckMPU]"));
-	V2_SendSingleByteResult(cmd, (mpuExists ? RESULT::SUCCESS : RESULT::ERR::NOT_FOUND));
+	V2_SendSingleByteResult(cmd, (edsMpu6050.IsAvailable() ? RESULT::SUCCESS : RESULT::ERR::NOT_FOUND));
 }
 
 void V2_GetMPUData(byte *cmd) {
 	if (debug) DEBUG.println(F("[V2_GetMPU]"));
-	byte result[MPU_RESULT_SIZE];
-	result[2] = MPU_RESULT_SIZE - 4;
+	byte result[EMPU_RESULT_SIZE];
+	result[2] = EMPU_RESULT_SIZE - 4;
 	result[3] = cmd[3];
+	/*
 	if (MpuGetData()) {
 		memcpy((byte *)(result + 4), mpuBuffer, MPU_DATA_SIZE);
 	}
+	*/
+	if (edsMpu6050.GetMpuData()) {
+		memcpy((byte *)(result + 4), edsMpu6050.MpuBuffer(), EMPU_DATA_SIZE);
+	}
 	V2_SendResult(result);
 }
-
 
 #pragma endregion
 
