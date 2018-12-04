@@ -15,7 +15,15 @@ void EdsPsxButton::Initialize(EventData *data) {
 */
 
 void EdsPsxButton::Setup(SSBoard *ssb) {
+    _dbg->msg("EdsPsxButton::Setup(*ssb)");
     _ssb = ssb;
+    // Check if device available
+
+    byte cmd[] = {0xA8, 0x8A, 0x02, 0x01, 0x03, 0xED};
+    _isAvailable = _ssb->SendCommand((byte *) cmd, true);
+    if (!_isAvailable) {
+        _dbg->msg("PSX Conbroller not available");
+    }
 }
 
 bool EdsPsxButton::GetData() {
@@ -39,6 +47,8 @@ bool EdsPsxButton::GetData() {
     button[0] = result->peek(8);
     button[1] = result->peek(7);
 
+    // Due to the behavious of PSX control board, it will repeat the value within 1s
+    // Need to skip repeated value if handled
     if (_prevDataRady && (_lastReportValue == data) && (_lastValueHandled) && ((millis() - _lastReportMS) < EPB_IGNORE_REPEAT_TIME)) {
         // ignore this value as it has just been handled
         // _dbg->msg("PSX Button already handled: %d, %04X : %04X, %d, %ld", _prevDataRady, _lastReportValue, data, _lastValueHandled, millis() - _lastReportMS);
@@ -62,7 +72,7 @@ bool EdsPsxButton::GetData() {
 *   PostHandler
 *       Can wait longer if data reported and handled
 */
-void EdsPsxButton::PostHandler(bool eventMatched, bool isRelated) {
+void EdsPsxButton::PostHandler(bool eventMatched, bool isRelated, bool pending) {
     if (!IsReady()) return;
     if (_thisDataReady) _lastValueHandled = isRelated;
     // wait longer if 

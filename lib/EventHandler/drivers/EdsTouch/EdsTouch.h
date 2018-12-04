@@ -24,9 +24,9 @@ class EdsTouch : public EventDataSource {
         EdsTouch(EventData *data, MyDebugger *dbg, byte devId = 0);
         ~EdsTouch();
 
-        void Setup(uint8_t gpioPin, unsigned long touchDetectPeriod, unsigned touchReleasePeriod);
+        void Setup(uint8_t gpioPin, unsigned long touchDetectPeriod, unsigned long touchReleasePeriod);
         bool GetData() override;
-        void PostHandler(bool eventMatched, bool isRelated) override;
+        void PostHandler(bool eventMatched, bool isRelated, bool pending) override;
 
     private:
         uint8_t _gpioPin;

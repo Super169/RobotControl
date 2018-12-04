@@ -41,7 +41,8 @@ SoftwareSerial ssbPort(ssbConfig.rx_pin, ssbConfig.tx_pin, ssbConfig.inverse_log
 //EventHandler eBusy(&eData);
 //EventHandler eTemp(&eData);
 
-#define TOUCH_GPIO  13
+#define EDS_TOUCH_GPIO      13
+#define EDS_MPU6050_I2CADDR 0x68  // I2C address of the MPU-6050
 
 //SSBoard ssb;
 //EdsPsxButton edsPsxButton(&eData, _dbg);
@@ -56,6 +57,6 @@ void CheckVoltage() ;
 byte GetPower(uint16_t v);
 
 
-
+EventDataSource* eds[ED_MAX_DEVICE + 1];
 
 #endif

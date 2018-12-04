@@ -5,8 +5,9 @@
 #include "EventData.h"
 #include "MyDebugger.h"
 
-// Default setting for continue check and delay check
-#define EDS_CONTINUE_CHECK_MS   10
+// Default setting for checking frequency, don't make it too busy
+#define EDS_PENDING_CHECK_MS    20
+#define EDS_CONTINUE_CHECK_MS   50
 #define EDS_DELAY_CHECK_MS      1000
 
 class EventDataSource {
@@ -15,6 +16,7 @@ class EventDataSource {
         EventData *_data = NULL;
         MyDebugger *_dbg;
 
+        bool _isAvailable = true;
         bool _isEnabled = true;
         bool _enableDebug = true;
         /*
@@ -35,6 +37,10 @@ class EventDataSource {
         unsigned long _reportInterval = 1000;   // by default, each sensor will be reported once per second
         unsigned long _nextReportMs = 0;
 
+        unsigned long _pendingCheckMs = EDS_PENDING_CHECK_MS;
+        unsigned long _continueCheckMs = EDS_CONTINUE_CHECK_MS;
+        unsigned long _delayCheckMs = EDS_DELAY_CHECK_MS;
+
         uint8_t _Device = 0;
         uint8_t _DevId = 0;
 
@@ -45,10 +51,12 @@ class EventDataSource {
         EventDataSource() {}
         ~EventDataSource() {}
 
+        bool SetEnabled(bool enabled);
+        bool IsAvailable();
         bool IsEnabled();
         bool IsReady();
         virtual bool GetData() = 0;
-        virtual void PostHandler(bool eventMatched, bool isRelated);
+        virtual void PostHandler(bool eventMatched, bool isRelated, bool pending);
 
     private:
 

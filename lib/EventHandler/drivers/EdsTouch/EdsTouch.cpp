@@ -9,7 +9,8 @@ EdsTouch::EdsTouch(EventData *data, MyDebugger *dbg, byte devId) {
 EdsTouch::~EdsTouch() {
 }
 
-void EdsTouch::Setup(uint8_t gpioPin, unsigned long touchDetectPeriod, unsigned touchReleasePeriod) {
+void EdsTouch::Setup(uint8_t gpioPin, unsigned long touchDetectPeriod, unsigned long touchReleasePeriod) {
+    _dbg->msg("EdsTouch::Setup(%d, %ld, %ld)", gpioPin, touchDetectPeriod, touchReleasePeriod);
     _gpioPin = gpioPin;
     _touchDetectPeriod = touchDetectPeriod;
     _touchReleasePeriod = touchReleasePeriod;
@@ -99,14 +100,13 @@ bool EdsTouch::GetData() {
     return (touchAction != 0);
 }
 
-void EdsTouch::PostHandler(bool eventMatched, bool isRelated) {
+void EdsTouch::PostHandler(bool eventMatched, bool isRelated, bool pending) {
     if (!IsReady()) return;
-    // wait longer if 
-    //   - button pressed, and no event required or handled: i.e. !eventMatched
+    // Cannot use generic routine as it need to check the value != 0 to confirm value is not handled
     if ((_thisDataReady) && (_lastReportValue != 0) && ((!eventMatched) || (isRelated))) {
-        _nextReportMs = millis() + EDS_DELAY_CHECK_MS;
+        _nextReportMs = millis() + _delayCheckMs;
     } else {
-        _nextReportMs = millis() + EDS_CONTINUE_CHECK_MS;
+        _nextReportMs = millis() + _continueCheckMs;
     }
 }
 

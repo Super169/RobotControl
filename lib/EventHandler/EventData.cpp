@@ -38,6 +38,18 @@ uint8_t EventData::Offset(uint8_t device, uint8_t devId, uint8_t target) {
     return _offset[device] + target;
 }
 
+
+bool EventData::SetThreadhold(uint8_t device, uint16_t threadhold) {
+    if (device > ED_MAX_DEVICE) return false;
+    _threadhold[device] = threadhold;
+    return true;
+}
+
+uint16_t EventData::Threadhold(uint8_t device) {
+    if (device > ED_MAX_DEVICE) return 0;
+    return _threadhold[device];
+}
+
 uint8_t EventData::DeviceDataSize(uint8_t device) {
     if (device > ED_MAX_DEVICE) return 0;
     return _size[device];

@@ -27,7 +27,7 @@ class EdsPsxButton : public EventDataSource {
         // void Initialize(EventData *data) override;
         void Setup(SSBoard *ssb);
         bool GetData() override;
-        void PostHandler(bool eventMatched, bool isRelated) override;
+        void PostHandler(bool eventMatched, bool isRelated, bool pending) override;
 
     private:
         SSBoard *_ssb;

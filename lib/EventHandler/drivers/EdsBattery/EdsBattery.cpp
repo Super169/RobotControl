@@ -9,10 +9,15 @@ EdsBattery::~EdsBattery() {
 }
 
 void EdsBattery::Setup(uint16_t minVoltage, uint16_t maxVoltage, uint16_t normalCheckMs, uint16_t alarmtIntervalMs) {
+    _dbg->msg("EdsBattery::Setup(%d,%d,%d,%d)", minVoltage, maxVoltage, normalCheckMs, alarmtIntervalMs);
     _minVoltage = minVoltage;
     _maxVoltage = maxVoltage;
-    _normalCheckMs = normalCheckMs;
-    _alarmIntervalMs = alarmtIntervalMs;
+
+    _data->SetThreadhold(_Device, EBAT_THREADHOLD);
+    _pendingCheckMs = _data->Threadhold(_Device) / 10;
+    _continueCheckMs = normalCheckMs;
+    _delayCheckMs = alarmtIntervalMs;
+
 }
 
 bool EdsBattery::GetData() {
@@ -51,11 +56,17 @@ byte EdsBattery::GetPower(uint16_t v) {
 /*  
 *   PostHandler
 */
-void EdsBattery::PostHandler(bool eventMatched, bool isRelated) {
+/*
+void EdsBattery::PostHandler(bool eventMatched, bool isRelated, bool pending) {
     if (!IsReady()) return;
     if (_thisDataReady && isRelated) {
         _nextReportMs = millis() + _alarmIntervalMs;
+    } else if (pending) {
+        _dbg->msg("edsBattery pending");
+        _nextReportMs = millis() + EDS_PENDING_CHECK_MS;
     } else {
+        _dbg->msg("edsBattery normal");
         _nextReportMs = millis() + _normalCheckMs;
     }
 }
+*/

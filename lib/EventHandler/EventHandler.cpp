@@ -1,15 +1,19 @@
 #include "EventHandler.h"
 
+// #define EH_DEBUG
+
 EventHandler::EventHandler(EventData *data)
 {
     _data = data;
     _evtCount = 0;
-    _events = 0;
+    _events = NULL;
+    _eventLastMs = NULL;
 }
 
 EventHandler::~EventHandler()
 {
     delete _events;
+    delete _eventLastMs;
 }
 
 /*
@@ -19,6 +23,7 @@ void EventHandler::ReleaseMemory() {
     if (_evtCount > 0) {
         _evtCount = 0;
         free (_events);
+        free (_eventLastMs);
     }
 }
 
@@ -31,6 +36,9 @@ void EventHandler::SetCount(uint8_t count) {
     size_t size = count * sizeof(EVENT);
     _events =  (EVENT *) malloc(size);
     memset(_events, 0, size);
+    size = count * sizeof(unsigned long);
+    _eventLastMs = (unsigned long *) malloc(size);
+    memset(_eventLastMs, 0, size);
 }
 
 bool EventHandler::FillData(uint8_t startIdx, uint8_t count, byte *buffer) {
@@ -151,6 +159,11 @@ bool EventHandler::LastEventRelated(uint8_t device) {
     return false;
 }
 
+bool EventHandler::IsPending(uint8_t device) {
+    if (device <= ED_MAX_DEVICE) return (_eventLastMs[device]);
+    return false;
+}
+
 void EventHandler::CheckEventsRequirement() {
     
     for (int i = 0; i < ED_MAX_DEVICE + 1; i++) _reqDevice[i] = false;
@@ -174,19 +187,34 @@ EventHandler::EVENT EventHandler::CheckEvents() {
         if (skipEvent) {
             // Skip all related events if pre-cond failed
             skipEvent = (_events[i].data.type != (uint8_t) EVENT_TYPE::handler);
+            if (_data->Threadhold(_events[i].data.condition.data.device)) {
+                // need to check continue condition, so it has to check event will be ignored
+                MatchCondition(i, _events[i].data.condition);
+            }
         } else {
-            if (MatchCondition(_events[i].data.condition)) {
+            if (MatchCondition(i, _events[i].data.condition)) {
                 if (_events[i].data.type == (uint8_t) EVENT_TYPE::handler) {
+                    byte condDevice = _events[i].data.condition.data.device; 
                     // just for safety, make a copy of event object for return
                     // Or it can just return _events[i];
                     memcpy((void *) event.buffer, (void *) _events[i].buffer, sizeof(EVENT));
                     // Check events for related devices
-                    _lastEventRelated[_events[i].data.condition.data.device] = true;
+                    _lastEventRelated[condDevice] = true;
+                    // Reste lastMs once handled
+                    #ifdef EH_DEBUG
+                    Serial1.printf("%08ld Release last ms for %d\n", millis(), condDevice);
+                    #endif
+                    _eventLastMs[condDevice] = 0;
                     
                     int16_t j = i - 1;
                     while (j >= 0) {
                         if (_events[j].data.type == (uint8_t) EVENT_TYPE::preCond) {
-                            _lastEventRelated[_events[j].data.condition.data.device] = true;
+                            condDevice = _events[j].data.condition.data.device;
+                            _lastEventRelated[condDevice] = true;
+                            #ifdef EH_DEBUG
+                            Serial1.printf("%08ld [%d] Threadhold met, release last ms for %d\n", millis(), condDevice, condDevice);
+                            #endif
+                            _eventLastMs[condDevice] = 0;
                         } else {
                             break;
                         }
@@ -221,25 +249,50 @@ void EventHandler::DumpEvents(Stream *output) {
 }
 
 
-bool EventHandler::MatchCondition(CONDITION cond) {
+bool EventHandler::MatchCondition(uint16_t idx, CONDITION cond) {
     if (!_data->IsReady(cond.data.device, cond.data.devId, cond.data.target)) return false;
     int16_t value = _data->GetData(cond.data.device, cond.data.devId, cond.data.target);
+    bool match = false;
     switch (cond.data.checkMode) {
         case (uint8_t) CHECK_MODE::match:
-            // if (value == ED_INVALID_DATA) return false;
-            return value == cond.data.value;
+            match = (value == cond.data.value);
+            break;
+
         case (uint8_t) CHECK_MODE::greater:
-            // if (value == ED_INVALID_DATA) return false;
-            return value > cond.data.value;
+            match = (value > cond.data.value);
+            break;
         case (uint8_t) CHECK_MODE::less:
-            // if (value == ED_INVALID_DATA) return false;
-            return value < cond.data.value;
+            match = (value < cond.data.value);
+            break;
+
         case (uint8_t) CHECK_MODE::button:
             uint16_t status = (value & ~cond.data.value);
-            // Serial1.printf("----------- Check button: %04X vs %04X => %04X\n", value, cond.data.value, status);
-            return (status == 0);
+            match = (status == 0);
     }
-    return false;
+    if (match) {
+        byte condDevice = cond.data.device;
+        uint16_t threadhold = _data->Threadhold(condDevice);
+        if (threadhold) {
+            if (_eventLastMs[condDevice]) {
+                match = millis() > (_eventLastMs[condDevice] + threadhold);
+                #ifdef EH_DEBUG
+                if (match) {
+                    Serial1.printf("%08ld [%d] Threadhold matched: %08ld + %d\n", 
+                                   millis(), condDevice, _eventLastMs[condDevice], threadhold);
+                }
+                #endif
+            } else {
+                match = false;
+                _eventLastMs[condDevice] = millis();
+                #ifdef EH_DEBUG
+                Serial1.printf("%08ld [%d] Pending threadthod: %08ld + %d\n", millis(), condDevice, _eventLastMs[condDevice], threadhold);
+                #endif
+            }
+        }
+    } else {
+        _eventLastMs[idx] = 0;
+    }
+    return match;
 }
 
 size_t EventHandler::FileSize(const char *fileName) {

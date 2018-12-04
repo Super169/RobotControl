@@ -7,6 +7,8 @@
 #include "EventDataSource.h"
 #include "SSBoard.h"
 
+#define EBAT_THREADHOLD 1000
+
 /*
 *   Event Data Source for Battery
 *
@@ -20,7 +22,7 @@ class EdsBattery : public EventDataSource {
         // void Initialize(EventData *data) override;
         void Setup(uint16_t minVoltage, uint16_t maxVoltage, uint16_t normalCheckMs, uint16_t alarmIntervalMs);
         bool GetData() override;
-        void PostHandler(bool eventMatched, bool isRelated) override;
+        // void PostHandler(bool eventMatched, bool isRelated, bool pending) override;
 
     private:
 
@@ -28,8 +30,6 @@ class EdsBattery : public EventDataSource {
         uint16_t _maxVoltage = 0;
         uint16_t _lastReportReading = 0;
         uint16_t _lastReportLevel = 0;
-        uint16_t _normalCheckMs = 0;
-        uint16_t _alarmIntervalMs = 0;
 
         byte GetPower(uint16_t v);
 };

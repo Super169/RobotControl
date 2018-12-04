@@ -32,7 +32,7 @@ void MyDebugger::msg(const char *format, ...) {
 		return;
 	}
 
-	_dbg->printf("%08ld: ", millis());
+	_dbg->printf("%08ld ", millis());
 
 	// source from Print::pritnf, as it cannot call printf wihtin the method
 	// just modify write to _dbg->write as it's now not under Strem object
@@ -73,7 +73,7 @@ void MyDebugger::msgh(const char *format, ...) {
 		return;
 	}
 
-	_dbg->printf("%08ld: ", millis());
+	_dbg->printf("%08ld ", millis());
 
 	// source from Print::pritnf, as it cannot call printf wihtin the method
 	// just modify write to _dbg->write as it's now not under Strem object

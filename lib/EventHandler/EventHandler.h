@@ -82,6 +82,7 @@ class EventHandler {
         bool SaveData(String filename);
         bool IsRequired(uint8_t device);
         bool LastEventRelated(uint8_t device);
+        bool IsPending(uint8_t device);
 
         EVENT CheckEvents();
         uint16_t Count() { return _evtCount; }
@@ -92,14 +93,14 @@ class EventHandler {
     private:
         uint16_t _evtCount;
         EVENT *_events;
-
+        unsigned long *_eventLastMs;
 
         EventData *_data;
         bool _reqDevice[ED_MAX_DEVICE + 1];
         void CheckEventsRequirement();  // mark flag in _reqDevice
 
         bool _lastEventRelated[ED_MAX_DEVICE + 1];
-        bool MatchCondition(CONDITION cod);
+        bool MatchCondition(uint16_t idx, CONDITION cod);
         
 
         size_t FileSize(const char *fileName);

@@ -11,15 +11,26 @@ void InitEventHandler() {
 	ssb.Begin(&ssbPort, &DEBUG);
 	ssb.SetEnableTxCalback(EnableSsbTxCallBack);
 
-	_dbg->msg("edsPsxButton.Setup(&ssb): GPIO: %d, BAUD: %ld, BUffer: %d", ssbConfig.tx_pin, ssbConfig.baud, ssbConfig.buffer_size);
+	_dbg->msg("edsMpu6050.Setup(0x%02X)", EDS_MPU6050_I2CADDR);
+	edsMpu6050.Setup(EDS_MPU6050_I2CADDR, config.mpuCheckFreq(), (1000 / config.positionCheckFreq()));
+
+	_dbg->msg("edsTouch.Setup(%d, %d, %d)", EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
+	edsTouch.Setup(EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
+
+	_dbg->msg("edsPsxButton.Setup() => GPIO: %d, BAUD: %ld, BUffer: %d", ssbConfig.tx_pin, ssbConfig.baud, ssbConfig.buffer_size);
 	edsPsxButton.Setup(&ssb);
 	
 	// TODO: add normal check ms to config object
 	_dbg->msg("edsBattery.Setup(%d, %d, %d, %d)", config.minVoltage(), config.maxVoltage(), 5000,config.voltageAlarmInterval() * 1000);
 	edsBattery.Setup(config.minVoltage(), config.maxVoltage(), 5000, config.voltageAlarmInterval() * 1000);
 
-	_dbg->msg("edsTouch.Setup(%d, %d, %d)", TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
-	edsTouch.Setup(TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
+	// Use array later
+	for (int i = 0; i <= ED_MAX_DEVICE; i++) eds[i] = NULL;
+
+	eds[(byte) EventData::DEVICE::mpu] = &edsMpu6050;
+	eds[(byte) EventData::DEVICE::touch] = &edsTouch;
+	eds[(byte) EventData::DEVICE::psx_button] = &edsPsxButton;
+	eds[(byte) EventData::DEVICE::battery] = &edsBattery;
 
 	eIdle.LoadData(EVENT_IDEL_FILE);
 	eBusy.LoadData(EVENT_BUSY_FILE);
@@ -68,6 +79,16 @@ if (millis() < nextHandlerMs) return;
 	}
 
 	// This part can be changed to use a loop if all data source changed to EventDataSource type
+
+	/*
+	if (eActive->IsRequired((uint8_t) EventData::DEVICE::mpu)) {
+		if (edsMpu6050.GetData()) showResult = true;
+	}
+
+	if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
+		if (edsTouch.GetData()) showResult = true;
+	}
+
 	if (eActive->IsRequired((uint8_t) EventData::DEVICE::psx_button)) {
 		if (edsPsxButton.GetData()) showResult = true;
 	}
@@ -75,10 +96,16 @@ if (millis() < nextHandlerMs) return;
 	if (eActive->IsRequired((uint8_t) EventData::DEVICE::battery)) {
 		if (edsBattery.GetData()) showResult = true;
 	} 
+	*/
 
-	if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
-		if (edsTouch.GetData()) showResult = true;
+	for (int device = 0; device <= ED_MAX_DEVICE; device++) {
+		if (eds[device] != NULL) {
+			if (eActive->IsRequired(device)) {
+				if (eds[device]->GetData()) showResult = true;
+			} 
+		}
 	}
+	
 	
 	// TODO: Study if it should move MpuGetData() to EsdMpu6050
 	if (millis() > nextMpuCheckMs) {
@@ -197,22 +224,44 @@ if (millis() < nextHandlerMs) return;
 		}
 	}
 
+
+	/*
+	if (eActive->IsRequired((uint8_t) EventData::DEVICE::mpu)) {
+		edsMpu6050.PostHandler( eventMatched, 
+		                        eActive->LastEventRelated((uint8_t) EventData::DEVICE::mpu),
+							    eActive->IsPending((uint8_t) EventData::DEVICE::mpu) );
+	}
+
+	if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
+		edsTouch.PostHandler( eventMatched, 
+		                      eActive->LastEventRelated((uint8_t) EventData::DEVICE::touch),
+							  eActive->IsPending((uint8_t) EventData::DEVICE::touch) );
+	}
+
 	if (eActive->IsRequired((uint8_t) EventData::DEVICE::psx_button)) {
-		edsPsxButton.PostHandler(eventMatched, eActive->LastEventRelated((uint8_t) EventData::DEVICE::psx_button));
+		edsPsxButton.PostHandler( eventMatched, 
+								  eActive->LastEventRelated((uint8_t) EventData::DEVICE::psx_button),
+								  eActive->IsPending((uint8_t) EventData::DEVICE::psx_button) );
 	}
 
 
 	if (eActive->IsRequired((uint8_t) EventData::DEVICE::battery)) {
-		edsBattery.PostHandler(eventMatched, eActive->LastEventRelated((uint8_t) EventData::DEVICE::battery));
+		edsBattery.PostHandler( eventMatched, 
+		                        eActive->LastEventRelated((uint8_t) EventData::DEVICE::battery),
+								eActive->IsPending((uint8_t) EventData::DEVICE::battery) );
 	}
+	*/
 
-	if (eActive->IsRequired((uint8_t) EventData::DEVICE::touch)) {
-		edsTouch.PostHandler(eventMatched, eActive->LastEventRelated((uint8_t) EventData::DEVICE::touch));
+	for (int device = 0; device <= ED_MAX_DEVICE; device++) {
+		if (eds[device] != NULL) {
+			if (eActive->IsRequired(device)) {
+				eds[device]->PostHandler( eventMatched, 
+							  			  eActive->LastEventRelated(device),
+										  eActive->IsPending(device) );
+			}
+		}
 	}
-
-	if (eActive->IsRequired((uint8_t) EventData::DEVICE::mpu)) {
-		edsMpu6050.PostHandler(eventMatched, eActive->LastEventRelated((uint8_t) EventData::DEVICE::mpu));
-	}
+	
 
 #else
 

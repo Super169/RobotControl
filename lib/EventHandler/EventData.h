@@ -71,10 +71,13 @@ class EventData {
 
         uint8_t Offset(uint8_t device, uint8_t devId, uint8_t target);
 
+        bool SetThreadhold(uint8_t device, uint16_t threadhold);
+        uint16_t Threadhold(uint8_t device);
 
     private:
         const uint8_t _offset[ED_MAX_DEVICE + 1] = {0, ED_OFFSET_MPU, ED_OFFSET_TOUCH, ED_OFFSET_PSXBUTTON, ED_OFFSET_BATTERY, ED_OFFSET_GPIO };
         const uint8_t _size[ED_MAX_DEVICE + 1] = {0, ED_SIZE_MPU, ED_SIZE_TOUCH, ED_SIZE_PSXBUTTON, ED_SIZE_BATTERY, ED_SIZE_GPIO};
+        uint16_t _threadhold[ED_MAX_DEVICE + 1] = {0, 0, 0, 0, 0,0 };
 
         int16_t _data[ED_DATA_SIZE];
         // Use bool array instead of bit control table at this moment, 64 bytes is OK
