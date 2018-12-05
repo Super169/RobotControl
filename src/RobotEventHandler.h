@@ -32,6 +32,10 @@ struct {
 
 SoftwareSerial ssbPort(ssbConfig.rx_pin, ssbConfig.tx_pin, ssbConfig.inverse_logic, ssbConfig.buffer_size);
 
+unsigned long nextHandlerMs = 0;
+unsigned long nextShowMs = 0;
+bool lastPlaying = false;
+
 
 // Too bad, cannot put them here as it cannot reconized the _dbg in robot.h, so have to move to robot.h
 // After Eds moved to robot.h, eData also need to mov e to robot.h, so all moved to robot.h

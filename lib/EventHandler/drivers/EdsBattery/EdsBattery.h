@@ -24,6 +24,8 @@ class EdsBattery : public EventDataSource {
         bool GetData() override;
         // void PostHandler(bool eventMatched, bool isRelated, bool pending) override;
 
+        byte GetPower(uint16_t v);
+
     private:
 
         uint16_t _minVoltage = 0;
@@ -31,7 +33,6 @@ class EdsBattery : public EventDataSource {
         uint16_t _lastReportReading = 0;
         uint16_t _lastReportLevel = 0;
 
-        byte GetPower(uint16_t v);
 };
 
 #endif

@@ -3,7 +3,6 @@
 
 
 #define DISABLE_BATTERY_CHECK
-#define NEW_EVENT_HANDLER
 
 
 #include "ESP8266WiFi.h"
@@ -33,8 +32,8 @@ SimpleWiFiManager SWFM;
 #include "V2_Command.h"
 
 #include "RobotEventHandler.h"
-#include "Event_Touch.h"
-#include "Event_Mpu6050.h"
+// #include "Event_Touch.h"
+// #include "Event_Mpu6050.h"
 
 #include "EyeLed.h"
 
@@ -44,7 +43,7 @@ SimpleWiFiManager SWFM;
 #define VERSION_MAJOR   2
 #define VERSION_MINOR   1
 #define VERSION_SUB     99
-#define VERSION_FIX     4
+#define VERSION_FIX     5
 
 // Start a TCP Server on port 6169
 uint16_t port = 6169;

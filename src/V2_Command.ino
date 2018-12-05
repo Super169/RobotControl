@@ -496,7 +496,7 @@ void V2_CheckBattery(byte *cmd) {
 	result[2] = 5;
 	result[3] = cmd[3];
 	uint16_t v = analogRead(0);
-	byte iPower = GetPower(v);
+	byte iPower = edsBattery.GetPower(v);
 	result[4] = iPower;
 	result[5] = v >> 8;
 	result[6] = v & 0xFF;
@@ -713,9 +713,9 @@ void V2_SetAdjAngle(byte *cmd) {
 	if (cmd[2] == 5) {
 		byte id = cmd[4];
 		uint16_t adjSet = (cmd[5] << 8) | cmd[6];
-		DEBUG.printf("Set angle: %d\n", adjSet);
+		if (debug) DEBUG.printf("Set angle: %d\n", adjSet);
 		uint16_t adjResult = rs.setAdjAngle(id, adjSet);
-		DEBUG.printf("Result angle: %d\n", adjResult);
+		if (debug) DEBUG.printf("Result angle: %d\n", adjResult);
 		V2_SendSingleByteResult(cmd, (adjSet == adjResult ? 0 : 2));
 	} else {
 		V2_SendSingleByteResult(cmd, 1);
@@ -1215,17 +1215,19 @@ void V2_GetAdPose(byte *cmd) {
 	result[2] = AD_POSE_SIZE - 4;
 	result[3] = cmd[3];
 
-	DEBUG.printf("Source Data at 0,0: \n");
-	for (int i = 0; i < AD_POSE_SIZE; i++) {
-		DEBUG.printf("%02X ", actionData.Data()[i]);
-	}
-	DEBUG.println();
+	if (debug) {
+		DEBUG.printf("Source Data at 0,0: \n");
+		for (int i = 0; i < AD_POSE_SIZE; i++) {
+			DEBUG.printf("%02X ", actionData.Data()[i]);
+		}
+		DEBUG.println();
 
-	DEBUG.printf("V2_GetAdPose - Return Data: \n");
-	for (int i = 0; i < AD_POSE_SIZE; i++) {
-		DEBUG.printf("%02X ", result[i]);
+		DEBUG.printf("V2_GetAdPose - Return Data: \n");
+		for (int i = 0; i < AD_POSE_SIZE; i++) {
+			DEBUG.printf("%02X ", result[i]);
+		}
+		DEBUG.println();
 	}
-	DEBUG.println();
 
 	V2_SendResult(result);
 }
@@ -1388,11 +1390,6 @@ void V2_GetMPUData(byte *cmd) {
 	byte result[EMPU_RESULT_SIZE];
 	result[2] = EMPU_RESULT_SIZE - 4;
 	result[3] = cmd[3];
-	/*
-	if (MpuGetData()) {
-		memcpy((byte *)(result + 4), mpuBuffer, MPU_DATA_SIZE);
-	}
-	*/
 	if (edsMpu6050.GetMpuData()) {
 		memcpy((byte *)(result + 4), edsMpu6050.MpuBuffer(), EMPU_DATA_SIZE);
 	}
@@ -1495,27 +1492,7 @@ byte SaveEventHandler(byte *cmd) {
 	EventHandler* eTarget;
 	eTarget = (mode ? &eBusy : &eIdle);
 
-
-	/*
-	DEBUG.printf("\n----------\nData dump before clone:\n");
-	DEBUG.printf("eTemp: \n");
-	eTemp.DumpEvents(&DEBUG);
-	DEBUG.printf("eTarget: \n");
-	eTarget->DumpEvents(&DEBUG);
-	DEBUG.printf("----------\n");
-	*/
-
 	if (eTarget->Clone(&eTemp)) {
-
-		/*
-		DEBUG.printf("\n----------\nData dump after clone:\n");
-		DEBUG.printf("eTemp: \n");
-		eTemp.DumpEvents(&DEBUG);
-		DEBUG.printf("eTarget: \n");
-		eTarget->DumpEvents(&DEBUG);
-		DEBUG.printf("----------\n");
-		*/
-
 		if (eTarget->SaveData(mode ? EVENT_BUSY_FILE : EVENT_IDEL_FILE)) {
 			return RESULT::SUCCESS;
 		}
@@ -1537,29 +1514,6 @@ void V2_SaveEventData(byte *cmd) {
 		byte *dest = (byte *) events[startIdx].buffer;
 		memcpy(dest, source, dataCnt);
 
-		/*
-		if (debug) {
-			DEBUG.printf("--Source----\n");
-			for (int i = 0; i < count; i++) {
-				for (int j = 0; j < 12; j++) {
-					DEBUG.printf("%02X ", source[i * 12 + j]);
-				}
-				DEBUG.printf("\n");
-			}
-			DEBUG.printf("------\n");
-
-			DEBUG.printf("--Dest----\n");
-			for (int i = 0; i < count; i++) {
-				for (int j = 0; j < 12; j++) {
-					DEBUG.printf("%02X ", dest[i * 12 + j]);
-				}
-				DEBUG.printf("\n");
-			}
-			DEBUG.printf("------\n");
-
-			eTemp.DumpEvents(&DEBUG);
-		}
-		*/
 		result = RESULT::SUCCESS;
 	} else {
 		result = RESULT::ERR::DATA_OVERFLOW;
