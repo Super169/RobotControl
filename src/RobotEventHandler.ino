@@ -166,6 +166,11 @@ void RobotEventHandler() {
 				ActionPlaySystemAction(action.data.parm_1);
                 break;
 
+            case (uint8_t) EventHandler::ACTION_TYPE::servo:
+                _dbg->log(0,0,"Move servo %d (%d : %d ms)", action.data.parm_1, (int8_t) action.data.parm_2, action.data.parm_3);
+				ActionServo(action.data.parm_1, (int8_t) action.data.parm_2, action.data.parm_3);
+                break;
+
 
             default:
                 if (debug) DEBUG.printf("Unknown action %d \n", action.data.type);
@@ -174,7 +179,7 @@ void RobotEventHandler() {
 		}
 		// if (validAction)  {
 		if ((validAction) && eActive->LastEventRelated((uint8_t) EventData::DEVICE::psx_button))  {
-			edsPsxButton.Shock();
+			// edsPsxButton.Shock();
 		}
 
 	} else {

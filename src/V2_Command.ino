@@ -1584,3 +1584,12 @@ void ActionMp3Stop() {
 	}	
 }
 
+void ActionServo(uint8_t servoId, int8_t moveAngle, uint8_t time) {
+	if (!rs.exists(servoId)) return;
+	int16_t currAngle = (int16_t) rs.getAngle(servoId);
+	int16_t newAngle = currAngle + moveAngle;
+	if (newAngle < 0) newAngle = 0;
+	if (newAngle > rs.maxAngle()) newAngle = rs.maxAngle();
+	if (currAngle == newAngle) return;	// no action required
+	rs.goAngle(servoId, newAngle, time);
+}
