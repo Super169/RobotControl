@@ -15,14 +15,16 @@ void EdsPsxButton::Initialize(EventData *data) {
 */
 
 void EdsPsxButton::Setup(SSBoard *ssb) {
-    _dbg->msg("EdsPsxButton::Setup(*ssb)");
+    _dbg->log(1, 0, "EdsPsxButton::Setup(*ssb)");
     _ssb = ssb;
     // Check if device available
 
     byte cmd[] = {0xA8, 0x8A, 0x02, 0x01, 0x03, 0xED};
     _isAvailable = _ssb->SendCommand((byte *) cmd, true);
-    if (!_isAvailable) {
-        _dbg->msg("PSX Conbroller not available");
+    if (_isAvailable) { 
+        _dbg->log(0, 0, "PSX Conbroller detected");
+    } else {
+        _dbg->log(0, 0, "PSX Conbroller not available");
     }
 }
 

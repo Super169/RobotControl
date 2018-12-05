@@ -10,7 +10,7 @@ EdsTouch::~EdsTouch() {
 }
 
 void EdsTouch::Setup(uint8_t gpioPin, unsigned long touchDetectPeriod, unsigned long touchReleasePeriod) {
-    _dbg->msg("EdsTouch::Setup(%d, %ld, %ld)", gpioPin, touchDetectPeriod, touchReleasePeriod);
+    _dbg->log(1, 0, "EdsTouch::Setup(GPIO: %d, Detect: %ld ms, Release: %ld ms)", gpioPin, touchDetectPeriod, touchReleasePeriod);
     _gpioPin = gpioPin;
     _touchDetectPeriod = touchDetectPeriod;
     _touchReleasePeriod = touchReleasePeriod;

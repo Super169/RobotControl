@@ -28,12 +28,17 @@ class MyDebugger : public Stream {
 		void msgf(const char * format, ...) __attribute__ ((format (printf, 2, 3)));
 		void msgh(const char * format, ...) __attribute__ ((format (printf, 2, 3)));  // Shoudl be combined with msg, but need to change program, do it in next version
 
+		void log(uint8_t level, uint8_t type, const char * format, ...) __attribute__ ((format (printf, 4, 5)));
+
+		void setLogLevel(uint8_t level);
+
 		size_t write(uint8_t byte);
 		using Print::write;		// Since Strem has not define for write, must bring from Print
 
 	private:
 		bool _enableDebug;
 		Stream *_dbg;		
+		uint8_t _level = 255;
 
 };
 

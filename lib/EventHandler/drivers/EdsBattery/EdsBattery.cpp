@@ -9,7 +9,7 @@ EdsBattery::~EdsBattery() {
 }
 
 void EdsBattery::Setup(uint16_t minVoltage, uint16_t maxVoltage, uint16_t normalCheckMs, uint16_t alarmtIntervalMs) {
-    _dbg->msg("EdsBattery::Setup(%d,%d,%d,%d)", minVoltage, maxVoltage, normalCheckMs, alarmtIntervalMs);
+    _dbg->log(1, 0, "EdsBattery::Setup(%d,%d,%d,%d)", minVoltage, maxVoltage, normalCheckMs, alarmtIntervalMs);
     _minVoltage = minVoltage;
     _maxVoltage = maxVoltage;
 
