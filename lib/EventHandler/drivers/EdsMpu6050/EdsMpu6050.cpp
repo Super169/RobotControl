@@ -11,7 +11,7 @@ EdsMpu6050::~EdsMpu6050() {
 }
 
 void EdsMpu6050::Setup(uint8_t i2cAddr, uint16_t threadhold, uint16_t elapseMs) {
-    _dbg->log(1, 0, "EdsMpu6050::Setup(0x%02X, threadhold: %d ms, elapse: %d ms)", i2cAddr, threadhold, elapseMs);
+    if (_dbg->require(110)) _dbg->log(110, 0, "EdsMpu6050::Setup(0x%02X, threadhold: %d ms, elapse: %d ms)", i2cAddr, threadhold, elapseMs);
     _i2cAddr = i2cAddr;
     _threadhold = threadhold;
     _continueCheckMs  = elapseMs;
@@ -29,9 +29,9 @@ void EdsMpu6050::Setup(uint8_t i2cAddr, uint16_t threadhold, uint16_t elapseMs) 
         Wire.write(0x6B);  // PWR_MGMT_1 register
         Wire.write(0);     // set to zero (wakes up the MPU-6050)
         Wire.endTransmission(true);
-        _dbg->log(0, 0, "MPU6050 initialized.");
+        if (_dbg->require(10)) _dbg->log(10, 0, "MPU6050 initialized.");
     } else {
-        _dbg->log(0, 0, "MPU6050 is not available.");
+        if (_dbg->require(10)) _dbg->log(10, 0, "MPU6050 is not available.");
     }
 }
 
@@ -43,6 +43,7 @@ bool EdsMpu6050::GetData() {
     _data->SetData(_Device, _DevId, 0, _ax);
     _data->SetData(_Device, _DevId, 1, _ay);
     _data->SetData(_Device, _DevId, 2, _az);
+    if (_dbg->require(100)) _dbg->log(100,0,"MPU 6050: ( %d , %d , %d )", _ax, _ay, _az);
 
     return true;
 }

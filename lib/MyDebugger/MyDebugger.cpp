@@ -27,8 +27,19 @@ void MyDebugger::setLogLevel(uint8_t level) {
     _level = level;
 }
 
+bool MyDebugger::require(uint8_t level) {
+    return (level > _level);
+}
+
 // To provide standard message for debug
 // It can still use _dbg to send debug message if standard message is not requried.
+// Level:
+//   0   - critical, must be show anytime, or for temporary debug purpose
+//   100 - major result return
+//   110 - tracing, major function
+//   200 - minor result return
+//   210 - tracing, minor function
+//
 // Type:
 //   0 - full:      header + content + footer
 //   1 - first:     header + content
@@ -37,7 +48,7 @@ void MyDebugger::setLogLevel(uint8_t level) {
 //
 void MyDebugger::log(uint8_t level, uint8_t type, const char *format, ...) {
 
-    if (level > _level) return;
+    if (!require(level)) return;
 
     switch (type) {
         case 0:

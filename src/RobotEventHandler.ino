@@ -167,7 +167,7 @@ void RobotEventHandler() {
                 break;
 
             case (uint8_t) EventHandler::ACTION_TYPE::servo:
-                _dbg->log(0,0,"Move servo %d (%d : %d ms)", action.data.parm_1, (int8_t) action.data.parm_2, action.data.parm_3);
+                _dbg->log(10,0,"Move servo %d (%d : %d ms)", action.data.parm_1, (int8_t) action.data.parm_2, action.data.parm_3);
 				ActionServo(action.data.parm_1, (int8_t) action.data.parm_2, action.data.parm_3);
                 break;
 

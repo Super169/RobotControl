@@ -10,7 +10,7 @@ EdsTouch::~EdsTouch() {
 }
 
 void EdsTouch::Setup(uint8_t gpioPin, unsigned long touchDetectPeriod, unsigned long touchReleasePeriod) {
-    _dbg->log(1, 0, "EdsTouch::Setup(GPIO: %d, Detect: %ld ms, Release: %ld ms)", gpioPin, touchDetectPeriod, touchReleasePeriod);
+    if (_dbg->require(110)) _dbg->log(110, 0, "EdsTouch::Setup(GPIO: %d, Detect: %ld ms, Release: %ld ms)", gpioPin, touchDetectPeriod, touchReleasePeriod);
     _gpioPin = gpioPin;
     _touchDetectPeriod = touchDetectPeriod;
     _touchReleasePeriod = touchReleasePeriod;
@@ -18,7 +18,7 @@ void EdsTouch::Setup(uint8_t gpioPin, unsigned long touchDetectPeriod, unsigned 
 }
 
 void EdsTouch::ResetTouchAction() {
-    _dbg->msg("EdsTouch::ResetTouchAction\n");
+    if (_dbg->require(210)) _dbg->log(210,0,"EdsTouch::ResetTouchAction\n");
     _touchStartMs = 0;
     _touchReleaseMs = 0;
     _touchCount = 0;
@@ -34,6 +34,7 @@ uint8_t EdsTouch::CheckTouchAction() {
 
     uint8_t retCode = ETU_TOUCH_NONE;
     if (!IsReady()) return retCode;
+    if (_dbg->require(210)) _dbg->log(210,0,"EdsTouch::CheckTouchAction()");
 
     unsigned long currMs = millis();    // for safety, use same time in ms for all checking later
     bool currStatus = IsTouchPressed();
@@ -58,20 +59,20 @@ uint8_t EdsTouch::CheckTouchAction() {
                 if (_touchCount == 1) {
                     if (currStatus) {
                         // Long hold
-                        _dbg->msg("EdsTouch: Long hold");
+                        if (_dbg->require(200)) _dbg->log(200,0,"EdsTouch: Long hold");
                         retCode = ETU_TOUCH_LONG;
                     } else {
                         // Single click
-                        _dbg->msg("EdsTouch: Single click");
+                        if (_dbg->require(200)) _dbg->log(200,0,"EdsTouch: Single click");
                         retCode = ETU_TOUCH_SINGLE;
                     }
                 } else if (_touchCount == 2) {
                     // double click
-                    _dbg->msg("EdsTouch: Double click\n");
+                    if (_dbg->require(200)) _dbg->log(200,0,"EdsTouch: Double click");
                     retCode = ETU_TOUCH_DOUBLE;
                 } else {
                     // triple click
-                    _dbg->msg("EdsTouch: Triple click\n");
+                    if (_dbg->require(200)) _dbg->log(200,0,"EdsTouch: Triple click");
                     retCode = ETU_TOUCH_TRIPLE;
                 }
             } else {
@@ -97,11 +98,13 @@ bool EdsTouch::GetData() {
     _thisDataReady = true;
     _lastReportValue = touchAction;
     _lastReportMS = millis();
+    if ((touchAction != 0) && _dbg->require(100)) _dbg->log(100,0,"EdsTouch::GetData() => %d", touchAction);
     return (touchAction != 0);
 }
 
 void EdsTouch::PostHandler(bool eventMatched, bool isRelated, bool pending) {
     if (!IsReady()) return;
+    if (_dbg->require(210)) _dbg->log(210,0,"EdsTouch::PostHandler(%d,%d,%d)",eventMatched, isRelated, pending);
     // Cannot use generic routine as it need to check the value != 0 to confirm value is not handled
     if ((_thisDataReady) && (_lastReportValue != 0) && ((!eventMatched) || (isRelated))) {
         _nextReportMs = millis() + _delayCheckMs;

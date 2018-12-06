@@ -1585,11 +1585,16 @@ void ActionMp3Stop() {
 }
 
 void ActionServo(uint8_t servoId, int8_t moveAngle, uint8_t time) {
-	if (!rs.exists(servoId)) return;
+	if (_dbg->require(200)) _dbg->log(200,0,"ActionServo(%d, %d, %d)", servoId, moveAngle, time);
+	if (!rs.exists(servoId)) {
+		if (_dbg->require(200)) _dbg->log(200,0,"Servo Id %d not exists", servoId);
+		return;
+	}
 	int16_t currAngle = (int16_t) rs.getAngle(servoId);
 	int16_t newAngle = currAngle + moveAngle;
 	if (newAngle < 0) newAngle = 0;
 	if (newAngle > rs.maxAngle()) newAngle = rs.maxAngle();
 	if (currAngle == newAngle) return;	// no action required
+	if (_dbg->require(200)) _dbg->log(200,0,"Servo Id %d move to %d in %d ms", servoId, newAngle, time);
 	rs.goAngle(servoId, newAngle, time);
 }

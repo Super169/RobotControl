@@ -30,6 +30,7 @@ void EventDataSource::SetNextReportTime() {
 
 void EventDataSource::PostHandler(bool eventMatched, bool isRelated, bool pending) {
     if (!IsReady()) return;
+    if (_dbg->require(210)) _dbg->log(210,0,"EventDataSource[%d]::PostHandler(%d,%d,%d)",_Device, eventMatched, isRelated, pending);
     if (_thisDataReady) {
         if (eventMatched && !isRelated){
             // handled other events, need to execute again immediately 
