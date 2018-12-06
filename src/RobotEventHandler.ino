@@ -7,17 +7,17 @@ void InitEventHandler() {
 	ssb.Begin(&ssbPort, &DEBUG);
 	ssb.SetEnableTxCalback(EnableSsbTxCallBack);
 
-	_dbg->msg("edsMpu6050.Setup(0x%02X, %d, %d)", EDS_MPU6050_I2CADDR, (1000 / config.positionCheckFreq()), config.mpuCheckFreq());
+	_dbg->log(10,0,"edsMpu6050.Setup(0x%02X, %d, %d)", EDS_MPU6050_I2CADDR, (1000 / config.positionCheckFreq()), config.mpuCheckFreq());
 	edsMpu6050.Setup(EDS_MPU6050_I2CADDR, (1000 / config.positionCheckFreq()), config.mpuCheckFreq());
 
-	_dbg->msg("edsTouch.Setup(%d, %d, %d)", EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
+	_dbg->log(10,0,"edsTouch.Setup(%d, %d, %d)", EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
 	edsTouch.Setup(EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
 
-	_dbg->msg("edsPsxButton.Setup() => GPIO: %d, BAUD: %ld, BUffer: %d", ssbConfig.tx_pin, ssbConfig.baud, ssbConfig.buffer_size);
+	_dbg->log(10,0,"edsPsxButton.Setup() => GPIO: %d, BAUD: %ld, BUffer: %d", ssbConfig.tx_pin, ssbConfig.baud, ssbConfig.buffer_size);
 	edsPsxButton.Setup(&ssb);
 	
 	// TODO: add normal check ms to config object
-	_dbg->msg("edsBattery.Setup(%d, %d, %d, %d)", config.minVoltage(), config.maxVoltage(), 5000,config.voltageAlarmInterval() * 1000);
+	_dbg->log(10,0,"edsBattery.Setup(%d, %d, %d, %d)", config.minVoltage(), config.maxVoltage(), 5000,config.voltageAlarmInterval() * 1000);
 	edsBattery.Setup(config.minVoltage(), config.maxVoltage(), 5000, config.voltageAlarmInterval() * 1000);
 
 	// Use array later
@@ -107,12 +107,11 @@ void RobotEventHandler() {
 	
 	if (event.data.type) {
 
-		if (debug) {
-			_dbg->msg("##########");
+		if (_dbg->require(250)) {
+			DEBUG.printf("\n##########\n");
 			eData.DumpData(&DEBUG);
 			eActive->DumpEvents(&DEBUG);
-			_dbg->msg("###### Event matched: %d", event.data.type);
-			_dbg->msg("##########\n\n");
+			DEBUG.printf("###### Event matched: %d\n##########\n\n", event.data.type);
 		}
 		
 		bool validAction = true;
@@ -123,57 +122,57 @@ void RobotEventHandler() {
                 break;
 	
 			case (uint8_t) EventHandler::ACTION_TYPE::headLed:
-                if (debug) _dbg->msg("Set head led %d \n", action.data.parm_1);
+                if (_dbg->require(110)) _dbg->log(110,0,"Set head led %d \n", action.data.parm_1);
 				ActionSetHeadLed(action.data.parm_1);
 				break;
 
 
             case (uint8_t) EventHandler::ACTION_TYPE::playAction:
-                if (debug) DEBUG.printf("Play action %d \n", action.data.parm_1);
+                if (_dbg->require(110)) _dbg->log(110,0,"Play action %d \n", action.data.parm_1);
 				ActionPlayAction(action.data.parm_1);
                 break;
 
             case (uint8_t) EventHandler::ACTION_TYPE::stopAction:
-                if (debug) DEBUG.printf("Stop action\n");
+                if (_dbg->require(110)) _dbg->log(110,0,"Stop action\n");
 				ActionStopPlay();
                 break;
 
             case (uint8_t) EventHandler::ACTION_TYPE::mp3PlayMp3:
-                if (debug) DEBUG.printf("Play mp3 %d\n", action.u16data.parm_u16);
+                if (_dbg->require(110)) _dbg->log(110,0,"Play mp3 %d\n", action.u16data.parm_u16);
 				ActionMp3PlayMp3(action.u16data.parm_u16);
                 break;
 
             case (uint8_t) EventHandler::ACTION_TYPE::mp3PlayFile:
-                if (debug) DEBUG.printf("Play mp3 at  %d : %d \n", action.data.parm_1, action.data.parm_2);
+                if (_dbg->require(110)) _dbg->log(110,0,"Play mp3 at  %d : %d \n", action.data.parm_1, action.data.parm_2);
 				ActionMp3PlayFile(action.data.parm_1, action.data.parm_2);
                 break;
 
 			case (uint8_t) EventHandler::ACTION_TYPE::mp3Stop:
-                if (debug) DEBUG.printf("Stop play MP3\n");
+                if (_dbg->require(110)) _dbg->log(110,0,"Stop play MP3\n");
 				ActionMp3Stop();
 				break;
 
 
             case (uint8_t) EventHandler::ACTION_TYPE::gpio:
-                if (debug) DEBUG.printf("Set gpio %d to %s\n", action.data.parm_1, 
-                                                    (action.data.parm_2 ? "HIGH" : "LOW"));
+                if (_dbg->require(110)) _dbg->log(110,0,"Set gpio %d to %s\n", action.data.parm_1, 
+                                                    	(action.data.parm_2 ? "HIGH" : "LOW"));
 				digitalWrite(action.data.parm_1, action.data.parm_2);
                 break;
 
 			
             case (uint8_t) EventHandler::ACTION_TYPE::system_action:
-                if (debug) DEBUG.printf("Play system action %d \n", action.data.parm_1);
+                if (_dbg->require(110)) _dbg->log(110,0,"Play system action %d \n", action.data.parm_1);
 				ActionPlaySystemAction(action.data.parm_1);
                 break;
 
             case (uint8_t) EventHandler::ACTION_TYPE::servo:
-                _dbg->log(10,0,"Move servo %d (%d : %d ms)", action.data.parm_1, (int8_t) action.data.parm_2, action.data.parm_3);
+                if (_dbg->require(110)) _dbg->log(110,0,"Move servo %d (%d : %d ms)", action.data.parm_1, (int8_t) action.data.parm_2, action.data.parm_3);
 				ActionServo(action.data.parm_1, (int8_t) action.data.parm_2, action.data.parm_3);
                 break;
 
 
             default:
-                if (debug) DEBUG.printf("Unknown action %d \n", action.data.type);
+                if (_dbg->require(110)) _dbg->log(110,0,"Unknown action %d \n", action.data.type);
 				validAction = false;
                 break;			
 		}
@@ -183,20 +182,21 @@ void RobotEventHandler() {
 		}
 
 	} else {
-		if (debug && showResult) {
-			_dbg->msg("----------");
+		if (_dbg->require(250) && showResult) {
+			DEBUG.printf("\n----------\n");
 			eData.DumpData(&DEBUG);
 			eActive->DumpEvents(&DEBUG);
-			_dbg->msg("No Event matched");
-			_dbg->msg("----------\n\n");
+			DEBUG.printf("No Event matched\n----------\n\n");
 		}
 	}
 
+	/*
 	if (showResult && (millis() > nextShowMs )) {
 		if (V2_ActionPlaying)
 		eData.DumpData(&Serial1);
 		nextShowMs = millis() + 1000;
 	}
+	*/
 
 	nextHandlerMs = millis() + EVENT_HANDLER_ELAPSE_MS;
 

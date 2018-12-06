@@ -70,6 +70,7 @@ void setup() {
 	delay(100);
 
 	debugger.setOutput(&DEBUG);
+	_dbg->setLogLevel(DEFAULT_LOG_LEVEL);
 
 	DEBUG.println("\n\n");
 

@@ -28,7 +28,7 @@ void MyDebugger::setLogLevel(uint8_t level) {
 }
 
 bool MyDebugger::require(uint8_t level) {
-    return (level > _level);
+    return (_level >= level);
 }
 
 // To provide standard message for debug
