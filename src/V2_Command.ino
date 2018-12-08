@@ -1,6 +1,7 @@
 #include "robot.h"
 #include "V2_Command.h"
 
+/*
 // Command start with A9 9A
 
 // {len} = cmd[2] = count( {len} xx .. xx )
@@ -16,6 +17,9 @@
 //   03 - Set DevMode (fix) 		: A9 9A 03 03 00 06 ED
 //									  A9 9A 03 03 01 07 ED
 //   04 - Get Config (fix)          : A9 9A 02 04 06 ED
+//   05 - Set Config 
+//   06 - Default Config
+//   07 - Enter USB-TTL mode (fix)  : A9 9A 07 03 01 01 05 ED
 //   0A - Command Enable (fix)		: A9 9A 02 0A 0C ED
 //                                    A9 9A 07 0A 00 01 01 01 01 15 ED
 //   0B - Check battery (fix)       : A9 9A 02 0B 0D ED
@@ -61,6 +65,8 @@
 //   94 - Save Event Data
 
 //   FF - Get Version				: A9 9A 02 FF 01 ED
+
+*/
 
 bool V2_Command() {
 
@@ -340,6 +346,10 @@ bool V2_Command() {
 			break;
 		case V2_CMD_SAVE_EVENT_DATA:
 			V2_SaveEventData(cmd);
+			break;
+
+		case V2_CMD_USB_TTL:
+			V2_USB_TTL(cmd);
 			break;
 
 		default:
@@ -1519,6 +1529,41 @@ void V2_SaveEventData(byte *cmd) {
 		result = RESULT::ERR::DATA_OVERFLOW;
 	}
 	V2_SendSingleByteResult(cmd, result);
+}
+
+void V2_USB_TTL(byte *cmd) {
+	if (debug) DEBUG.println(F("[V2_USB_TTL]"));
+	byte mode = cmd[4];
+	byte bus = cmd[5];
+	if ((mode > 1) || (bus > 1)) {
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_INVALID);
+		return;
+	}
+	V2_SendSingleByteResult(cmd, RESULT::SUCCESS);
+	switch (mode) {
+		case 0:
+			switch (bus) {
+				case 0:
+					if (debug) DEBUG.println(F("USER-TTL for robot"));
+					USER_TTL(&robotPort);
+					break;
+				case 1:
+					if (debug) DEBUG.println(F("USER-TTL for Sub-System"));
+					USER_TTL(&ssbPort);
+					break;
+			}
+		case 1:
+			switch (bus) {
+				case 0:
+					if (debug) DEBUG.println(F("USB-TTL for robot"));
+					USB_TTL(&robotPort);
+					break;
+				case 1:
+					if (debug) DEBUG.println(F("USB-TTL for Sub-System"));
+					USB_TTL(&ssbPort);
+					break;
+			}
+	}
 }
 
 /*

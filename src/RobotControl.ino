@@ -74,6 +74,16 @@ void setup() {
 
 	DEBUG.println("\n\n");
 
+	// TODO: must remove before contiue
+	//robotPort.begin(busConfig.baud);
+	//_dbg->log(0,0,"Hard code enter USB-TTL to robot bus");
+	//USB_TTL(&robotPort);
+
+	//ssbPort.begin(ssbConfig.baud);
+	//_dbg->log(0,0,"Hard code enter USB-TTL to Sub-system board");
+	//USB_TTL(&ssbPort);
+
+
 	config.readConfig();
 	config.dumpConfig();
 

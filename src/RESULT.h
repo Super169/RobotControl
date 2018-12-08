@@ -25,6 +25,7 @@ class RESULT {
 				static const byte  PARM_AD_NAME_SIZE	    = 13;
 				static const byte  PARM_PID_OUT_RANGE	    = 14;
 				static const byte  PARM_COMBO_OUT_RANGE	    = 15;
+				static const byte  PARM_INVALID             = 16;
 				static const byte  CHECKSUM			        = 19;
 				static const byte  FILE_SPIFFS			    = 21;
 				static const byte  FILE_NOT_FOUND		    = 22;
