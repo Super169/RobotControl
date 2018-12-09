@@ -74,7 +74,7 @@ bool V2_Command() {
 	byte header[3];
 	cmdBuffer.peek(header, 3);
 	if (header[1] != 0x9A) {
-		if (debug) DEBUG.println(F("Invalid start code"));
+		if (_dbg->require(200)) _dbg->log(200, 0, "Invalid start code");
 		return cmdSkip(true);
 	}
 	int len = header[2];
@@ -90,7 +90,7 @@ bool V2_Command() {
 	}
 
 	if (cmd[len+3] != 0xED) {
-		if (debug) DEBUG.println(F(" => Invalid end code"));
+		if (_dbg->require(200)) _dbg->log(200, 0, " => Invalid end code");
 		return cmdSkip(true);
 	}
 
@@ -381,14 +381,12 @@ void V2_SendSingleByteResult(byte *cmd, byte data) {
 	result[2] = 3;
 	result[3] = cmd[3];
 	result[4] = data;
-	if (debug) {
-		DEBUG.printf("SendSingleByteResult: %d\n", data);
-	}
+	if (_dbg->require(100)) _dbg->log(100, 0, "SendSingleByteResult: %d\n", data);
 	V2_SendResult(result);
 }
 
 void V2_GetVersion(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_GetVersion]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_GetVersion]");
 	byte result[10];
 	result[2] = 6;
 	result[3] = cmd[3];
@@ -402,7 +400,7 @@ void V2_GetVersion(byte *cmd) {
 #pragma region V2_CMD_RESET / V2_CMD_DEBUG / V2_CMD_DEVMODE / V2_CMD_GETCONFIG / V2_CMD_SETCONFIG
 
 void V2_Reset(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_Reset]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_Reset]");
 	robotPort.end();
 	delay(200);
 	robotPort.begin(busConfig.baud);
@@ -416,7 +414,7 @@ void V2_Reset(byte *cmd) {
 }
 
 void V2_SetDebug(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_SetDebug]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_SetDebug]");
 	byte status = (cmd[4] ? 1 : 0);
 	if (debug && !status) DEBUG.printf("Disable debug mode\n");
 	SetDebug(status);
@@ -427,14 +425,14 @@ void V2_SetDebug(byte *cmd) {
 }
 
 void V2_SetDevMode(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_SetDevMode]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_SetDevMode]");
 	devMode = (cmd[4] ? 1 : 0);
 	if (debug) DEBUG.printf("Developer mode %s\n", (devMode ? "enabled" : "disabled"));
 	V2_SendSingleByteResult(cmd, RESULT::SUCCESS);
 }
 
 void V2_CommandEnable(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_CommandEnable]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_CommandEnable]");
 	byte result[12];
 	// Should have only 2 options:
 	//   cmd[2] = 8 : set all 6 flags
@@ -460,7 +458,7 @@ void V2_CommandEnable(byte *cmd) {
 }
 
 void V2_GetConfig(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_GetConfig]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_GetConfig]");
 	config.Data()[3] = cmd[3];
 
 	V2_SendResult((byte *) config.Data());
@@ -468,7 +466,7 @@ void V2_GetConfig(byte *cmd) {
 }
 
 void V2_SetConfig(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_SetConfig]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_SetConfig]");
 	if (cmd[2] != RC_CONFIG_DATA_SIZE) {
 		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_SIZE);
 		return;
@@ -480,7 +478,7 @@ void V2_SetConfig(byte *cmd) {
 }
 
 void V2_DefaultConfig(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_DefaultConfig]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_DefaultConfig]");
 	config.initConfig();
 	byte result = config.writeConfig();
 	if (result == RESULT::SUCCESS) {
@@ -495,7 +493,7 @@ void V2_DefaultConfig(byte *cmd) {
 
 
 void V2_CheckBattery(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_CheckBattery]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_CheckBattery]");
 	if (cmd[2] != 2) {
 		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_SIZE);
 		return;
@@ -517,7 +515,7 @@ void V2_CheckBattery(byte *cmd) {
 }
 
 void V2_GetNetwork(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_GetNetwork]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_GetNetwork]");
 	if (cmd[2] != 2) {
 		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_SIZE);
 		return;
@@ -560,7 +558,7 @@ void V2_GetNetwork(byte *cmd) {
 }
 
 void V2_GetWiFiConfig(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_GetWiFiConfig]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_GetWiFiConfig]");
 	if (cmd[2] != 2) {
 		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_SIZE);
 		return;
@@ -577,7 +575,7 @@ void V2_GetWiFiConfig(byte *cmd) {
 
 
 void V2_SetWiFiConfig(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_SetWiFiConfig]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_SetWiFiConfig]");
 	uint8_t result = RESULT::SUCCESS;
 
 	if (cmd[2] != (SWFM_CONFIG_FILE_SIZE - 4)) {
@@ -590,7 +588,7 @@ void V2_SetWiFiConfig(byte *cmd) {
 }
 
 void V2_SetPartialWiFiConfig(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_SetPartialWiFiConfig]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_SetPartialWiFiConfig]");
 	uint8_t result = RESULT::SUCCESS;
 
 	// data to be overwrite should has len from 1 to SWFM_CONFIG_FILE_SIZE
@@ -620,14 +618,14 @@ void V2_SetPartialWiFiConfig(byte *cmd) {
 #pragma region V2_CMD_SERVOTYPE / V2_CMD_SERVOANGLE / V2_CMD_ONEANGLE
 
 void V2_GetServoType(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_GetServoType]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_GetServoType]");
 	byte servoType = rs.servoType();
 	V2_SendSingleByteResult(cmd, servoType);
 }
 
 void V2_GetServoAngle(byte *cmd) {
 	
-	if (debug) DEBUG.println(F("[V2_GetServoAngle]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_GetServoAngle]");
 	uint16_t len = 2 * config.maxServo() + 2;
 	byte result[len+4];
 	
@@ -642,7 +640,7 @@ void V2_GetServoAngle(byte *cmd) {
 
 void V2_GetOneAngle(byte *cmd) {
 
-	if (debug) DEBUG.println(F("[V2_GetOneAngle]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_GetOneAngle]");
 	byte result[9];
 	result[2] = 5;
 	result[3] = cmd[3];
@@ -677,7 +675,7 @@ void V2_GetOneAngle(byte *cmd) {
 #pragma region V2_CMD_SERVOADJANGLE / V2_CMD_ONEADJANGLE
 
 void V2_GetServoAdjAngle(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_GetServoAdjAngle]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_GetServoAdjAngle]");
 	// uint16_t len = 34;
 	uint16_t len = 2 * config.maxServo() + 2;
 	byte result[len+4];
@@ -692,7 +690,7 @@ void V2_GetServoAdjAngle(byte *cmd) {
 // A9 9A 04 {cmd} {id} {high} {low} {sum} ED
 
 void V2_GetOneAdjAngle(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_GetOneAdjAngle]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_GetOneAdjAngle]");
 	byte result[9];
 	result[2] = 5;
 	result[3] = cmd[3];
@@ -718,7 +716,7 @@ void V2_GetOneAdjAngle(byte *cmd) {
 }
 
 void V2_SetAdjAngle(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_SetAdjAngle]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_SetAdjAngle]");
 	byte id = cmd[4];
 	if (cmd[2] == 5) {
 		byte id = cmd[4];
@@ -733,14 +731,14 @@ void V2_SetAdjAngle(byte *cmd) {
 }
 
 void V2_ServoCommand(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_ServoCommand]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_ServoCommand]");
 	byte result = 0;
 	result = rs.servoCommand(cmd);
 	V2_SendSingleByteResult(cmd, result);
 }
 
 void V2_SetAngle(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_SetAngle]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_SetAngle]");
 	byte result = 0;
 	result = rs.setAngle(cmd[4], cmd[5], cmd[6]);
 	V2_SendSingleByteResult(cmd, result);
@@ -752,7 +750,7 @@ void V2_SetAngle(byte *cmd) {
 #pragma region V2_CMD_LOCKSERVO / V2_CMD_LOCKSERVO
 
 void V2_LockServo(byte *cmd, bool goLock) {
-	if (debug) DEBUG.printf("[V2_LockServo - %s]\n", (goLock ? "Lock" : "Unlock"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_LockServo - %s]\n", (goLock ? "Lock" : "Unlock"));
 
 	byte result[40];  // max: A9 9A len cmd n {2 * n} {sum} ED - n <= 16 => max: 39
 	result[3] = cmd[3];
@@ -819,7 +817,7 @@ void V2_LockServo(byte *cmd, bool goLock) {
 void V2_ServoMove(byte *cmd) {
 	byte moveAngle;
 	uint16_t moveTime;
-	if (debug) DEBUG.println(F("[V2_ServoMove]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_ServoMove]");
 	int cnt = (cmd[2] - 2) / 4;
 	byte moveParm[3 * config.maxServo()];
 	memset(moveParm, 0xFF, 3 * config.maxServo());
@@ -902,7 +900,7 @@ void V2_ServoMove(byte *cmd) {
 #pragma region V2_CMD_LED
 
 void V2_SetLED(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_SetLED]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_SetLED]");
 	byte id, mode;
 	if ((cmd[2] == 4) && (cmd[4] == 0)) {
 		mode = (cmd[5] ? 1 : 0);
@@ -933,7 +931,7 @@ void V2_SetLED(byte *cmd) {
 #pragma region Set Head LED
 
 void V2_SetHeadLED(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_SetHeadLED]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_SetHeadLED]");
 	bool status = (cmd[4] == 0x01);
 	SetHeadLed(status);
 	if (debug) DEBUG.printf("Turn Head LED %s\n", (status ? "ON" : "OFF"));
@@ -945,7 +943,7 @@ void V2_SetHeadLED(byte *cmd) {
 #pragma region MP3 Player
 
 void V2_Mp3Stop(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_Mp3Stop]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_Mp3Stop]");
 	if (config.mp3Enabled()) {
 		mp3.begin();
 		mp3.stop();
@@ -955,7 +953,7 @@ void V2_Mp3Stop(byte *cmd) {
 }
 
 void V2_Mp3PlayFile(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_Mp3PlayFile]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_Mp3PlayFile]");
 	if (!config.mp3Enabled()) return;
 	byte folderSeq = cmd[4];
 	byte fileSeq = cmd[5];
@@ -973,7 +971,7 @@ void V2_Mp3PlayFile(byte *cmd) {
 }
 
 void V2_Mp3PlayMp3(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_Mp3PlayMp3]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_Mp3PlayMp3]");
 	if (!config.mp3Enabled()) return;
 	byte fileSeq = cmd[4];
 	ActionMp3PlayMp3((uint16_t) fileSeq);
@@ -986,7 +984,7 @@ void V2_Mp3PlayMp3(byte *cmd) {
 }
 
 void V2_Mp3PlayAdvert(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_Mp3PlayAdvert]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_Mp3PlayAdvert]");
 	if (!config.mp3Enabled()) return;
 	byte fileSeq = cmd[4];
 	mp3.begin();
@@ -996,7 +994,7 @@ void V2_Mp3PlayAdvert(byte *cmd) {
 }
 
 void V2_Mp3SetVolume(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_Mp3SetVolume]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_Mp3SetVolume]");
 	if (!config.mp3Enabled()) return;
 	byte mode = cmd[4];
 	byte value = cmd[5];	
@@ -1032,7 +1030,7 @@ void V2_Mp3SetVolume(byte *cmd) {
 #pragma region Play Action / Combo 
 
 void V2_PlayAction(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_PlayAction]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_PlayAction]");
 	V2_ResetAction();
 	if ((cmd[2] != 3) && (cmd[2] != 4)) {
 		V2_SendSingleByteResult(cmd, 1);
@@ -1187,7 +1185,7 @@ void V2_GetAdHeader(byte *cmd) {
 
 
 void V2_GetAdPose(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_GetAdPose]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_GetAdPose]");
 
 	#ifdef UBT_DUMP
 		DEBUG.printf("\n\nV2_GetAdPose - A - Serial dump - first 60:\n");
@@ -1243,7 +1241,7 @@ void V2_GetAdPose(byte *cmd) {
 }
 
 void V2_UpdateAdHeader(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_UpdateAdHeader]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_UpdateAdHeader]");
 	byte aId = cmd[4];	
 	
 	// Length should be header size - 4
@@ -1275,7 +1273,7 @@ void V2_UpdateAdHeader(byte *cmd) {
 
 void V2_UpdateAdPose(byte *cmd) {
 	
-	if (debug) DEBUG.println(F("[V2_UpdateAdPose]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_UpdateAdPose]");
 	
 	// Length should be {len} {actionId} {poseId} {data} => pose datasize + 3
 	if (cmd[2] != (AD_POSE_SIZE - 4)) {
@@ -1332,7 +1330,7 @@ void V2_UpdateAdPose(byte *cmd) {
 
 
 void V2_UpdateAdName(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_UpdateAdName]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_UpdateAdName]");
 	byte id = cmd[4];
 	if (actionData.id() != id) {
 		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_AID_NOT_MATCH);
@@ -1357,7 +1355,7 @@ void V2_UpdateAdName(byte *cmd) {
 }
 
 void V2_DeleteActionFile(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_DeleteActionFile]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_DeleteActionFile]");
 	byte id = cmd[4];
 	byte result = actionData.DeleteActionFile(id);
 	V2_SendSingleByteResult(cmd, result);
@@ -1369,7 +1367,7 @@ void V2_DeleteActionFile(byte *cmd) {
 #pragma region Combo: V2_CMD_GET_COMBO / V2_CMD_UPD_COMBO
 
 void V2_GetCombo(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_GetCombo]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_GetCombo]");
 	byte seq = cmd[4];
 	if (seq >= CD_MAX_COMBO) {
 		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_COMBO_OUT_RANGE);
@@ -1381,7 +1379,7 @@ void V2_GetCombo(byte *cmd) {
 }
 
 void V2_UpdateCombo(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_UpdateCombo]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_UpdateCombo]");
 
 	V2_SendSingleByteResult(cmd, RESULT::SUCCESS);
 }
@@ -1391,12 +1389,12 @@ void V2_UpdateCombo(byte *cmd) {
 #pragma region Combo: V2_CMD_CHK_MPU / V2_CMD_GET_MPU
 
 void V2_CheckMPU(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_CheckMPU]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_CheckMPU]");
 	V2_SendSingleByteResult(cmd, (edsMpu6050.IsAvailable() ? RESULT::SUCCESS : RESULT::ERR::NOT_FOUND));
 }
 
 void V2_GetMPUData(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_GetMPU]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_GetMPU]");
 	byte result[EMPU_RESULT_SIZE];
 	result[2] = EMPU_RESULT_SIZE - 4;
 	result[3] = cmd[3];
@@ -1412,7 +1410,7 @@ void V2_GetMPUData(byte *cmd) {
 #pragma region Event: V2_CMD_GET_EVENT_HEADER
 
 void V2_GetEventHeader(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_GetEventHeader]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_GetEventHeader]");
 	byte result[EVENT_HEADER_RESULT_SIZE];
 	memset(result, 0, EVENT_HEADER_RESULT_SIZE);
 	result[2] = EVENT_HEADER_RESULT_SIZE - 4;
@@ -1433,7 +1431,7 @@ void V2_GetEventHeader(byte *cmd) {
 }
 
 void V2_GetEventData(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_GetEventData]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_GetEventData]");
 	byte result[EVENT_DATA_RESULT_SIZE];
 	memset(result, 0, EVENT_DATA_RESULT_SIZE);
 	result[2] = EVENT_DATA_RESULT_SIZE - 4;
@@ -1464,7 +1462,7 @@ void V2_GetEventData(byte *cmd) {
 }
 
 void V2_SaveEventHeader(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_SaveEventHeader]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_SaveEventHeader]");
 	byte result = RESULT::ERR::UNKNOWN;
 	byte mode = cmd[EH_OFFSET_MODE];	
 	byte version = cmd[EH_OFFSET_VERSION];	
@@ -1512,7 +1510,7 @@ byte SaveEventHandler(byte *cmd) {
 }
 
 void V2_SaveEventData(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_SaveEventData]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_SaveEventData]");
 	byte result = RESULT::ERR::UNKNOWN;
 	byte mode = cmd[ED_OFFSET_MODE];
 	byte startIdx = cmd[ED_OFFSET_STARTIDX];
@@ -1532,7 +1530,7 @@ void V2_SaveEventData(byte *cmd) {
 }
 
 void V2_USB_TTL(byte *cmd) {
-	if (debug) DEBUG.println(F("[V2_USB_TTL]"));
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_USB_TTL]");
 	byte mode = cmd[4];
 	byte bus = cmd[5];
 	if ((mode > 1) || (bus > 1)) {
@@ -1544,24 +1542,24 @@ void V2_USB_TTL(byte *cmd) {
 		case 0:
 			switch (bus) {
 				case 0:
-					if (debug) DEBUG.println(F("USER-TTL for robot"));
+					if (_dbg->require(110)) _dbg->log(110, 0, "USER-TTL for robot");
 					USER_TTL(&robotPort);
-					break;
+					return;
 				case 1:
-					if (debug) DEBUG.println(F("USER-TTL for Sub-System"));
+					if (_dbg->require(110)) _dbg->log(110, 0, "USER-TTL for Sub-System");
 					USER_TTL(&ssbPort);
-					break;
+					return;
 			}
 		case 1:
 			switch (bus) {
 				case 0:
-					if (debug) DEBUG.println(F("USB-TTL for robot"));
+					if (_dbg->require(110)) _dbg->log(110, 0,"USB-TTL for robot");
 					USB_TTL(&robotPort);
-					break;
+					return;
 				case 1:
-					if (debug) DEBUG.println(F("USB-TTL for Sub-System"));
+					if (_dbg->require(110)) _dbg->log(110, 0, "USB-TTL for Sub-System");
 					USB_TTL(&ssbPort);
-					break;
+					return;
 			}
 	}
 }

@@ -93,7 +93,6 @@ void USB_TTL(SoftwareSerial *ttl) {
 	int cnt = 0;
 	while (1) {
 		if (digitalRead(TTL_EXIT_PIN)) {
-			if (_dbg->require(10))	_dbg->log(10,0, "Exit USB-TTL");
 			break;
 		}
 		if (Serial.available()) {
@@ -114,14 +113,17 @@ void USB_TTL(SoftwareSerial *ttl) {
 			while (ttl->available()) {
 				Serial.write(ttl->read());
 				cnt++;
+				if (!Serial.available()) delayMicroseconds(10);
 			}
 			// if (_dbg->require(100))	_dbg->log(100,0, "USB <<< TTL : %d bytes", cnt);
 		}
 	}
+	if (_dbg->require(10))	_dbg->log(10,0, "Exit USB-TTL");
 	SetHeadLed(false);
 }
 
-
+#define EXIT_CODE_SIZE	5
+const byte exitCode[] = {0xA9, 0x9A, 0x01, 0x06, 0x09};
 
 void USER_TTL(SoftwareSerial *ttl) {
 	for (int i = 0; i < 5; i++) {
@@ -132,6 +134,8 @@ void USER_TTL(SoftwareSerial *ttl) {
 	}
 	SetHeadLed(true);
 	byte buffer[128];
+	byte lastCode[EXIT_CODE_SIZE];
+	byte lastCnt = 0;
 	int cnt = 0;
 	while (1) {
 		if (Serial.available()) {
@@ -139,7 +143,46 @@ void USER_TTL(SoftwareSerial *ttl) {
 			while (Serial.available()) {
 				buffer[cnt++] = Serial.read();
 				if (cnt >= 128) break;
+				// It need to wait 100us to make sure continue code, but it waste time
+				// use lastCode buffer can be better than wait 100us
+				// if (!Serial.available()) delayMicroseconds(100);
 			}
+
+			// no need to check if cnt > 5, over the code size
+			if (cnt <= EXIT_CODE_SIZE) {
+				if (cnt == EXIT_CODE_SIZE) {
+					// fill last 5 from buffer
+					for (int idx = 0; idx < EXIT_CODE_SIZE; idx++) {
+						lastCode[idx] = buffer[idx];
+					}
+					lastCnt = EXIT_CODE_SIZE;
+				} else {
+					if (lastCnt + cnt > EXIT_CODE_SIZE) {
+						byte removeCnt = lastCnt + cnt - EXIT_CODE_SIZE;
+						for (int idx = 0; idx < (lastCnt - removeCnt); idx++) {
+							lastCode[idx] = lastCode[idx + removeCnt];
+						}
+						lastCnt -= removeCnt;
+					}
+					// fill all from buffer
+					for (int idx = 0; idx < cnt; idx ++) {
+						lastCode[lastCnt + idx] = buffer[idx];
+					}
+					lastCnt += cnt;
+				}
+				if (lastCnt == EXIT_CODE_SIZE) {
+					bool goExit = true;
+					for (int i = 0; i < EXIT_CODE_SIZE; i++) {
+						if (lastCode[i] != exitCode[i]) {
+							goExit = false;
+							break;
+						}
+					}
+					if (goExit) break;
+				}
+
+			}
+
 			ttl->flush();
 			ttl->enableTx(true);
 			delayMicroseconds(5);			
@@ -156,5 +199,6 @@ void USER_TTL(SoftwareSerial *ttl) {
 			// if (_dbg->require(100))	_dbg->log(100,0, "USB <<< TTL : %d bytes", cnt);
 		}
 	}
+	if (_dbg->require(10))	_dbg->log(10,0, "Exit USER-TTL");
 	SetHeadLed(false);
 }

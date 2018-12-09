@@ -74,7 +74,7 @@ void setup() {
 
 	DEBUG.println("\n\n");
 
-	// TODO: must remove before contiue
+	// TODO: must remove
 	//robotPort.begin(busConfig.baud);
 	//_dbg->log(0,0,"Hard code enter USB-TTL to robot bus");
 	//USB_TTL(&robotPort);
