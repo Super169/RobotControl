@@ -3,7 +3,7 @@
 void SetDebug(bool mode) {
 	debug = mode;
 	_dbg->enableDebug(mode);
-	_dbg->setLogLevel((debug ? 255 : 0));
+	_dbg->setLogLevel((debug ? DEFAULT_LOG_LEVEL : 0));
 	rs.enableDebug(mode);
 	mp3.setDebug(mode);
 	config.setDebug(mode);
