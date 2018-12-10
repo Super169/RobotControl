@@ -40,17 +40,17 @@ void ActionPlaySystemAction(byte systemActionId) {
 
 void SystemAction_011() {
 	if (_dbg->require(110)) _dbg->log(110,0, "SystemAction_011");
-	GoMoveServo(1,5,200,200);
+	GoMoveServo(5,5,80,100);
 }
 
 void SystemAction_012() {
 	if (_dbg->require(110)) _dbg->log(110,0, "SystemAction_012");
-	GoMoveServo(1,5,210,200);
+	GoMoveServo(5,5,100,100);
 }
 
 void SystemAction_013() {
 	if (_dbg->require(110)) _dbg->log(110,0, "SystemAction_013");
-	GoMoveServo(1,5,220,200);
+	GoMoveServo(5,5,120,100);
 }
 
 void GoMoveServo(byte servoId, int step, int execTime, int waitTime) {
@@ -100,6 +100,7 @@ void USB_TTL(SoftwareSerial *ttl) {
 			while (Serial.available()) {
 				buffer[cnt++] = Serial.read();
 				if (cnt >= 128) break;
+				if (!Serial.available()) delayMicroseconds(100);
 			}
 			ttl->flush();
 			ttl->enableTx(true);
@@ -145,9 +146,23 @@ void USER_TTL(SoftwareSerial *ttl) {
 				if (cnt >= 128) break;
 				// It need to wait 100us to make sure continue code, but it waste time
 				// use lastCode buffer can be better than wait 100us
-				// if (!Serial.available()) delayMicroseconds(100);
+				// Unforunately, when communicate with UBT servo, it does not allow delay within the 10 byte codes.
+				// So keep the delay and let them go in same batch
+				if (!Serial.available()) delayMicroseconds(100);
 			}
 
+			if (cnt == EXIT_CODE_SIZE) {
+				bool goExit = true;
+				for (int i = 0; i < EXIT_CODE_SIZE; i++) {
+					if (buffer[i] != exitCode[i]) {
+						goExit = false;
+						break;
+					}
+				}
+				if (goExit) break;
+			}
+
+			/*
 			// no need to check if cnt > 5, over the code size
 			if (cnt <= EXIT_CODE_SIZE) {
 				if (cnt == EXIT_CODE_SIZE) {
@@ -182,6 +197,7 @@ void USER_TTL(SoftwareSerial *ttl) {
 				}
 
 			}
+			*/
 
 			ttl->flush();
 			ttl->enableTx(true);
