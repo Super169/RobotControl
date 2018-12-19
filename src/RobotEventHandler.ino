@@ -7,14 +7,31 @@ void InitEventHandler() {
 	ssb.Begin(&ssbPort, &DEBUG);
 	ssb.SetEnableTxCalback(EnableSsbTxCallBack);
 
-	_dbg->log(10,0,"edsMpu6050.Setup(0x%02X, %d, %d)", EDS_MPU6050_I2CADDR, (1000 / config.positionCheckFreq()), config.mpuCheckFreq());
-	edsMpu6050.Setup(EDS_MPU6050_I2CADDR, (1000 / config.positionCheckFreq()), config.mpuCheckFreq());
+	edsMpu6050.SetEnabled(config.mpuEnabled());
+	if (config.mpuEnabled()) {
+		_dbg->log(10,0,"edsMpu6050.Setup(0x%02X, %d, %d)", EDS_MPU6050_I2CADDR, (1000 / config.mpuPositionCheckFreq()), config.mpuCheckFreq());
+		edsMpu6050.Setup(EDS_MPU6050_I2CADDR, (1000 / config.mpuPositionCheckFreq()), config.mpuCheckFreq());
+	} else {
+		_dbg->log(10,0,"MPU6050 disabled");
+	}
 
-	_dbg->log(10,0,"edsTouch.Setup(%d, %d, %d)", EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
-	edsTouch.Setup(EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
+	edsTouch.SetEnabled(config.touchEnabled());
+	if (config.touchEnabled()) {
+		_dbg->log(10,0,"edsTouch.Setup(%d, %d, %d)", EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
+		edsTouch.Setup(EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
+	} else {
+		_dbg->log(10,0,"Touch disabled");
+	}
 
-	_dbg->log(10,0,"edsPsxButton.Setup() => GPIO: %d, BAUD: %ld, BUffer: %d", ssbConfig.tx_pin, ssbConfig.baud, ssbConfig.buffer_size);
-	edsPsxButton.Setup(&ssb);
+	_dbg->log(10,0,"Sub-system board: GPIO: %d, BAUD: %ld, BUffer: %d", ssbConfig.tx_pin, ssbConfig.baud, ssbConfig.buffer_size);
+
+	edsPsxButton.SetEnabled(config.psxEnabled());
+	if (config.psxEnabled()) {
+		_dbg->log(10,0,"edsPsxButton.Setup(&ssb, %d, %d, %d)", config.psxCheckMs(), config.psxNoEventMs(), config.psxIgnoreRepeatMs());
+		edsPsxButton.Setup(&ssb, config.psxCheckMs(), config.psxNoEventMs(), config.psxIgnoreRepeatMs());
+	} else {
+		_dbg->log(10,0,"PSX disabled");
+	}
 	
 	// TODO: add normal check ms to config object
 	// _dbg->log(10,0,"edsBattery.Setup(%d, %d, %d, %d)", config.batteryMinValue(), config.batteryMaxValue(), 5000,config.voltageAlarmInterval() * 1000);
@@ -178,9 +195,9 @@ void RobotEventHandler() {
 				validAction = false;
                 break;			
 		}
-		// if (validAction)  {
+
 		if ((validAction) && eActive->LastEventRelated((uint8_t) EventData::DEVICE::psx_button))  {
-			// edsPsxButton.Shock();
+			if (config.psxShock()) edsPsxButton.Shock();
 		}
 
 	} else {

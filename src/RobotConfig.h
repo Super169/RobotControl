@@ -50,8 +50,11 @@
 
 #define DEFAULT_PSX_ENABLED             false
 #define DEFAULT_PSX_CHECK_MS            20
+#define DEFAULT_PSX_NO_EVENT_MS         100
 #define DEFAULT_PSX_IGNORE_REPEAT_MS    200
-
+#define DEFAULT_PSX_SHOCK               false
+#define MIN_PSX_MS                      10
+#define MIN_PSX_IGNORE_REPEAT_MS        50
 
 #define RC_RECORD_SIZE                  60
 #define RC_CONFIG_DATA_SIZE             56
@@ -77,7 +80,9 @@
 
 #define RC_PSX_ENABLED                  35  // V1: New
 #define RC_PSX_CHECK_MS                 36
+#define RC_PSX_NO_EVENT_MS              37
 #define RC_PSX_IGNORE_REPEAT_MS         38
+#define RC_PSX_SHOCK                    40
 
 #define RC_MPU_ENABLED                  41  // V1: Rename
 #define RC_MPU_CHECK_FREQ               42  // V1: Moved from 52
@@ -159,19 +164,22 @@ class RobotConfig {
         }
 
         void setPsxEnabled(bool enabled);
-        void setPsxCheckMs(uint16_t value);
+        void setPsxCheckMs(uint8_t value);
+        void setPsxNoEventMs(uint8_t value);
         void setPsxIgnoreRepeatMs(uint16_t value);
-        inline void setPsx(bool enablePsxButton, uint16_t psxCheckMs, uint16_t psxIgnoreRepeatMs) {
+        void setPsxShock(bool enabled);
+        inline void setPsx(bool enablePsxButton, uint8_t psxCheckMs, uint8_t psxNoEventMs, uint16_t psxIgnoreRepeatMs, bool psxShock) {
             setPsxEnabled(enablePsxButton);
             setPsxCheckMs(psxCheckMs);
+            setPsxNoEventMs(psxNoEventMs);
             setPsxIgnoreRepeatMs(psxIgnoreRepeatMs);
+            setPsxShock(psxShock);
         }
 
 
         bool enableDebug() { return _data[RC_ENABLE_DEBUG]; }
         bool connectRouter() { return _data[RC_CONNECT_ROUTER]; }
         bool enableOLED() { return _data[RC_ENABLE_OLED]; }
-        bool enableTouch();
         uint16_t batteryRefVoltage() { return getUint16_t(RC_BATTERY_REF_VOLTAGE); }
         uint16_t batteryMinValue() { return getUint16_t(RC_BATTERY_MIN_VALUE); }
         uint16_t batteryMaxValue() { return getUint16_t(RC_BATTERY_MAX_VALUE); }
@@ -187,16 +195,19 @@ class RobotConfig {
         uint8_t mp3Volume() { return _data[RC_MP3_VOLUME]; }
         uint8_t mp3Startup() { return _data[RC_MP3_STARTUP]; }
 
-        bool enableMpu() { return _data[RC_MPU_ENABLED]; }
+        bool mpuEnabled() { return _data[RC_MPU_ENABLED]; }
         uint8_t mpuCheckFreq() { return _data[RC_MPU_CHECK_FREQ]; }
-        uint8_t positionCheckFreq() { return _data[RC_MPU_POSITION_CHECK_FREQ]; }
+        uint8_t mpuPositionCheckFreq() { return _data[RC_MPU_POSITION_CHECK_FREQ]; }
 
+        bool touchEnabled() { return _data[RC_TOUCH_ENABLED]; }
         uint16_t touchDetectPeriod() { return getUint16_t(RC_TOUCH_DETECT_PERIOD); }
         uint16_t touchReleasePeriod() { return getUint16_t(RC_TOUCH_RELEASE_PERIOD); }
         
-        bool enablePsxButton() { return _data[RC_PSX_ENABLED]; }
-        uint16_t psxCheckMs() { return getUint16_t(RC_PSX_CHECK_MS); }
+        bool psxEnabled() { return _data[RC_PSX_ENABLED]; }
+        uint8_t psxCheckMs() { return _data[RC_PSX_CHECK_MS]; }
+        uint8_t psxNoEventMs() { return _data[RC_PSX_NO_EVENT_MS]; }
         uint16_t psxIgnoreRepeatMs() { return getUint16_t(RC_PSX_IGNORE_REPEAT_MS); }
+        bool psxShock() { return _data[RC_PSX_SHOCK]; }
 
     private:
         void initObject(HardwareSerial *hsDebug);
