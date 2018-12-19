@@ -4,7 +4,6 @@ RobotConfig::RobotConfig() {
     initObject(NULL);
 }
 
-
 RobotConfig::RobotConfig(HardwareSerial *hsDebug) {
     initObject(hsDebug);
 }
@@ -39,11 +38,12 @@ void RobotConfig::initConfig() {
     setRouter(DEFAULT_CONNECT_ROUTER);
     setOLED(DEFAULT_ENABLE_OLED);
 	setTouch(DEFAULT_ENABLE_TOUCH);
-	setTouch(DEFAULT_TOUCH_NO_ACTION, DEFAULT_TOUCH_NO_ACTION, DEFAULT_TOUCH_NO_ACTION, DEFAULT_TOUCH_NO_ACTION);
+	// setTouch(DEFAULT_TOUCH_NO_ACTION, DEFAULT_TOUCH_NO_ACTION, DEFAULT_TOUCH_NO_ACTION, DEFAULT_TOUCH_NO_ACTION);
     setTouchDetectPeriod(DEFAULT_TOUCH_DETECT_PERIOD);
     setTouchReleasePeriod(DEFAULT_TOUCH_RELEASE_PERIOD);
     
-    setVoltage(DEFAULT_REF_VOLTAGE, DEFAULT_MIN_VOLTAGE, DEFAULT_MAX_VOLTAGE, DEFAULT_ALARM_VOLTAGE, DEFAULT_ALARM_MP3, DEFAULT_ALARM_INTERVAL);
+    setBattery(DEFAULT_REF_VOLTAGE, DEFAULT_MIN_VOLTAGE, DEFAULT_MAX_VOLTAGE, DEFAULT_BATTERY_NORMAL_SEC, DEFAULT_BATTERY_ALARM_SEC);
+    // setVoltage(DEFAULT_REF_VOLTAGE, DEFAULT_MIN_VOLTAGE, DEFAULT_MAX_VOLTAGE, DEFAULT_ALARM_VOLTAGE, DEFAULT_ALARM_MP3, DEFAULT_ALARM_INTERVAL);
 
     setMaxServo(DEFAULT_MAX_SERVO);
     setMaxDetectRetry(DEFAULT_MAX_DETECT_RETRY);
@@ -54,10 +54,13 @@ void RobotConfig::initConfig() {
     setMp3Volume(DEFAULT_MP3_VOLUME);
     setMp3Startup(DEFAULT_MP3_STARTUP);
 
-    setAutoStand(DEFAULT_AUTO_STAND, DEFAULT_AUTO_FACE_UP, DEFAULT_AUTO_FACE_DOWN);
+    setMpu6050(DEFAULT_ENABLE_MPU6050);
+    // setAutoStand(DEFAULT_AUTO_STAND, DEFAULT_AUTO_FACE_UP, DEFAULT_AUTO_FACE_DOWN);
 
     setMpuCheckFreq(DEFAULT_MPU_CHECK_FREQ);
     setPositionCheckFreq(DEFAULT_POSITION_CHECK_FREQ);
+
+    setPsx(DEFAULT_ENABLE_PSX_BUTTON, DEFAULT_PSX_CHECK_MS, DEFAULT_PSX_IGNORE_REPEAT_MS);
 
 }
 
@@ -95,17 +98,43 @@ bool RobotConfig::readConfig() {
 
 }
 
+void RobotConfig::checkConversion() {
+    if (_data[RC_VERSION] == CURRENT_VERSION) return;
+
+    // Conversion from V0
+    if (_data[RC_VERSION] == 0) {
+        // Default battery noraml check frequency in 5 seconds
+        _data[RC_BATTERY_NORAML_SEC] = 5;
+
+        bool enabled = false;
+        for (uint8_t id = 0; id < V0_TOUCH_ACTION_CNT; id++) {
+            enabled |= _data[V0_TOUCH_ACTION + id];
+        }
+        _data[RC_ENABLE_TOUCH] = (enabled ? 1 : 0);
+
+        _data[RC_MPU_CHECK_FREQ] = _data[V0_MPU_CHECK_FREQ];
+        _data[RC_POSITION_CHECK_FREQ] = _data[V0_POSITION_CHECK_FREQ];
+        _data[RC_VERSION] = CURRENT_VERSION;
+    }
+}
+
 void RobotConfig::checkConfig() {
     
     // Just for safety, to check for possible invalid interval to prevent continue trigger event
    
-    if (touchDetectPeriod() < 1000) setTouchDetectPeriod(DEFAULT_TOUCH_DETECT_PERIOD);
-    if (touchReleasePeriod() < 1000) setTouchReleasePeriod(DEFAULT_TOUCH_RELEASE_PERIOD);
+    if (touchDetectPeriod() < MIN_TOUCH_PERIOD) setTouchDetectPeriod(DEFAULT_TOUCH_DETECT_PERIOD);
+    if (touchReleasePeriod() < MIN_TOUCH_PERIOD) setTouchReleasePeriod(DEFAULT_TOUCH_RELEASE_PERIOD);
 
-    if (voltageAlarmInterval() < 10) setVoltageAlarmInterval(DEFAULT_ALARM_INTERVAL);
 
-    if (mpuCheckFreq() < 10) setMpuCheckFreq(DEFAULT_MPU_CHECK_FREQ);
-    if (positionCheckFreq() < 10) setPositionCheckFreq(DEFAULT_POSITION_CHECK_FREQ);
+    // if (voltageAlarmInterval() < 10) setVoltageAlarmInterval(DEFAULT_ALARM_INTERVAL);
+
+    if ((mpuCheckFreq() < MIN_BATTERY_CHECK_FREQ) || (mpuCheckFreq() > MAX_BATTERY_CHECK_FREQ)) {
+        setMpuCheckFreq(DEFAULT_MPU_CHECK_FREQ);
+    }
+
+    if ((positionCheckFreq() < MIN_BATTERY_CHECK_FREQ) || (positionCheckFreq() > MAX_BATTERY_CHECK_FREQ)) {
+        setPositionCheckFreq(DEFAULT_POSITION_CHECK_FREQ);
+    } 
 }
 
 byte RobotConfig::writeConfig() {
@@ -137,7 +166,8 @@ void RobotConfig::dumpConfig() {
 	_dbg->printf("Router: %s\n", (connectRouter() ? "Enabled" : "Disabled"));
  	_dbg->printf("OLED: %s\n", (enableOLED() ? "Enabled" : "Disabled"));
  	_dbg->printf("Touch Sensor: %s\n", (enableTouch() ? "Enabled" : "Disabled"));
- 	_dbg->printf("AutoStandup: %s\n", (autoStand() ? "Enabled" : "Disabled"));
+ 	_dbg->printf("MPU6050: %s\n", (enableMpu() ? "Enabled" : "Disabled"));
+ 	_dbg->printf("PSX Button: %s\n", (enablePsxButton() ? "Enabled" : "Disabled"));
 
 	_dbg->println();
 }
@@ -163,10 +193,12 @@ bool RobotConfig::setTouch(bool value) {
 	return enableTouch();
 }
 
+/*
 void RobotConfig::setTouchAction(uint8_t id, uint8_t value) {
 	if (id >= RC_TOUCH_ACTION_CNT) return;
 	_data[RC_TOUCH_ACTION + id] = value;
 }
+*/
 
 bool RobotConfig::enableTouch() {
 	if (!_data[RC_ENABLE_TOUCH]) return false;
@@ -180,10 +212,12 @@ bool RobotConfig::enableTouch() {
     */
 }
 
+/*
 uint8_t RobotConfig::touchAction(uint8_t id) {
 	if (id >= RC_TOUCH_ACTION_CNT) return DEFAULT_TOUCH_NO_ACTION;
 	return (_data[RC_TOUCH_ACTION + id]);
 }
+*/
 
 void RobotConfig::setTouchDetectPeriod(uint16_t detectPeriod) {
     setUint16_t(RC_TOUCH_DETECT_PERIOD, detectPeriod);
@@ -205,6 +239,24 @@ void RobotConfig::setMaxVoltage(uint16_t maxVoltage) {
     setUint16_t(RC_MAX_VOLTAGE, maxVoltage);
 }
 
+void RobotConfig::setBatteryNormalSec(uint8_t value) {
+    _data[RC_BATTERY_NORAML_SEC] = value;
+}
+
+void RobotConfig::setBatteryAlarmSec(uint8_t value) {
+    _data[RC_BATTERY_ALARM_SEC] = value;
+}
+
+void RobotConfig::setBattery(uint16_t refVoltage, uint16_t minVoltage, uint16_t maxVoltage, uint8_t normalSec, uint8_t alarmSec)  {
+    setRefVoltage(refVoltage); 
+    setMinVoltage(minVoltage); 
+    setMaxVoltage(maxVoltage); 
+    setBatteryNormalSec(normalSec);
+    setBatteryAlarmSec(alarmSec);
+}
+
+
+/*
 void RobotConfig::setAlarmVoltage(uint16_t alarmVoltage) {    
     setUint16_t(RC_ALARM_VOLTAGE, alarmVoltage);
 }
@@ -225,7 +277,7 @@ void RobotConfig::setVoltage(uint16_t refVoltage, uint16_t minVoltage, uint16_t 
     setVoltageAlarmMp3(mp3);
     setVoltageAlarmInterval(interval);
 };
-
+*/
 
 void RobotConfig::setMaxServo(uint8_t maxServo) {
     _data[RC_MAX_SERVO] = maxServo;
@@ -255,6 +307,11 @@ void RobotConfig::setMp3Startup(uint8_t mp3) {
     _data[RC_MP3_STARTUP] = mp3;
 }
 
+void RobotConfig::setMpu6050(bool enabled) {
+    _data[RC_ENABLE_MPU6050] = enabled;
+}
+
+/*
 void RobotConfig::setAutoStand(bool autoStand) {
     _data[RC_AUTO_STAND] = autoStand;
 }
@@ -266,6 +323,7 @@ void RobotConfig::setAutoFaceUp(uint8_t faceUp) {
 void RobotConfig::setAutoFaceDown(uint8_t faceDown) {
     _data[RC_AUTO_FACE_DOWN] = faceDown;
 }
+*/
 
 void RobotConfig::setMpuCheckFreq(uint8_t checkFreq) {
     _data[RC_MPU_CHECK_FREQ] = checkFreq;
@@ -274,3 +332,19 @@ void RobotConfig::setMpuCheckFreq(uint8_t checkFreq) {
 void RobotConfig::setPositionCheckFreq(uint8_t checkFreq) {
     _data[RC_POSITION_CHECK_FREQ] = checkFreq;
 }
+
+
+void RobotConfig::setPsxButton(bool enabled) {
+    _data[RC_ENABLE_PSX_BUTTON] = enabled;
+}
+
+void RobotConfig::setPsxCheckMs(uint16_t value) {
+    setUint16_t(RC_PSX_CHECK_MS, value);
+}
+
+void RobotConfig::setPsxIgnoreRepeatMs(uint16_t value) {
+    setUint16_t(RC_PSX_IGNORE_REPEAT_MS, value);
+}
+
+
+

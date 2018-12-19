@@ -17,8 +17,10 @@ void InitEventHandler() {
 	edsPsxButton.Setup(&ssb);
 	
 	// TODO: add normal check ms to config object
-	_dbg->log(10,0,"edsBattery.Setup(%d, %d, %d, %d)", config.minVoltage(), config.maxVoltage(), 5000,config.voltageAlarmInterval() * 1000);
-	edsBattery.Setup(config.minVoltage(), config.maxVoltage(), 5000, config.voltageAlarmInterval() * 1000);
+	// _dbg->log(10,0,"edsBattery.Setup(%d, %d, %d, %d)", config.minVoltage(), config.maxVoltage(), 5000,config.voltageAlarmInterval() * 1000);
+	// edsBattery.Setup(config.minVoltage(), config.maxVoltage(), 5000, config.voltageAlarmInterval() * 1000);
+	_dbg->log(10,0,"edsBattery.Setup(%d, %d, %d, %d)", config.minVoltage(), config.maxVoltage(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
+	edsBattery.Setup(config.minVoltage(), config.maxVoltage(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
 
 	// Use array later
 	for (int i = 0; i <= ED_MAX_DEVICE; i++) eds[i] = NULL;
