@@ -165,6 +165,12 @@ bool V2_Command() {
 			return true;
 			break;
 
+		// allow to disable eventhandler event playing 
+		case V2_CMD_SET_EH_MODE:
+			V2_SetEventHandlerMode(cmd);
+			return true;
+			break;
+
 	}
 
 
@@ -199,6 +205,10 @@ bool V2_Command() {
 
 		case V2_CMD_DEFAULTCONFIG:
 			V2_DefaultConfig(cmd);
+			break;
+
+		case V2_CMD_GET_EH_MODE:
+			V2_GetEventHandlerMode(cmd);
 			break;
 
 		case V2_CMD_GET_NETWORK:
@@ -939,6 +949,22 @@ void V2_SetHeadLED(byte *cmd) {
 }
 
 #pragma endregion
+
+#pragma region Event EVENT_HANDLER
+
+void V2_GetEventHandlerMode(byte *cmd)	 {
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_GetEventHandlerMode]");
+	V2_SendSingleByteResult(cmd, (eventHandlerSuspended ? 0 : 1));
+}
+
+void V2_SetEventHandlerMode(byte *cmd) {
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_SetEventHandlerMode(%d)]", cmd[4]);
+	eventHandlerSuspended = (cmd[4] == 0);
+	V2_SendSingleByteResult(cmd, 0);
+}
+
+#pragma endregion
+
 
 #pragma region MP3 Player
 

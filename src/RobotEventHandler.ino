@@ -2,6 +2,7 @@
 
 void InitEventHandler() {
 	
+	eventHandlerSuspended = false;
 	ssbPort.begin(ssbConfig.baud);
 
 	ssb.Begin(&ssbPort, &DEBUG);
@@ -53,6 +54,8 @@ void InitEventHandler() {
 }
 
 void RobotEventHandler() {
+
+	if (eventHandlerSuspended) return;
 
 	if (millis() < nextHandlerMs) return;
 

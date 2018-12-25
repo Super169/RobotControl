@@ -22,6 +22,8 @@
 
 #define EVENT_HANDLER_ELAPSE_MS 10
 
+bool eventHandlerSuspended  = true;
+
 struct {
     uint8_t rx_pin          = 14;
     uint8_t tx_pin          = 14;

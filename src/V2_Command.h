@@ -23,6 +23,8 @@ bool V2_UseGlobalTime = true;
 #define V2_CMD_SETCONFIG      	0x05
 #define V2_CMD_DEFAULTCONFIG    0x06
 #define V2_CMD_USB_TTL          0x07
+#define V2_CMD_GET_EH_MODE      0x08
+#define V2_CMD_SET_EH_MODE      0x09
 
 #define V2_CMD_ENABLE			0x0A
 #define V2_CMD_CHECK_BATTERY	0x0B

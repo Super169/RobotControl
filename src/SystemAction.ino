@@ -15,6 +15,9 @@ void ActionPlaySystemAction(byte systemActionId) {
 		case 13:
 			SystemAction_013();
 			break;	
+		case 14:
+			SystemAction_014();
+			break;	
 		case 250:
 			if (_dbg->require(10))	_dbg->log(10,0, "USB-TTL for Robot bus");
 			USB_TTL(&robotPort);
@@ -51,6 +54,48 @@ void SystemAction_012() {
 void SystemAction_013() {
 	if (_dbg->require(110)) _dbg->log(110,0, "SystemAction_013");
 	GoMoveServo(5,5,120,100);
+}
+
+void SystemAction_014() {
+	int id = 2;
+	int elapseMs = 50;
+	int step = 10;
+	int time = 0;
+	byte angle = 0;
+	byte cmd[] = {0xFA, 0xAF,0x00,0x01,0x00, 0x00, 0x00, 0x00, 0x00, 0xED};
+	cmd[2] = id;
+	cmd[5] = (time / 20);
+	cmd[7] = (time / 20);
+
+	// Wait 2s to reset in angle 0 before start
+	byte sum = 0;
+	for (int i = 2; i < 8; i++) {
+		sum += cmd[i];
+	}
+	cmd[8] = sum;
+	robotPort.write(cmd, 10);
+	delay(2000);
+
+	while (angle <= 240) {
+		cmd[4] = (angle & 0xFF);
+
+		robotPort.enableTx(true);
+		delayMicroseconds(10);
+
+		byte sum = 0;
+		for (int i = 2; i < 8; i++) {
+			sum += cmd[i];
+		}
+		cmd[8] = sum;
+		robotPort.write(cmd, 10);
+
+		robotPort.enableTx(false);
+		delayMicroseconds(10);
+		angle += step;
+
+		delay(elapseMs);
+	}
+
 }
 
 void GoMoveServo(byte servoId, int step, int execTime, int waitTime) {
