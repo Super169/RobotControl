@@ -93,6 +93,9 @@
 #define RC_TOUCH_DETECT_PERIOD          48   
 #define RC_TOUCH_RELEASE_PERIOD         50   
 
+#define RC_SONIC_ENABLED                53
+
+
 // V0 setting to be removed later
 #define V0_ENABLE_TOUCH                 8   // V0: ????
 #define V0_ALARM_VOLTAGE                16  // V0: Obsolete
@@ -176,6 +179,8 @@ class RobotConfig {
             setPsxShock(psxShock);
         }
 
+        void setSonicEnabled(bool enabled);
+
 
         bool enableDebug() { return _data[RC_ENABLE_DEBUG]; }
         bool connectRouter() { return _data[RC_CONNECT_ROUTER]; }
@@ -208,6 +213,8 @@ class RobotConfig {
         uint8_t psxNoEventMs() { return _data[RC_PSX_NO_EVENT_MS]; }
         uint16_t psxIgnoreRepeatMs() { return getUint16_t(RC_PSX_IGNORE_REPEAT_MS); }
         bool psxShock() { return _data[RC_PSX_SHOCK]; }
+
+        bool sonicEnabled() { return _data[RC_SONIC_ENABLED]; }
 
     private:
         void initObject(HardwareSerial *hsDebug);

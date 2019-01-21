@@ -34,6 +34,15 @@ void InitEventHandler() {
 		_dbg->log(10,0,"PSX disabled");
 	}
 	
+	edsSonic.SetEnabled(config.sonicEnabled());
+	if (config.sonicEnabled()) {
+		_dbg->log(10,0,"edsSonic.Setup(&ssb)");
+		edsSonic.Setup(&ssb);
+	} else {
+		_dbg->log(10,0,"Sonic sensor disabled");
+	}
+
+
 	// TODO: add normal check ms to config object
 	// _dbg->log(10,0,"edsBattery.Setup(%d, %d, %d, %d)", config.batteryMinValue(), config.batteryMaxValue(), 5000,config.voltageAlarmInterval() * 1000);
 	// edsBattery.Setup(config.batteryMinValue(), config.batteryMaxValue(), 5000, config.voltageAlarmInterval() * 1000);
@@ -47,6 +56,7 @@ void InitEventHandler() {
 	eds[(byte) EventData::DEVICE::touch] = &edsTouch;
 	eds[(byte) EventData::DEVICE::psx_button] = &edsPsxButton;
 	eds[(byte) EventData::DEVICE::battery] = &edsBattery;
+	eds[(byte) EventData::DEVICE::sonic] = &edsSonic;
 
 	eIdle.LoadData(EVENT_IDEL_FILE);
 	eBusy.LoadData(EVENT_BUSY_FILE);

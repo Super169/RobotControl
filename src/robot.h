@@ -42,10 +42,12 @@ SimpleWiFiManager SWFM;
 // Version 2.2 - New version for event handler added
 #define VERSION_MAJOR   2
 #define VERSION_MINOR   2
-#define VERSION_SUB     0
+#define VERSION_SUB     1
 #define VERSION_FIX     0
 
-#define DEFAULT_LOG_LEVEL 200
+// Level   0 - all
+// Level 200 - most important only
+#define DEFAULT_LOG_LEVEL 100
 
 // Start a TCP Server on port 6169
 uint16_t port = 6169;
@@ -87,6 +89,7 @@ EdsPsxButton edsPsxButton(&eData, _dbg);
 EdsBattery edsBattery(&eData, _dbg);
 EdsTouch edsTouch(&eData, _dbg);
 EdsMpu6050 edsMpu6050(&eData, _dbg);
+EdsSonic edsSonic(&eData, _dbg);
 
 #define CMD_BUFFER_SIZE 160
 

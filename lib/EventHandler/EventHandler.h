@@ -10,10 +10,6 @@ class EventHandler {
 
     public:
 
-        enum class DEVICE_TYPE : uint8_t {
-            mpu6050 = 1, touch = 2, psxButton = 3, batteryReading = 4, batteryLevel =5, gpio = 6
-        };
-
         enum class CHECK_MODE : uint8_t {
             match = 1, greater = 2, less = 3, button = 4
         };

@@ -178,6 +178,10 @@ void RobotConfig::dumpConfig() {
  	_dbg->printf("PSX Button: %s, Check Interval: %d, No Event: %d, Ignore Repeat Interval: %d, shock: %s\n", 
                   (psxEnabled() ? "Enabled" : "Disabled"), psxCheckMs(), psxNoEventMs(), psxIgnoreRepeatMs(),(psxShock() ? "Enabled" : "Disabled"));
 
+ 	_dbg->printf("Sonic: %s\n", 
+                  (sonicEnabled() ? "Enabled" : "Disabled"));
+
+
 	_dbg->println();
 }
 
@@ -298,3 +302,8 @@ void RobotConfig::setPsxIgnoreRepeatMs(uint16_t value) {
 void RobotConfig::setPsxShock(bool enabled) {
     _data[RC_PSX_SHOCK] = enabled;
 }
+
+void RobotConfig::setSonicEnabled(bool enabled) {
+    _data[RC_SONIC_ENABLED] = enabled;
+}
+

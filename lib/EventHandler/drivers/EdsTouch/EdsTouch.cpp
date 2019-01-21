@@ -113,5 +113,3 @@ void EdsTouch::PostHandler(bool eventMatched, bool isRelated, bool pending) {
     }
 }
 
-
-

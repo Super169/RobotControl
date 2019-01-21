@@ -227,10 +227,6 @@ void setup() {
   	// Serial.println(localip);
 
 
-
-	// TODO: for testing only, remove it for production
-	// eIdle.LoadDummyData();
-
 }
 
 void showNetwork() {
