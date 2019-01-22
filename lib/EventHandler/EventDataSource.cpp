@@ -28,6 +28,13 @@ void EventDataSource::SetNextReportTime() {
     _nextReportMs = millis() + _reportInterval; 
 }
 
+/*
+*   PostHandling (eventMatched, isRelated, pending)
+*   - eventMatched : this round has event matched
+*   - isRelated : the matched event is related to this device
+*   - pending : some event pending on this data within threadhold: see EventHander.cpp
+*               condition require to match for continous time before confirmed (e.g. Mpu6050)
+*/
 void EventDataSource::PostHandler(bool eventMatched, bool isRelated, bool pending) {
     if (!IsReady()) return;
     if (_dbg->require(210)) _dbg->log(210,0,"EventDataSource[%d]::PostHandler(%d,%d,%d)",_Device, eventMatched, isRelated, pending);

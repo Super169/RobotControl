@@ -56,8 +56,8 @@ bool EdsPsxButton::GetData() {
     // New return:  A8 8A 08 01 00 02 28 02  [ EF 00 ] 24 ED 
     uint16_t data;
     byte *button = (byte *) &data;
-    button[0] = result->peek(9);
-    button[1] = result->peek(8);
+    button[0] = result->peek(8);
+    button[1] = result->peek(9);
 
     // Due to the behavious of PSX control board, it will repeat the value within 1s
     // Need to skip repeated value if handled
