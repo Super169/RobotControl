@@ -48,6 +48,7 @@ void RobotConfig::initConfig() {
     setMp3(DEFAULT_MP3_ENABLED, DEFAULT_MP3_VOLUME, DEFAULT_MP3_STARTUP);
     setMpu(DEFAULT_MPU_ENABLED, DEFAULT_MPU_CHECK_FREQ, DEFAULT_MPU_POSITION_CHECK_FREQ);
     setPsx(DEFAULT_PSX_ENABLED, DEFAULT_PSX_CHECK_MS, DEFAULT_PSX_NO_EVENT_MS, DEFAULT_PSX_IGNORE_REPEAT_MS, DEFAULT_PSX_SHOCK);
+    setSonic(DEFAULT_SONIC_ENABLED, DEFAULT_SONIC_CHECK_FREQ, DEFAULT_SONIC_DELAY_SEC);
 
 }
 
@@ -96,7 +97,7 @@ void RobotConfig::checkConversion() {
         }
 
         // Default battery noraml check frequency in 5 seconds
-        _data[RC_BATTERY_NORAML_SEC] = 5;
+        _data[RC_BATTERY_NORMAL_SEC] = 5;
 
         _data[RC_TOUCH_ENABLED] = _data[V0_ENABLE_TOUCH];
 
@@ -130,6 +131,9 @@ void RobotConfig::checkConfig() {
     if (psxCheckMs() < MIN_PSX_MS) setPsxCheckMs(DEFAULT_PSX_CHECK_MS);
     if (psxNoEventMs() < MIN_PSX_MS) setPsxNoEventMs(DEFAULT_PSX_NO_EVENT_MS);
     if (psxIgnoreRepeatMs() < MIN_PSX_IGNORE_REPEAT_MS) setPsxIgnoreRepeatMs(DEFAULT_PSX_IGNORE_REPEAT_MS);
+
+    if (sonicCheckFreq() == 0) setSonicCheckFreq(DEFAULT_SONIC_CHECK_FREQ);
+    if (sonicDelaySec() == 0) setSonicDelaySec(DEFAULT_SONIC_DELAY_SEC);
 
 }
 
@@ -178,8 +182,8 @@ void RobotConfig::dumpConfig() {
  	_dbg->printf("PSX Button: %s, Check Interval: %d, No Event: %d, Ignore Repeat Interval: %d, shock: %s\n", 
                   (psxEnabled() ? "Enabled" : "Disabled"), psxCheckMs(), psxNoEventMs(), psxIgnoreRepeatMs(),(psxShock() ? "Enabled" : "Disabled"));
 
- 	_dbg->printf("Sonic: %s\n", 
-                  (sonicEnabled() ? "Enabled" : "Disabled"));
+ 	_dbg->printf("Sonic: %s, Check Freq: %d\n", 
+                  (sonicEnabled() ? "Enabled" : "Disabled"), sonicCheckFreq());
 
 
 	_dbg->println();
@@ -227,7 +231,7 @@ void RobotConfig::setBatteryMaxValue(uint16_t maxVoltage) {
 }
 
 void RobotConfig::setBatteryNormalSec(uint8_t value) {
-    _data[RC_BATTERY_NORAML_SEC] = value;
+    _data[RC_BATTERY_NORMAL_SEC] = value;
 }
 
 void RobotConfig::setBatteryAlarmSec(uint8_t value) {
@@ -307,3 +311,10 @@ void RobotConfig::setSonicEnabled(bool enabled) {
     _data[RC_SONIC_ENABLED] = enabled;
 }
 
+void RobotConfig::setSonicCheckFreq(uint8_t checkFreq) {
+    _data[RC_SONIC_CHECK_FREQ] = checkFreq;
+}
+
+void RobotConfig::setSonicDelaySec(uint8_t delaySec) {
+    _data[RC_SONIC_DELAY_SEC] = delaySec;
+}

@@ -164,7 +164,10 @@ bool EventHandler::LastEventRelated(uint8_t device) {
 bool EventHandler::IsPending(uint8_t device) {
     for (int i = 0; i < _evtCount; i++) {
         if (_events[i].data.condition.data.device == device) {
-            if (_eventLastMs[device]) return true;
+            if (_eventLastMs[i]) {
+                Serial1.printf("Pending Device: %d: %08ld \n", device, _eventLastMs[device]);
+                return true;
+            }
         }
     }
     return false;

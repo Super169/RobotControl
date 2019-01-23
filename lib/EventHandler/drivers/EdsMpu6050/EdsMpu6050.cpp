@@ -38,12 +38,17 @@ void EdsMpu6050::Setup(uint8_t i2cAddr, uint16_t threadhold, uint16_t elapseMs) 
 
 bool EdsMpu6050::GetData() {
     if (!IsReady())  return false;
+
+    _thisDataReady = false;
+
     if (!GetMpuData()) return false;
 
     _data->SetData(_Device, _DevId, 0, _ax);
     _data->SetData(_Device, _DevId, 1, _ay);
     _data->SetData(_Device, _DevId, 2, _az);
     if (_dbg->require(100)) _dbg->log(100,0,"MPU 6050: ( %d , %d , %d )", _ax, _ay, _az);
+
+    _thisDataReady = true;
 
     return true;
 }

@@ -56,6 +56,10 @@
 #define MIN_PSX_MS                      10
 #define MIN_PSX_IGNORE_REPEAT_MS        50
 
+#define DEFAULT_SONIC_ENABLED           false
+#define DEFAULT_SONIC_CHECK_FREQ        5
+#define DEFAULT_SONIC_DELAY_SEC         1
+
 #define RC_RECORD_SIZE                  60
 #define RC_CONFIG_DATA_SIZE             56
 #define RC_VERSION                      4
@@ -66,7 +70,7 @@
 #define RC_BATTERY_REF_VOLTAGE          10
 #define RC_BATTERY_MIN_VALUE            12
 #define RC_BATTERY_MAX_VALUE            14
-#define RC_BATTERY_NORAML_SEC           18  // V1: New
+#define RC_BATTERY_NORMAL_SEC           18  // V1: New
 #define RC_BATTERY_ALARM_SEC            19  // V1: Rename
 
 #define RC_MAX_SERVO                    21
@@ -94,6 +98,8 @@
 #define RC_TOUCH_RELEASE_PERIOD         50   
 
 #define RC_SONIC_ENABLED                53
+#define RC_SONIC_CHECK_FREQ             54
+#define RC_SONIC_DELAY_SEC              55
 
 
 // V0 setting to be removed later
@@ -180,6 +186,14 @@ class RobotConfig {
         }
 
         void setSonicEnabled(bool enabled);
+        void setSonicCheckFreq(uint8_t checkFreq);
+        void setSonicDelaySec(uint8_t delaySec);
+
+        inline void setSonic(bool enabled, uint8_t checkFreq, uint8_t delaySec) {
+            setSonicEnabled(enabled);
+            setSonicCheckFreq(checkFreq);
+            setSonicDelaySec(delaySec);
+        }
 
 
         bool enableDebug() { return _data[RC_ENABLE_DEBUG]; }
@@ -188,7 +202,7 @@ class RobotConfig {
         uint16_t batteryRefVoltage() { return getUint16_t(RC_BATTERY_REF_VOLTAGE); }
         uint16_t batteryMinValue() { return getUint16_t(RC_BATTERY_MIN_VALUE); }
         uint16_t batteryMaxValue() { return getUint16_t(RC_BATTERY_MAX_VALUE); }
-        uint8_t batteryNormalSec() { return _data[RC_BATTERY_NORAML_SEC]; }
+        uint8_t batteryNormalSec() { return _data[RC_BATTERY_NORMAL_SEC]; }
         uint8_t batteryAlarmSec() { return _data[RC_BATTERY_ALARM_SEC]; }
 
         uint8_t maxServo() { return _data[RC_MAX_SERVO]; }
@@ -204,17 +218,20 @@ class RobotConfig {
         uint8_t mpuCheckFreq() { return _data[RC_MPU_CHECK_FREQ]; }
         uint8_t mpuPositionCheckFreq() { return _data[RC_MPU_POSITION_CHECK_FREQ]; }
 
-        bool touchEnabled() { return _data[RC_TOUCH_ENABLED]; }
-        uint16_t touchDetectPeriod() { return getUint16_t(RC_TOUCH_DETECT_PERIOD); }
-        uint16_t touchReleasePeriod() { return getUint16_t(RC_TOUCH_RELEASE_PERIOD); }
-        
         bool psxEnabled() { return _data[RC_PSX_ENABLED]; }
         uint8_t psxCheckMs() { return _data[RC_PSX_CHECK_MS]; }
         uint8_t psxNoEventMs() { return _data[RC_PSX_NO_EVENT_MS]; }
         uint16_t psxIgnoreRepeatMs() { return getUint16_t(RC_PSX_IGNORE_REPEAT_MS); }
         bool psxShock() { return _data[RC_PSX_SHOCK]; }
 
+
+        bool touchEnabled() { return _data[RC_TOUCH_ENABLED]; }
+        uint16_t touchDetectPeriod() { return getUint16_t(RC_TOUCH_DETECT_PERIOD); }
+        uint16_t touchReleasePeriod() { return getUint16_t(RC_TOUCH_RELEASE_PERIOD); }
+        
         bool sonicEnabled() { return _data[RC_SONIC_ENABLED]; }
+        uint8_t sonicCheckFreq() { return _data[RC_SONIC_CHECK_FREQ]; }
+        uint8_t sonicDelaySec() { return _data[RC_SONIC_DELAY_SEC]; }
 
     private:
         void initObject(HardwareSerial *hsDebug);

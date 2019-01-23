@@ -27,9 +27,9 @@ class EdsSonic : public EventDataSource {
         EdsSonic(EventData *data, MyDebugger *dbg, byte devId = 0);
         ~EdsSonic();
 
-        void Setup(SSBoard *ssb);
+        void Setup(SSBoard *ssb, unsigned long continueCheckms, unsigned long delayCheckMs);
         bool GetData() override;
-        void PostHandler(bool eventMatched, bool isRelated, bool pending) override;
+        // void PostHandler(bool eventMatched, bool isRelated, bool pending) override;
 
     private:
         SSBoard *_ssb;

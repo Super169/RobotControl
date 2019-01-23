@@ -23,10 +23,10 @@ EdsDataSource.h (generic)
 */
 Default action:
 1) with data but not checked : force check in next time
-2) with data and checked     : _delayCheckMs      : 1000
-3) pending                   : _pendingCheckMs    : 20
-4) no data                   : _continueCheckMs   : 50      
-
+2) post handling delay       : _delayCheckMs      : 1000
+4) pending                   : _pendingCheckMs    : 20
+5) no data or data not match : _continueCheckMs   : 50      
+//  may consider to separate no data & data not match with different setting
 
 EdsMpu6050:
 	edsMpu6050.Setup(EDS_MPU6050_I2CADDR, (1000 / config.mpuPositionCheckFreq()), config.mpuCheckFreq());

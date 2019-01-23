@@ -9,6 +9,7 @@
 #define EDS_PENDING_CHECK_MS    20
 #define EDS_CONTINUE_CHECK_MS   50
 #define EDS_DELAY_CHECK_MS      1000
+#define EDS_HANDLED_CHECK_MS    1000
 
 class EventDataSource {
 

@@ -36,8 +36,8 @@ void InitEventHandler() {
 	
 	edsSonic.SetEnabled(config.sonicEnabled());
 	if (config.sonicEnabled()) {
-		_dbg->log(10,0,"edsSonic.Setup(&ssb)");
-		edsSonic.Setup(&ssb);
+		_dbg->log(10,0,"edsSonic.Setup(&ssb, %d, %d)", 1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
+		edsSonic.Setup(&ssb, 1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
 	} else {
 		_dbg->log(10,0,"Sonic sensor disabled");
 	}

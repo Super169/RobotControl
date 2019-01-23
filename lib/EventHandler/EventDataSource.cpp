@@ -39,12 +39,15 @@ void EventDataSource::PostHandler(bool eventMatched, bool isRelated, bool pendin
     if (!IsReady()) return;
     if (_dbg->require(210)) _dbg->log(210,0,"EventDataSource[%d]::PostHandler(%d,%d,%d)",_Device, eventMatched, isRelated, pending);
     if (_thisDataReady) {
-        if (eventMatched && !isRelated){
-            // handled other events, need to execute again immediately 
-            _nextReportMs = 0;
-        } else  {
-            // either handled or no action for it, can delay longer
+        if (isRelated) {
+            // Current data has event matched
             _nextReportMs = millis() + _delayCheckMs;
+        } else if (eventMatched) {
+            // Maybe handled with other events, should check again in next round
+            _nextReportMs = 0;
+        } else {
+            // Current data did not trigger any event
+            _nextReportMs = millis() + _continueCheckMs;
         }
     } else if (pending) {
         _nextReportMs = millis() + _pendingCheckMs;
