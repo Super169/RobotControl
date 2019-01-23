@@ -46,12 +46,17 @@ void EdsSonic::Setup(SSBoard *ssb, unsigned long continueCheckms, unsigned long 
 
 bool EdsSonic::GetData() {
     _thisDataReady = false;
+    _thisDataError = false;
     if (!IsReady()) return false;
 
     byte cmd[] = { 0xA8, 0x8A, 0x06, 0x02, 0x00, 0x02, 0x28, 0x02, 0x34, 0xED };
 
     unsigned long startMs = millis();
-    if (!_ssb->SendCommand((byte *) cmd, true)) return false;
+    if (!_ssb->SendCommand((byte *) cmd, true)) {
+        _thisDataError = true;
+        return false;
+    }
+
     
     unsigned long diff = millis() - startMs;
     //_dbg->msg("It taks %d ms to read PSX", diff); 

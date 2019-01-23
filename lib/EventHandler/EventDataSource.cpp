@@ -51,7 +51,11 @@ void EventDataSource::PostHandler(bool eventMatched, bool isRelated, bool pendin
         }
     } else if (pending) {
         _nextReportMs = millis() + _pendingCheckMs;
-    } else {
+    } else if (_thisDataError) {
         _nextReportMs = millis() + _continueCheckMs;
+    } else {
+        // not ready at GetData, but ready now
+        // Do nothing and let it getData again in next round
     }
+
 }

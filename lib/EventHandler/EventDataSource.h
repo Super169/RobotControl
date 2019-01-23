@@ -31,7 +31,7 @@ class EventDataSource {
         */
         bool _lastDataReady = false;
         bool _thisDataReady = false;
-
+        bool _thisDataError = false;
 
         unsigned long _lastReportMS = 0;
         bool _lastValueHandled = false;
