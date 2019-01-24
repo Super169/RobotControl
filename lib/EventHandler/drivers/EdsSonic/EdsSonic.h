@@ -33,6 +33,7 @@ class EdsSonic : public EventDataSource {
 
     private:
         SSBoard *_ssb;
+        bool Ping();
         // uint8_t _normalCheckMs = 0;
         // uint8_t _noEventMs = 0;
         // uint16_t _ignoreRepeatMs = 0;

@@ -76,9 +76,9 @@ class EventHandler {
         bool LoadData(String filename);
         void LoadDummyData();
         bool SaveData(String filename);
-        bool IsRequired(uint8_t device);
+        bool IsRequired(uint8_t device, uint8_t devId);
         bool LastEventRelated(uint8_t device, uint8_t devId);
-        bool IsPending(uint8_t device);
+        bool IsPending(uint8_t device, uint8_t devId);
 
         EVENT CheckEvents();
         uint16_t Count() { return _evtCount; }
@@ -93,8 +93,8 @@ class EventHandler {
         unsigned long *_eventLastMs;
 
         EventData *_data;
-        bool _reqDevice[ED_MAX_DEVICE + 1];
-        void CheckEventsRequirement();  // mark flag in _reqDevice
+        bool *_isRequired;
+        void CheckEventsRequirement();  // mark flag in _isRequired
 
         // bool _lastEventRelated[ED_MAX_DEVICE + 1];
         bool *_lastEventRelated; 

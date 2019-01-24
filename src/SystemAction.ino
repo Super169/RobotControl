@@ -24,6 +24,9 @@ void ActionPlaySystemAction(byte systemActionId) {
 		case 201:
 			SystemAction_201();
 			break;	
+		case 210:
+			SystemAction_210();
+			break;	
 		case 250:
 			if (_dbg->require(10))	_dbg->log(10,0, "USB-TTL for Robot bus");
 			USB_TTL(&robotPort);
@@ -145,13 +148,13 @@ void SystemAction_210() {
 	// Force to read and dump all data
 	DEBUG.printf("\n\nSystem Action 210 (check data soruce):\n\n");
 	eData.Clear();
-	for (int device = 0; device < eData.DevCount(); device++) {
-		if (eds[device] != NULL) {
-			if (eds[device]->IsAvailable()) {
-				eds[device]->ForceGetData();
+	for (int devIdx = 0; devIdx < eData.DevCount(); devIdx++) {
+		if (eds[devIdx] != NULL) {
+			if (eds[devIdx]->IsAvailable()) {
+				eds[devIdx]->ForceGetData();
 			} else {
 				DEBUG.printf("eds[%d] (Device: %d, DevId: %d) is not available\n", 
-							device, eds[device]->Device(), eds[device]->DevId());
+							devIdx, eds[devIdx]->Device(), eds[devIdx]->DevId());
 			}
 		}
 	}

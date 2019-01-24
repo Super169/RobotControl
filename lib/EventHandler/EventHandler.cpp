@@ -8,7 +8,12 @@ EventHandler::EventHandler(EventData *data)
     _evtCount = 0;
     _events = NULL;
     _eventLastMs = NULL;
+    _isRequired = (bool *) malloc(_data->DevCount());
     _lastEventRelated = (bool *) malloc(_data->DevCount());
+    for (int i = 0; i < _data->DevCount(); i++) {
+        _isRequired[i] = false;
+        _lastEventRelated[i] = false;
+    }
 }
 
 EventHandler::~EventHandler()
@@ -150,8 +155,8 @@ bool EventHandler::WriteFile(const char *fileName, uint8_t *buffer, size_t size)
 	return success;
 }
 
-bool EventHandler::IsRequired(uint8_t device) {
-    if (device <= ED_MAX_DEVICE) return _reqDevice[device];
+bool EventHandler::IsRequired(uint8_t device, uint8_t devId) {
+    if (_data->IsValid(device, devId)) return _isRequired[_data->DevOffset(device, devId)];
     return false;
 }
 
@@ -160,9 +165,9 @@ bool EventHandler::LastEventRelated(uint8_t device, uint8_t devId) {
     return false;
 }
 
-bool EventHandler::IsPending(uint8_t device) {
+bool EventHandler::IsPending(uint8_t device, uint8_t devId) {
     for (int i = 0; i < _evtCount; i++) {
-        if (_events[i].data.condition.data.device == device) {
+        if ((_events[i].data.condition.data.device == device) && (_events[i].data.condition.data.devId == devId))    {
             if (_eventLastMs[i]) {
                 return true;
             }
@@ -173,13 +178,13 @@ bool EventHandler::IsPending(uint8_t device) {
 
 void EventHandler::CheckEventsRequirement() {
     
-    for (int i = 0; i < ED_MAX_DEVICE + 1; i++) _reqDevice[i] = false;
+    for (int i = 0; i < _data->DevCount() + 1; i++) _isRequired[i] = false;
 
     for (uint16_t i = 0; i < _evtCount; i++) {
         if (_data->IsValid(_events[i].data.condition.data.device,
                            _events[i].data.condition.data.devId, 
                            _events[i].data.condition.data.target)) {
-            _reqDevice[_events[i].data.condition.data.device] = true;
+            _isRequired[_data->DevOffset(_events[i].data.condition.data.device,_events[i].data.condition.data.devId)] = true;
         }
     }
 }

@@ -1,7 +1,7 @@
 #include "robot.h"
 
 void InitEventHandler() {
-	
+
 	eventHandlerSuspended = false;
 	ssbPort.begin(ssbConfig.baud);
 
@@ -60,8 +60,9 @@ void InitEventHandler() {
 		eds[eData.DevOffset((byte) EventData::DEVICE::sonic,id)] = edsSonic[id];
 	}
 
+
 	// TODO: add normal check ms to config object
-	for (int id = 0; id < ED_COUNT_SONIC; id++) {
+	for (int id = 0; id < ED_COUNT_BATTERY; id++) {
 		edsBattery[id] = new EdsBattery(&eData, _dbg, id);
 		_dbg->log(10,0,"edsBattery.Setup(%d, %d, %d, %d)", config.batteryMinValue(), config.batteryMaxValue(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
 		edsBattery[id]->Setup(config.batteryMinValue(), config.batteryMaxValue(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
@@ -118,16 +119,19 @@ void RobotEventHandler() {
 
 	for (int device = 0; device < eData.DevCount(); device++) {		
 		if (eds[device] != NULL) {
-			if (eActive->IsRequired(eds[device]->Device())) {
+			if (eActive->IsRequired(eds[device]->Device(), eds[device]->DevId())) {
 				if (eds[device]->GetData()) showResult = true;
 			} 
 		}
 	}
 
-	// Part 2: Condition checking
 
+	// Part 2: Condition checking
+	
 	EventHandler::EVENT event = eActive->CheckEvents();
     EventHandler::ACTION action = event.data.action;
+
+
 
 
 	// Part 3: Post checking control 
@@ -135,21 +139,22 @@ void RobotEventHandler() {
 	*	Need to think about how to prevent keep triggering the same event as condition may not changed
 	*   May add time interval for eData once handled
 	*/
+
 	for (int devIdx = 0; devIdx < eData.DevCount(); devIdx++) {
 		if (eds[devIdx] != NULL) {
 			int device = eds[devIdx]->Device();
 			int devId = eds[devIdx]->DevId();
-			if (eActive->IsRequired(device)) {
+			if (eActive->IsRequired(device, devId)) {
 				eds[devIdx]->PostHandler( (bool) (event.data.type), 
 							  			  eActive->LastEventRelated(device, devId),
-										  eActive->IsPending(device) );
+										  eActive->IsPending(device, devId) );
 				
 			}
 		}
 	}
 	
 	// Part 4: Action	
-	
+
 	if (event.data.type) {
 		if (_dbg->require(250)) {
 			DEBUG.printf("\n##########\n");
@@ -238,14 +243,6 @@ void RobotEventHandler() {
 			DEBUG.printf("No Event matched\n----------\n\n");
 		}
 	}
-
-	/*
-	if (showResult && (millis() > nextShowMs )) {
-		if (V2_ActionPlaying)
-		eData.DumpData(&DEBUG);
-		nextShowMs = millis() + 1000;
-	}
-	*/
 
 	nextHandlerMs = millis() + EVENT_HANDLER_ELAPSE_MS;
 
