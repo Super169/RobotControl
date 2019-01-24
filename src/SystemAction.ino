@@ -21,6 +21,9 @@ void ActionPlaySystemAction(byte systemActionId) {
 		case 200:
 			SystemAction_200();
 			break;	
+		case 201:
+			SystemAction_201();
+			break;	
 		case 250:
 			if (_dbg->require(10))	_dbg->log(10,0, "USB-TTL for Robot bus");
 			USB_TTL(&robotPort);
@@ -116,6 +119,30 @@ void SystemAction_200() {
 		}
 	}
 	eData.DumpData(&DEBUG);
+}
+
+void SystemAction_201() {
+	// Force to read and dump all data
+	DEBUG.printf("\n\nSystem Action 201 (dump SPIFFS):\n\n");
+	if (!SPIFFS.begin()) {
+		DEBUG.printf("Fail to start SPIFFS\n\n");
+		return;
+	}
+	Dir dir;
+	dir = SPIFFS.openDir("");
+	unsigned long fcnt, fsize;
+	fcnt = 0;
+	fsize = 0;
+	while (dir.next()) {
+		DEBUG.printf("%-40s", dir.fileName().c_str());
+		File f = dir.openFile("r");
+		DEBUG.printf("   %8d\n", f.size());
+		fcnt++;
+		fsize += f.size();
+		f.close();
+	}
+	DEBUG.printf("\n%12ld File(s)    %10ld bytes", fcnt, fsize);
+	SPIFFS.end();	
 }
 
 void GoMoveServo(byte servoId, int step, int execTime, int waitTime) {
