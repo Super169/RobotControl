@@ -43,7 +43,7 @@ SimpleWiFiManager SWFM;
 #define VERSION_MAJOR   2
 #define VERSION_MINOR   2
 #define VERSION_SUB     1
-#define VERSION_FIX     1
+#define VERSION_FIX     2
 
 // Level   0 - all
 // Level 200 - most important only
@@ -85,11 +85,12 @@ EventHandler eBusy(&eData);
 EventHandler eTemp(&eData);
 
 SSBoard ssb;
-EdsPsxButton edsPsxButton(&eData, _dbg);
-EdsBattery edsBattery(&eData, _dbg);
-EdsTouch edsTouch(&eData, _dbg);
-EdsMpu6050 edsMpu6050(&eData, _dbg);
-EdsSonic edsSonic(&eData, _dbg);
+EdsPsxButton edsPsxButton(&eData, _dbg, 0);
+EdsBattery edsBattery(&eData, _dbg, 0);
+EdsTouch edsTouch(&eData, _dbg, 0);
+EdsMpu6050 edsMpu6050(&eData, _dbg, 0);
+EdsSonic edsSonic(&eData, _dbg, 0);
+EdsSonic edsSonic_1(&eData, _dbg, 1);
 
 #define CMD_BUFFER_SIZE 160
 

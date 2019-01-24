@@ -26,6 +26,8 @@ void EdsSonic::Setup(SSBoard *ssb, unsigned long continueCheckms, unsigned long 
     // Check if device available
 
     byte cmd[] = {0xA8, 0x8A, 0x04, 0x02, 0x00, 0x01, 0x07, 0xED};
+    cmd[4] = _DevId;
+
     _isAvailable = _ssb->SendCommand((byte *) cmd, true);
     if (_isAvailable) { 
         if (_dbg->require(10)) _dbg->log(10, 0, "Sonic Sensor detected");
@@ -47,9 +49,11 @@ void EdsSonic::Setup(SSBoard *ssb, unsigned long continueCheckms, unsigned long 
 bool EdsSonic::GetData() {
     _thisDataReady = false;
     _thisDataError = false;
+
     if (!IsReady()) return false;
 
     byte cmd[] = { 0xA8, 0x8A, 0x06, 0x02, 0x00, 0x02, 0x28, 0x02, 0x34, 0xED };
+    cmd[4] = _DevId;
 
     unsigned long startMs = millis();
     if (!_ssb->SendCommand((byte *) cmd, true)) {

@@ -41,7 +41,15 @@ void InitEventHandler() {
 	} else {
 		_dbg->log(10,0,"Sonic sensor disabled");
 	}
-
+/*
+	edsSonic_1.SetEnabled(config.sonicEnabled());
+	if (config.sonicEnabled()) {
+		_dbg->log(10,0,"edsSonic_1.Setup(&ssb, %d, %d)", 1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
+		edsSonic_1.Setup(&ssb, 1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
+	} else {
+		_dbg->log(10,0,"Sonic sensor disabled");
+	}
+*/
 
 	// TODO: add normal check ms to config object
 	// _dbg->log(10,0,"edsBattery.Setup(%d, %d, %d, %d)", config.batteryMinValue(), config.batteryMaxValue(), 5000,config.voltageAlarmInterval() * 1000);
@@ -49,14 +57,23 @@ void InitEventHandler() {
 	_dbg->log(10,0,"edsBattery.Setup(%d, %d, %d, %d)", config.batteryMinValue(), config.batteryMaxValue(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
 	edsBattery.Setup(config.batteryMinValue(), config.batteryMaxValue(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
 
-	// Use array later
-	for (int i = 0; i <= ED_MAX_DEVICE; i++) eds[i] = NULL;
+	Serial1.printf("**** Size of EventDataSource*: %d, devCount: %d\n", sizeof(EventDataSource*), eData.DevCount());
+	for (int i = 0; i <= 5; i++) {
+		Serial1.printf("Device: %d ; %d\n", i, eData.ControlOffset(i,0));
+	}
+	Serial1.printf("Sonic - 1 : %d\n", eData.ControlOffset((byte) EventData::DEVICE::sonic, 1));
 
-	eds[(byte) EventData::DEVICE::mpu] = &edsMpu6050;
-	eds[(byte) EventData::DEVICE::touch] = &edsTouch;
-	eds[(byte) EventData::DEVICE::psx_button] = &edsPsxButton;
-	eds[(byte) EventData::DEVICE::battery] = &edsBattery;
-	eds[(byte) EventData::DEVICE::sonic] = &edsSonic;
+	// eds = (EventDataSource**) malloc(sizeof(EventDataSource*) * (eData.DevCount()));
+	// for (int i = 0; i <= ED_MAX_DEVICE; i++) eds[i] = NULL;
+	for (int i = 0; i < eData.DevCount(); i++) eds[i] = NULL;
+
+	// Readlly need to following the control order?? order just add in sequence
+	eds[eData.ControlOffset((byte) EventData::DEVICE::mpu,0)] = &edsMpu6050;
+	eds[eData.ControlOffset((byte) EventData::DEVICE::touch,0)] = &edsTouch;
+	eds[eData.ControlOffset((byte) EventData::DEVICE::psx_button,0)] = &edsPsxButton;
+	eds[eData.ControlOffset((byte) EventData::DEVICE::battery,0)] = &edsBattery;
+	eds[eData.ControlOffset((byte) EventData::DEVICE::sonic,0)] = &edsSonic;
+//	eds[eData.ControlOffset((byte) EventData::DEVICE::sonic,1)] = &edsSonic_1;
 
 	eIdle.LoadData(EVENT_IDEL_FILE);
 	eBusy.LoadData(EVENT_BUSY_FILE);
@@ -106,9 +123,11 @@ void RobotEventHandler() {
 	}
 	lastPlaying = V2_ActionPlaying;
 
-	for (int device = 0; device <= ED_MAX_DEVICE; device++) {
+	// for (int device = 0; device <= ED_MAX_DEVICE; device++) {
+	for (int device = 0; device <= eData.DevCount(); device++) {		
 		if (eds[device] != NULL) {
-			if (eActive->IsRequired(device)) {
+			// if (eActive->IsRequired(device)) {
+			if (eActive->IsRequired(eds[device]->Device())) {
 				if (eds[device]->GetData()) showResult = true;
 			} 
 		}
@@ -125,9 +144,11 @@ void RobotEventHandler() {
 	*	Need to think about how to prevent keep triggering the same event as condition may not changed
 	*   May add time interval for eData once handled
 	*/
-	for (int device = 0; device <= ED_MAX_DEVICE; device++) {
+	// for (int device = 0; device <= ED_MAX_DEVICE; device++) {
+	for (int device = 0; device <= eData.DevCount(); device++) {
 		if (eds[device] != NULL) {
-			if (eActive->IsRequired(device)) {
+			// if (eActive->IsRequired(device)) {
+			if (eActive->IsRequired(eds[device]->Device())) {
 				eds[device]->PostHandler( (bool) (event.data.type), 
 							  			  eActive->LastEventRelated(device),
 										  eActive->IsPending(device) );
@@ -225,7 +246,7 @@ void RobotEventHandler() {
 	/*
 	if (showResult && (millis() > nextShowMs )) {
 		if (V2_ActionPlaying)
-		eData.DumpData(&Serial1);
+		eData.DumpData(&DEBUG);
 		nextShowMs = millis() + 1000;
 	}
 	*/

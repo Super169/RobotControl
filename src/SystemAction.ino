@@ -18,6 +18,9 @@ void ActionPlaySystemAction(byte systemActionId) {
 		case 14:
 			SystemAction_014();
 			break;	
+		case 200:
+			SystemAction_200();
+			break;	
 		case 250:
 			if (_dbg->require(10))	_dbg->log(10,0, "USB-TTL for Robot bus");
 			USB_TTL(&robotPort);
@@ -96,6 +99,23 @@ void SystemAction_014() {
 		delay(elapseMs);
 	}
 
+}
+
+void SystemAction_200() {
+	// Force to read and dump all data
+	DEBUG.printf("\n\nSystem Action 200 (check data soruce):\n\n");
+	eData.Clear();
+	for (int device = 0; device <= ED_MAX_DEVICE; device++) {
+		if (eds[device] != NULL) {
+			if (eds[device]->IsAvailable()) {
+				eds[device]->ForceGetData();
+			} else {
+				DEBUG.printf("eds[%d] (Device: %d, DevId: %d) is not available\n", 
+							device, eds[device]->Device(), eds[device]->DevId());
+			}
+		}
+	}
+	eData.DumpData(&DEBUG);
 }
 
 void GoMoveServo(byte servoId, int step, int execTime, int waitTime) {

@@ -52,11 +52,18 @@ class EventDataSource {
         EventDataSource() {}
         ~EventDataSource() {}
 
+        uint8_t Device() { return _Device; }
+        uint8_t DevId() { return _DevId; }
+
         bool SetEnabled(bool enabled);
         bool IsAvailable();
         bool IsEnabled();
         bool IsReady();
         virtual bool GetData() = 0;
+        bool ForceGetData() { 
+            _nextReportMs = 0;
+            return GetData();
+        }
         virtual void PostHandler(bool eventMatched, bool isRelated, bool pending);
 
     private:
