@@ -63,8 +63,7 @@ void CheckVoltage() ;
 byte GetPower(uint16_t v);
 
 
-EventDataSource* eds[ED_MAX_DEVICE + 1];
-// EventDataSource** eds;
+EventDataSource** eds;
 
 void EnableSsbTxCallBack(bool send);
 void USB_TTL(SoftwareSerial *ttl);

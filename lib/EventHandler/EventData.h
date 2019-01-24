@@ -14,7 +14,7 @@
 #define ED_COUNT_TOUCH      1
 #define ED_COUNT_PSXBUTTON  1
 #define ED_COUNT_BATTERY    1
-#define ED_COUNT_SONIC      1
+#define ED_COUNT_SONIC      2
 
 /*
 #define ED_OFFSET_MPU       0

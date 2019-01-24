@@ -4,6 +4,7 @@
 EdsTouch::EdsTouch(EventData *data, MyDebugger *dbg, byte devId) {
     _Device = (uint8_t) EventData::DEVICE::touch;
     Config(data, dbg, devId);
+    _isAvailable = true;
 }
 
 EdsTouch::~EdsTouch() {

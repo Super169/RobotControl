@@ -17,7 +17,7 @@ class EventDataSource {
         EventData *_data = NULL;
         MyDebugger *_dbg;
 
-        bool _isAvailable = true;
+        bool _isAvailable = false;
         bool _isEnabled = true;
         bool _enableDebug = true;
         /*

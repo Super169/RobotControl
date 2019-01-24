@@ -5,6 +5,7 @@
 EdsMpu6050::EdsMpu6050(EventData *data, MyDebugger *dbg, byte devId) {
     _Device = (uint8_t) EventData::DEVICE::mpu;
     Config(data, dbg, devId);
+    _isAvailable = false;
 }
 
 EdsMpu6050::~EdsMpu6050() {

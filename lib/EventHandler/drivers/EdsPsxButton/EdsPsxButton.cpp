@@ -3,6 +3,7 @@
 EdsPsxButton::EdsPsxButton(EventData *data, MyDebugger *dbg, byte devId) {
     _Device = (uint8_t) EventData::DEVICE::psx_button;
     Config(data, dbg, devId);
+    _isAvailable = false;
 }
 
 EdsPsxButton::~EdsPsxButton() {

@@ -105,7 +105,7 @@ void SystemAction_200() {
 	// Force to read and dump all data
 	DEBUG.printf("\n\nSystem Action 200 (check data soruce):\n\n");
 	eData.Clear();
-	for (int device = 0; device <= ED_MAX_DEVICE; device++) {
+	for (int device = 0; device < eData.DevCount(); device++) {
 		if (eds[device] != NULL) {
 			if (eds[device]->IsAvailable()) {
 				eds[device]->ForceGetData();

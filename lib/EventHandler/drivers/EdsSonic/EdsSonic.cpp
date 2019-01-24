@@ -3,6 +3,7 @@
 EdsSonic::EdsSonic(EventData *data, MyDebugger *dbg, byte devId) {
     _Device = (uint8_t) EventData::DEVICE::sonic;
     Config(data, dbg, devId);
+    _isAvailable = false;
 }
 
 EdsSonic::~EdsSonic() {

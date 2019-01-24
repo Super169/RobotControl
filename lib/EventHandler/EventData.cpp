@@ -116,8 +116,6 @@ void EventData::DumpData(Stream *output) {
     }
     output->printf("\n");
 
-
-
     device = (uint8_t) DEVICE::mpu;
     devCount = _idCount[device];
     output->printf("\nMPU (device: %d x %d): \n", device, devCount);
