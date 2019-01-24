@@ -76,7 +76,7 @@ class EventData {
         uint8_t DeviceDataSize(uint8_t device);
 
         uint8_t Offset(uint8_t device, uint8_t devId, uint8_t target);
-        uint8_t ControlOffset(uint8_t device, uint8_t devId);
+        uint8_t DevOffset(uint8_t device, uint8_t devId);
         uint8_t IdCount(uint8_t device);
         uint8_t MaxId(uint8_t device);
         uint8_t DevCount() { return _devCount; }
@@ -107,7 +107,7 @@ class EventData {
         // uint16_t _threadhold[ED_MAX_DEVICE + 1] = {0, 0, 0, 0, 0,0 };
 
         uint8_t _offset[ED_MAX_DEVICE + 1];
-        uint8_t _controlOffset[ED_MAX_DEVICE + 1];
+        uint8_t _devOffset[ED_MAX_DEVICE + 1];
 
 
         uint8_t _devCount;      // actual device, not the count of device type

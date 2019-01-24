@@ -77,7 +77,7 @@ class EventHandler {
         void LoadDummyData();
         bool SaveData(String filename);
         bool IsRequired(uint8_t device);
-        bool LastEventRelated(uint8_t device);
+        bool LastEventRelated(uint8_t device, uint8_t devId);
         bool IsPending(uint8_t device);
 
         EVENT CheckEvents();
@@ -96,7 +96,8 @@ class EventHandler {
         bool _reqDevice[ED_MAX_DEVICE + 1];
         void CheckEventsRequirement();  // mark flag in _reqDevice
 
-        bool _lastEventRelated[ED_MAX_DEVICE + 1];
+        // bool _lastEventRelated[ED_MAX_DEVICE + 1];
+        bool *_lastEventRelated; 
         bool MatchCondition(uint16_t idx, CONDITION cod);
 
         size_t FileSize(const char *fileName);

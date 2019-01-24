@@ -3,13 +3,13 @@
 
 EventData::EventData()
 {
-    // ControlOffset - location of starting point of device, flag has 1 byte only
+    // DevOffset - location of starting point of device, flag has 1 byte only
     // offset - location of starting point of data, dat can have multiple bytes
     _devCount = 0;
     _dataSize = 0;
     for (int i = 0; i <= ED_MAX_DEVICE; i++) {
         _offset[i] = _dataSize;
-        _controlOffset[i] = _devCount;
+        _devOffset[i] = _devCount;
         _dataSize += _size[i] * _idCount[i];
         _devCount += _idCount[i];
     }
@@ -57,9 +57,9 @@ uint8_t EventData::Offset(uint8_t device, uint8_t devId, uint8_t target) {
     return _offset[device] + devId * _size[device] + target;
 }
 
-uint8_t EventData::ControlOffset(uint8_t device, uint8_t devId) {
+uint8_t EventData::DevOffset(uint8_t device, uint8_t devId) {
     // no need to validate for private function
-    return _controlOffset[device] + devId;
+    return _devOffset[device] + devId;
 }
 
 uint8_t EventData::IdCount(uint8_t device) {
@@ -74,13 +74,13 @@ uint8_t EventData::MaxId(uint8_t device) {
 
 bool EventData::SetThreadhold(uint8_t device, uint8_t devId, uint16_t threadhold) {
     if (!IsValid(device, devId)) return false;
-    _threadhold[ControlOffset(device, devId)] = threadhold;
+    _threadhold[DevOffset(device, devId)] = threadhold;
     return true;
 }
 
 uint16_t EventData::Threadhold(uint8_t device, uint8_t devId) {
     if (!IsValid(device, devId)) return 0;
-    return _threadhold[ControlOffset(device, devId)];
+    return _threadhold[DevOffset(device, devId)];
 }
 
 uint8_t EventData::DeviceDataSize(uint8_t device) {
@@ -114,7 +114,7 @@ void EventData::DumpData(Stream *output) {
         output->printf("%d: %d, %d, [ %d , %d ], [ %d , %d ]\n", 
                        i, _size[i], _idCount[i], 
                        _offset[i], Offset(i,0,0),
-                       _controlOffset[i], ControlOffset(i, 0));
+                       _devOffset[i], DevOffset(i, 0));
     }
     output->printf("\n");
 

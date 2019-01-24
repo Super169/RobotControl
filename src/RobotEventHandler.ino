@@ -20,7 +20,7 @@ void InitEventHandler() {
 		} else {
 			_dbg->log(10,0,"MPU6050 disabled");
 		}
-		eds[eData.ControlOffset((byte) EventData::DEVICE::mpu,id)] = edsMpu6050[id];
+		eds[eData.DevOffset((byte) EventData::DEVICE::mpu,id)] = edsMpu6050[id];
 	}
 
 	for (int id = 0; id < ED_COUNT_TOUCH; id++) {
@@ -32,7 +32,7 @@ void InitEventHandler() {
 		} else {
 			_dbg->log(10,0,"Touch disabled");
 		}
-		eds[eData.ControlOffset((byte) EventData::DEVICE::touch,id)] = edsTouch[id];
+		eds[eData.DevOffset((byte) EventData::DEVICE::touch,id)] = edsTouch[id];
 	}
 	_dbg->log(10,0,"Sub-system board: GPIO: %d, BAUD: %ld, BUffer: %d", ssbConfig.tx_pin, ssbConfig.baud, ssbConfig.buffer_size);
 
@@ -45,7 +45,7 @@ void InitEventHandler() {
 		} else {
 			_dbg->log(10,0,"PSX disabled");
 		}
-		eds[eData.ControlOffset((byte) EventData::DEVICE::psx_button,id)] = edsPsxButton[id];
+		eds[eData.DevOffset((byte) EventData::DEVICE::psx_button,id)] = edsPsxButton[id];
 	}
 
 	for (int id = 0; id < ED_COUNT_SONIC; id++) {
@@ -57,7 +57,7 @@ void InitEventHandler() {
 		} else {
 			_dbg->log(10,0,"Sonic sensor disabled");
 		}
-		eds[eData.ControlOffset((byte) EventData::DEVICE::sonic,id)] = edsSonic[id];
+		eds[eData.DevOffset((byte) EventData::DEVICE::sonic,id)] = edsSonic[id];
 	}
 
 	// TODO: add normal check ms to config object
@@ -65,7 +65,7 @@ void InitEventHandler() {
 		edsBattery[id] = new EdsBattery(&eData, _dbg, id);
 		_dbg->log(10,0,"edsBattery.Setup(%d, %d, %d, %d)", config.batteryMinValue(), config.batteryMaxValue(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
 		edsBattery[id]->Setup(config.batteryMinValue(), config.batteryMaxValue(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
-		eds[eData.ControlOffset((byte) EventData::DEVICE::battery,id)] = edsBattery[id];
+		eds[eData.DevOffset((byte) EventData::DEVICE::battery,id)] = edsBattery[id];
 	}
 
 	eIdle.LoadData(EVENT_IDEL_FILE);
@@ -138,9 +138,10 @@ void RobotEventHandler() {
 	for (int devIdx = 0; devIdx < eData.DevCount(); devIdx++) {
 		if (eds[devIdx] != NULL) {
 			int device = eds[devIdx]->Device();
+			int devId = eds[devIdx]->DevId();
 			if (eActive->IsRequired(device)) {
 				eds[devIdx]->PostHandler( (bool) (event.data.type), 
-							  			  eActive->LastEventRelated(device),
+							  			  eActive->LastEventRelated(device, devId),
 										  eActive->IsPending(device) );
 				
 			}
@@ -221,8 +222,12 @@ void RobotEventHandler() {
 		}
 
 		// TODO: check relattion based on devId
-		if ((validAction) && eActive->LastEventRelated((uint8_t) EventData::DEVICE::psx_button))  {
-			if (config.psxShock()) edsPsxButton[0]->Shock();
+		if (config.psxShock()) {
+			for (int id = 0; id < ED_COUNT_PSXBUTTON; id++) {
+				if ((validAction) && eActive->LastEventRelated((uint8_t) EventData::DEVICE::psx_button, id))  {
+					edsPsxButton[id]->Shock();
+				}
+			}
 		}
 
 	} else {
