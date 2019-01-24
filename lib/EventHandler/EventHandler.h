@@ -98,7 +98,6 @@ class EventHandler {
 
         bool _lastEventRelated[ED_MAX_DEVICE + 1];
         bool MatchCondition(uint16_t idx, CONDITION cod);
-        
 
         size_t FileSize(const char *fileName);
         bool ReadFile(const char *fileName, uint8_t *buffer, size_t size);

@@ -85,12 +85,11 @@ EventHandler eBusy(&eData);
 EventHandler eTemp(&eData);
 
 SSBoard ssb;
-EdsPsxButton edsPsxButton(&eData, _dbg, 0);
-EdsBattery edsBattery(&eData, _dbg, 0);
-EdsTouch edsTouch(&eData, _dbg, 0);
-EdsMpu6050 edsMpu6050(&eData, _dbg, 0);
-EdsSonic edsSonic(&eData, _dbg, 0);
-EdsSonic edsSonic_1(&eData, _dbg, 1);
+EdsMpu6050* edsMpu6050[ED_COUNT_MPU];
+EdsTouch* edsTouch[ED_COUNT_TOUCH];
+EdsPsxButton* edsPsxButton[ED_COUNT_PSXBUTTON];
+EdsBattery* edsBattery[ED_COUNT_BATTERY];
+EdsSonic* edsSonic[ED_COUNT_SONIC];
 
 #define CMD_BUFFER_SIZE 160
 

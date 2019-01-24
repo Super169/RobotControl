@@ -8,73 +8,65 @@ void InitEventHandler() {
 	ssb.Begin(&ssbPort, &DEBUG);
 	ssb.SetEnableTxCalback(EnableSsbTxCallBack);
 
-	edsMpu6050.SetEnabled(config.mpuEnabled());
-	if (config.mpuEnabled()) {
-		_dbg->log(10,0,"edsMpu6050.Setup(0x%02X, %d, %d)", EDS_MPU6050_I2CADDR, (1000 / config.mpuPositionCheckFreq()), config.mpuCheckFreq());
-		edsMpu6050.Setup(EDS_MPU6050_I2CADDR, (1000 / config.mpuPositionCheckFreq()), config.mpuCheckFreq());
-	} else {
-		_dbg->log(10,0,"MPU6050 disabled");
-	}
-
-	edsTouch.SetEnabled(config.touchEnabled());
-	if (config.touchEnabled()) {
-		_dbg->log(10,0,"edsTouch.Setup(%d, %d, %d)", EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
-		edsTouch.Setup(EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
-	} else {
-		_dbg->log(10,0,"Touch disabled");
-	}
-
-	_dbg->log(10,0,"Sub-system board: GPIO: %d, BAUD: %ld, BUffer: %d", ssbConfig.tx_pin, ssbConfig.baud, ssbConfig.buffer_size);
-
-	edsPsxButton.SetEnabled(config.psxEnabled());
-	if (config.psxEnabled()) {
-		_dbg->log(10,0,"edsPsxButton.Setup(&ssb, %d, %d, %d)", config.psxCheckMs(), config.psxNoEventMs(), config.psxIgnoreRepeatMs());
-		edsPsxButton.Setup(&ssb, config.psxCheckMs(), config.psxNoEventMs(), config.psxIgnoreRepeatMs());
-	} else {
-		_dbg->log(10,0,"PSX disabled");
-	}
-	
-	edsSonic.SetEnabled(config.sonicEnabled());
-	if (config.sonicEnabled()) {
-		_dbg->log(10,0,"edsSonic.Setup(&ssb, %d, %d)", 1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
-		edsSonic.Setup(&ssb, 1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
-	} else {
-		_dbg->log(10,0,"Sonic sensor disabled");
-	}
-
-	edsSonic_1.SetEnabled(config.sonicEnabled());
-	if (config.sonicEnabled()) {
-		_dbg->log(10,0,"edsSonic_1.Setup(&ssb, %d, %d)", 1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
-		edsSonic_1.Setup(&ssb, 1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
-	} else {
-		_dbg->log(10,0,"Sonic sensor disabled");
-	}
-
-
-	// TODO: add normal check ms to config object
-	// _dbg->log(10,0,"edsBattery.Setup(%d, %d, %d, %d)", config.batteryMinValue(), config.batteryMaxValue(), 5000,config.voltageAlarmInterval() * 1000);
-	// edsBattery.Setup(config.batteryMinValue(), config.batteryMaxValue(), 5000, config.voltageAlarmInterval() * 1000);
-	_dbg->log(10,0,"edsBattery.Setup(%d, %d, %d, %d)", config.batteryMinValue(), config.batteryMaxValue(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
-	edsBattery.Setup(config.batteryMinValue(), config.batteryMaxValue(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
-
-	/*
-	Serial1.printf("**** Size of EventDataSource*: %d, devCount: %d\n", sizeof(EventDataSource*), eData.DevCount());
-	for (int i = 0; i <= 5; i++) {
-		Serial1.printf("Device: %d ; %d\n", i, eData.ControlOffset(i,0));
-	}
-	Serial1.printf("Sonic - 1 : %d\n", eData.ControlOffset((byte) EventData::DEVICE::sonic, 1));
-	*/
-
 	eds = (EventDataSource**) malloc(sizeof(EventDataSource*) * (eData.DevCount()));
 	for (int i = 0; i < eData.DevCount(); i++) eds[i] = NULL;
 
-	// Readlly need to following the control order?? order just add in sequence
-	eds[eData.ControlOffset((byte) EventData::DEVICE::mpu,0)] = &edsMpu6050;
-	eds[eData.ControlOffset((byte) EventData::DEVICE::touch,0)] = &edsTouch;
-	eds[eData.ControlOffset((byte) EventData::DEVICE::psx_button,0)] = &edsPsxButton;
-	eds[eData.ControlOffset((byte) EventData::DEVICE::battery,0)] = &edsBattery;
-	eds[eData.ControlOffset((byte) EventData::DEVICE::sonic,0)] = &edsSonic;
-	eds[eData.ControlOffset((byte) EventData::DEVICE::sonic,1)] = &edsSonic_1;
+	for (int id = 0; id < ED_COUNT_MPU; id++) {
+		edsMpu6050[id] = new EdsMpu6050(&eData, _dbg, id);
+		edsMpu6050[id]->SetEnabled(config.mpuEnabled());
+		if (config.mpuEnabled()) {
+			_dbg->log(10,0,"edsMpu6050.Setup(0x%02X, %d, %d)", EDS_MPU6050_I2CADDR, (1000 / config.mpuPositionCheckFreq()), config.mpuCheckFreq());
+			edsMpu6050[id]->Setup(EDS_MPU6050_I2CADDR, (1000 / config.mpuPositionCheckFreq()), config.mpuCheckFreq());
+		} else {
+			_dbg->log(10,0,"MPU6050 disabled");
+		}
+		eds[eData.ControlOffset((byte) EventData::DEVICE::mpu,id)] = edsMpu6050[id];
+	}
+
+	for (int id = 0; id < ED_COUNT_TOUCH; id++) {
+		edsTouch[id] = new EdsTouch(&eData, _dbg, 0);
+		edsTouch[id]->SetEnabled(config.touchEnabled());
+		if (config.touchEnabled()) {
+			_dbg->log(10,0,"edsTouch.Setup(%d, %d, %d)", EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
+			edsTouch[id]->Setup(EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
+		} else {
+			_dbg->log(10,0,"Touch disabled");
+		}
+		eds[eData.ControlOffset((byte) EventData::DEVICE::touch,id)] = edsTouch[id];
+	}
+	_dbg->log(10,0,"Sub-system board: GPIO: %d, BAUD: %ld, BUffer: %d", ssbConfig.tx_pin, ssbConfig.baud, ssbConfig.buffer_size);
+
+	for (int id = 0; id < ED_COUNT_PSXBUTTON; id++) {
+		edsPsxButton[id] = new EdsPsxButton(&eData, _dbg, id);
+		edsPsxButton[id]->SetEnabled(config.psxEnabled());
+		if (config.psxEnabled()) {
+			_dbg->log(10,0,"edsPsxButton.Setup(&ssb, %d, %d, %d)", config.psxCheckMs(), config.psxNoEventMs(), config.psxIgnoreRepeatMs());
+			edsPsxButton[id]->Setup(&ssb, config.psxCheckMs(), config.psxNoEventMs(), config.psxIgnoreRepeatMs());
+		} else {
+			_dbg->log(10,0,"PSX disabled");
+		}
+		eds[eData.ControlOffset((byte) EventData::DEVICE::psx_button,id)] = edsPsxButton[id];
+	}
+
+	for (int id = 0; id < ED_COUNT_SONIC; id++) {
+		edsSonic[id] = new EdsSonic(&eData, _dbg, id);
+		edsSonic[id]->SetEnabled(config.sonicEnabled());
+		if (config.sonicEnabled()) {
+			_dbg->log(10,0,"edsSonic[%d].Setup(&ssb, %d, %d)", id, 1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
+			edsSonic[id]->Setup(&ssb, 1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
+		} else {
+			_dbg->log(10,0,"Sonic sensor disabled");
+		}
+		eds[eData.ControlOffset((byte) EventData::DEVICE::sonic,id)] = edsSonic[id];
+	}
+
+	// TODO: add normal check ms to config object
+	for (int id = 0; id < ED_COUNT_SONIC; id++) {
+		edsBattery[id] = new EdsBattery(&eData, _dbg, id);
+		_dbg->log(10,0,"edsBattery.Setup(%d, %d, %d, %d)", config.batteryMinValue(), config.batteryMaxValue(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
+		edsBattery[id]->Setup(config.batteryMinValue(), config.batteryMaxValue(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
+		eds[eData.ControlOffset((byte) EventData::DEVICE::battery,id)] = edsBattery[id];
+	}
 
 	eIdle.LoadData(EVENT_IDEL_FILE);
 	eBusy.LoadData(EVENT_BUSY_FILE);
@@ -143,10 +135,8 @@ void RobotEventHandler() {
 	*	Need to think about how to prevent keep triggering the same event as condition may not changed
 	*   May add time interval for eData once handled
 	*/
-	// for (int device = 0; device <= ED_MAX_DEVICE; device++) {
 	for (int device = 0; device < eData.DevCount(); device++) {
 		if (eds[device] != NULL) {
-			// if (eActive->IsRequired(device)) {
 			if (eActive->IsRequired(eds[device]->Device())) {
 				eds[device]->PostHandler( (bool) (event.data.type), 
 							  			  eActive->LastEventRelated(device),
@@ -229,8 +219,9 @@ void RobotEventHandler() {
                 break;			
 		}
 
+		// TODO: check relattion based on devId
 		if ((validAction) && eActive->LastEventRelated((uint8_t) EventData::DEVICE::psx_button))  {
-			if (config.psxShock()) edsPsxButton.Shock();
+			if (config.psxShock()) edsPsxButton[0]->Shock();
 		}
 
 	} else {

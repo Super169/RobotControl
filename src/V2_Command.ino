@@ -514,7 +514,7 @@ void V2_CheckBattery(byte *cmd) {
 	result[2] = 5;
 	result[3] = cmd[3];
 	uint16_t v = analogRead(0);
-	byte iPower = edsBattery.GetPower(v);
+	byte iPower = edsBattery[0]->GetPower(v);
 	result[4] = iPower;
 	result[5] = v >> 8;
 	result[6] = v & 0xFF;
@@ -1416,7 +1416,7 @@ void V2_UpdateCombo(byte *cmd) {
 
 void V2_CheckMPU(byte *cmd) {
 	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_CheckMPU]");
-	V2_SendSingleByteResult(cmd, (edsMpu6050.IsAvailable() ? RESULT::SUCCESS : RESULT::ERR::NOT_FOUND));
+	V2_SendSingleByteResult(cmd, (edsMpu6050[0]->IsAvailable() ? RESULT::SUCCESS : RESULT::ERR::NOT_FOUND));
 }
 
 void V2_GetMPUData(byte *cmd) {
@@ -1424,8 +1424,8 @@ void V2_GetMPUData(byte *cmd) {
 	byte result[EMPU_RESULT_SIZE];
 	result[2] = EMPU_RESULT_SIZE - 4;
 	result[3] = cmd[3];
-	if (edsMpu6050.GetMpuData()) {
-		memcpy((byte *)(result + 4), edsMpu6050.MpuBuffer(), EMPU_DATA_SIZE);
+	if (edsMpu6050[0]->GetMpuData()) {
+		memcpy((byte *)(result + 4), edsMpu6050[0]->MpuBuffer(), EMPU_DATA_SIZE);
 	}
 	V2_SendResult(result);
 }
