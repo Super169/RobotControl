@@ -103,22 +103,16 @@ void SystemAction_014() {
 	}
 
 }
-
 void SystemAction_200() {
-	// Force to read and dump all data
-	DEBUG.printf("\n\nSystem Action 200 (check data soruce):\n\n");
-	eData.Clear();
-	for (int device = 0; device < eData.DevCount(); device++) {
-		if (eds[device] != NULL) {
-			if (eds[device]->IsAvailable()) {
-				eds[device]->ForceGetData();
-			} else {
-				DEBUG.printf("eds[%d] (Device: %d, DevId: %d) is not available\n", 
-							device, eds[device]->Device(), eds[device]->DevId());
-			}
-		}
-	}
-	eData.DumpData(&DEBUG);
+	DEBUG.printf("\n\nSystem Action 200 (System Information):\n\n");
+	DEBUG.printf("Chip ID: %d\n", system_get_chip_id());
+	DEBUG.printf("CPU Frequency: %d\n", system_get_cpu_freq());
+	DEBUG.printf("Boot Version: %d\n", system_get_boot_version());
+	DEBUG.printf("SDK Version: %s\n", system_get_sdk_version());
+	DEBUG.printf("Free Heap Size: %d\n", system_get_free_heap_size());
+	DEBUG.printf("VDD33: %d\n", system_get_vdd33());
+	
+	DEBUG.printf("\n\n");
 }
 
 void SystemAction_201() {
@@ -141,9 +135,29 @@ void SystemAction_201() {
 		fsize += f.size();
 		f.close();
 	}
-	DEBUG.printf("\n%12ld File(s)    %10ld bytes", fcnt, fsize);
+	DEBUG.printf("\n%12ld File(s)    %10ld bytes\n\n", fcnt, fsize);
 	SPIFFS.end();	
+
+
 }
+
+void SystemAction_210() {
+	// Force to read and dump all data
+	DEBUG.printf("\n\nSystem Action 210 (check data soruce):\n\n");
+	eData.Clear();
+	for (int device = 0; device < eData.DevCount(); device++) {
+		if (eds[device] != NULL) {
+			if (eds[device]->IsAvailable()) {
+				eds[device]->ForceGetData();
+			} else {
+				DEBUG.printf("eds[%d] (Device: %d, DevId: %d) is not available\n", 
+							device, eds[device]->Device(), eds[device]->DevId());
+			}
+		}
+	}
+	eData.DumpData(&DEBUG);
+}
+
 
 void GoMoveServo(byte servoId, int step, int execTime, int waitTime) {
 	if (_dbg->require(110)) _dbg->log(110,0, "GoMoveServo(step: %d, exec: %d, wait: %d)", step, execTime, waitTime);
