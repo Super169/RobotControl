@@ -14,7 +14,7 @@
 #define ED_COUNT_TOUCH      1
 #define ED_COUNT_PSXBUTTON  1
 #define ED_COUNT_BATTERY    1
-#define ED_COUNT_SONIC      2
+#define ED_COUNT_SONIC      1
 
 /*
 #define ED_OFFSET_MPU       0
@@ -110,14 +110,14 @@ class EventData {
         uint8_t _controlOffset[ED_MAX_DEVICE + 1];
 
 
-        uint8_t _devCount;  // actual device, not the count of device type
+        uint8_t _devCount;      // actual device, not the count of device type
         uint8_t _dataSize;
 
 
         int16_t _data[ED_DATA_SIZE];
 
         // Control flags: use bool array instead of bit control table at this moment
-        // bool    _ready[ED_DATA_SIZE];
+        // bool     _ready[ED_DATA_SIZE];
         // uint16_t _threadhold[ED_MAX_DEVICE + 1];  
         bool *_ready;
         uint16_t *_threadhold;

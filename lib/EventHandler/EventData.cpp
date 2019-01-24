@@ -13,7 +13,7 @@ EventData::EventData()
         _dataSize += _size[i] * _idCount[i];
         _devCount += _idCount[i];
     }
-    _ready = (bool *) malloc(_devCount);
+    _ready = (bool *) malloc(_dataSize);
     _threadhold = (uint16_t *) malloc(_devCount * sizeof(uint16_t));
     Clear();
 }
@@ -27,8 +27,10 @@ void EventData::Clear() {
         _data[i] = ED_INVALID_DATA;
     }
     // for safety, do not use memset as data type may changed to multiple bytes later
-    for (int i = 0; i < _devCount; i++) {
+    for (int i = 0; i < _dataSize; i++) {
         _ready[i] = false;
+    }
+    for (int i = 0; i < _devCount; i++) {
         _threadhold[i] = 0;
     }
 }

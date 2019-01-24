@@ -135,12 +135,14 @@ void RobotEventHandler() {
 	*	Need to think about how to prevent keep triggering the same event as condition may not changed
 	*   May add time interval for eData once handled
 	*/
-	for (int device = 0; device < eData.DevCount(); device++) {
-		if (eds[device] != NULL) {
-			if (eActive->IsRequired(eds[device]->Device())) {
-				eds[device]->PostHandler( (bool) (event.data.type), 
+	for (int devIdx = 0; devIdx < eData.DevCount(); devIdx++) {
+		if (eds[devIdx] != NULL) {
+			int device = eds[devIdx]->Device();
+			if (eActive->IsRequired(device)) {
+				eds[devIdx]->PostHandler( (bool) (event.data.type), 
 							  			  eActive->LastEventRelated(device),
 										  eActive->IsPending(device) );
+				
 			}
 		}
 	}
@@ -148,7 +150,6 @@ void RobotEventHandler() {
 	// Part 4: Action	
 	
 	if (event.data.type) {
-
 		if (_dbg->require(250)) {
 			DEBUG.printf("\n##########\n");
 			eData.DumpData(&DEBUG);

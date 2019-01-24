@@ -29,7 +29,12 @@ void EdsSonic::Setup(SSBoard *ssb, unsigned long continueCheckms, unsigned long 
     byte cmd[] = {0xA8, 0x8A, 0x04, 0x02, 0x00, 0x01, 0x07, 0xED};
     cmd[4] = _DevId;
 
-    _isAvailable = _ssb->SendCommand((byte *) cmd, true);
+    byte tryCnt = 0;
+    while (tryCnt++ < 5) {
+        _isAvailable = _ssb->SendCommand((byte *) cmd, true);
+        if (_isAvailable) break;
+    }
+
     if (_isAvailable) { 
         if (_dbg->require(10)) _dbg->log(10, 0, "Sonic Sensor detected");
     } else {
@@ -77,15 +82,3 @@ bool EdsSonic::GetData() {
     return true;
 }
 
-/*
-void EdsSonic::PostHandler(bool eventMatched, bool isRelated, bool pending) {
-    if (!IsReady()) return;
-    if (_thisDataReady && isRelated) {
-        _nextReportMs = millis() + EDS_DELAY_CHECK_MS;
-    } else if (pending) {
-        _nextReportMs = millis() + EDS_PENDING_CHECK_MS;
-    } else {
-        _nextReportMs = millis() + EDS_CONTINUE_CHECK_MS;
-    }
-}
-*/

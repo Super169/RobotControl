@@ -77,8 +77,6 @@ bool EventHandler::IsValid() {
     for (int i = 0; i < _evtCount; i++) {
         EVENT evt = _events[i];
         if (evt.data.type == 0) return false;
-        Serial1.printf("EventHandler::IsValid: %d, device: %d, devId: %d, target: %d\n", 
-                        i, evt.data.condition.data.device, evt.data.condition.data.devId, evt.data.condition.data.target);
         if (!_data->IsValid(evt.data.condition.data.device, evt.data.condition.data.devId, evt.data.condition.data.target)) return false;
     }
     return true;
@@ -165,7 +163,6 @@ bool EventHandler::IsPending(uint8_t device) {
     for (int i = 0; i < _evtCount; i++) {
         if (_events[i].data.condition.data.device == device) {
             if (_eventLastMs[i]) {
-                Serial1.printf("Pending Device: %d: %08ld \n", device, _eventLastMs[device]);
                 return true;
             }
         }
