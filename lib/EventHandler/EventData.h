@@ -9,12 +9,14 @@
 #define ED_SIZE_PSXBUTTON   1
 #define ED_SIZE_BATTERY     2
 #define ED_SIZE_SONIC       1
+#define ED_SIZE_MAZE        1
 
 #define ED_COUNT_MPU        1
 #define ED_COUNT_TOUCH      1
 #define ED_COUNT_PSXBUTTON  1
 #define ED_COUNT_BATTERY    1
 #define ED_COUNT_SONIC      4
+#define ED_COUNT_MAZE       1
 
 /*
 #define ED_OFFSET_MPU       0
@@ -26,7 +28,6 @@
 
 #define ED_MAX_DEVICE       6
 #define ED_DATA_SIZE        64      
-#define ED_CONTROL_SIZE     8
 
 
 class EventData {
@@ -34,7 +35,7 @@ class EventData {
     public:
 
         enum class DEVICE : uint8_t {
-            mpu = 1, touch = 2, psx_button = 3, battery = 4, sonic = 5
+            mpu = 1, touch = 2, psx_button = 3, battery = 4, sonic = 5, maze = 6
         };
 
         enum class MPU_TARGET : uint8_t {
@@ -100,9 +101,9 @@ class EventData {
 
     private:
         const uint8_t _size[ED_MAX_DEVICE + 1] = 
-            {0, ED_SIZE_MPU, ED_SIZE_TOUCH, ED_SIZE_PSXBUTTON, ED_SIZE_BATTERY, ED_SIZE_SONIC};
+            {0, ED_SIZE_MPU, ED_SIZE_TOUCH, ED_SIZE_PSXBUTTON, ED_SIZE_BATTERY, ED_SIZE_SONIC, ED_SIZE_MAZE};
         const uint8_t _idCount[ED_MAX_DEVICE + 1] = 
-            {0, ED_COUNT_MPU, ED_COUNT_TOUCH, ED_COUNT_PSXBUTTON, ED_COUNT_BATTERY, ED_COUNT_SONIC};
+            {0, ED_COUNT_MPU, ED_COUNT_TOUCH, ED_COUNT_PSXBUTTON, ED_COUNT_BATTERY, ED_COUNT_SONIC, ED_COUNT_MAZE};
         // const uint8_t _offset[ED_MAX_DEVICE + 1] = {0, ED_OFFSET_MPU, ED_OFFSET_TOUCH, ED_OFFSET_PSXBUTTON, ED_OFFSET_BATTERY, ED_OFFSET_SONIC };
         // uint16_t _threadhold[ED_MAX_DEVICE + 1] = {0, 0, 0, 0, 0,0 };
 
