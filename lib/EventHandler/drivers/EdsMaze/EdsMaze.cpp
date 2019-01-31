@@ -44,6 +44,7 @@ bool EdsMaze::Ping() {
     if (!Ping(EDS_MAZE_LEFT_ID)) return false;
     if (!Ping(EDS_MAZE_RIGHT_ID)) return false;
     _isAvailable = true;
+    return true;
 }
 
 bool EdsMaze::Ping(byte id) {
