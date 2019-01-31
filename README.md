@@ -57,38 +57,45 @@ This is a Visual Studio Code project with PlatformIO IDE.
 | GPIO-5 | Connect to SCL of I2C bus |
 | GPIO-12 | Connect to signal pin of Servo |
 | GPIO-13 | Connect to Touch sensor |
-| GPIO-14 | Connect to Tx of MP3 module |
+| GPIO-14 | Connect to Sub-System Bus (for PSX Control, Ultrasonic, ...) |
 | GPIO-15 | Connect to head led |
 | GPIO-16 | Connect to Rx of MP3 module |
 | Rx | Connect to Tx of HC-05 |
 | Tx | Connect to Rx of HC-05 |
 | I2C | for MPU6050 and OLED display |
 
-
 The PC setup program MyAlphaRobot can be found in https://github.com/Super169/MyAlphaRobotV2/releases/tag/MyAlphaRobot_2.0
-![MyAlphaRobot](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/MyAlphaRobot.png)
+![MyAlphaRobot](https://raw.githubusercontent.com/Super169/images/master/MyAlphaRobot/MyAlphaRobot_2_2_1_3_a.png)
+
+The new version support event setting by Blockly UI.
+
+![MyAlphaRobot](https://raw.githubusercontent.com/Super169/images/master/MyAlphaRobot/MyAlphaRobot_2_2_1_3_b.png)
+
+And also online update firmware up to 921600bps, it takes less than 10 seconds to flash the firmware.
+
+![MyAlphaRobot](https://raw.githubusercontent.com/Super169/images/master/MyAlphaRobot/MyAlphaRobot_2_2_1_3_c.png)
 
 You need a ESP8266 control board in order to use this firmware.
 
 You can make a simple PCB like this,
-![PCBLayout](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/PCBLayout.png)
+![PCBLayout](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/PCB_v2_7.png)
 
-I just make one as below, 
-![MyPCB](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/MyPCB_1.png)
+I just make one as below, I have removed the HC-05 as it can already controlled by smartphone via WiFi.
+![MyPCB](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/MyPCB_3.png)
 
 
-and installed in my robot.  You can also add the OLED and MPU6050 via the I2C bus, and connect a touch sensor to GPIO-13.
+and this is my testing environment for program development, including PSX Control and Ultrasonic Sensor.
 
-![Robot](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/MyPCB_2.png)
+![Robot](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/MyPCB_4.png)
 
 
 
 Or if you cannot make the PCB yourself, you can buy a ready to use control board from Taobo.
 https://item.taobao.com/item.htm?id=571368655206
 
-![PCBLayout](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/TB_01.png)
+![PCBLayout](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/TB-03.png)
 
-![PCBLayout](https://raw.githubusercontent.com/Super169/images/master/RobotControlV2.0/TB_02.png)
+
 
 
 
