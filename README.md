@@ -27,11 +27,9 @@ In this version, it will support both V1 & V2 commands.
 
 ## Dependency
 
-- [UBTech] Library 
 - [OLED12864] library
-- [espsoftwareserial] library
 
-Save all above libraries in lib folder.
+Already included in lib_deps.
 
 ## Installation
 
@@ -49,6 +47,7 @@ This is a Visual Studio Code project with PlatformIO IDE.
 - MPU6050 module (optional) 
 - TTP223 touch sensor (optional)
 - SSD1306 OLED module (optional)
+- Sub-system boards (optional)
 
 ## Pin Assignment for ESP8266 Board
 
