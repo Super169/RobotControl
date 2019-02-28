@@ -8,6 +8,8 @@
 #include "ESP8266WiFi.h"
 #include "WiFiClient.h"
 #include <WiFiUDP.h>
+#include "SimpleWiFiManager.h"
+SimpleWiFiManager SWFM;
 
 #include <Wire.h>
 #include "OLED12864.h"
@@ -25,8 +27,6 @@
 #include "message.h"
 #include "RESULT.h"
 
-#include "SimpleWiFiManager.h"
-SimpleWiFiManager SWFM;
 
 #include "RobotServo.h"
 #include "V2_Command.h"
