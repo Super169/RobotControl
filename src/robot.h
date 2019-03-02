@@ -43,11 +43,12 @@ SimpleWiFiManager SWFM;
 #define VERSION_MAJOR   2
 #define VERSION_MINOR   2
 #define VERSION_SUB     1
-#define VERSION_FIX     3
+#define VERSION_FIX     4
+
 
 // Level   0 - all
-// Level 200 - most important only
-#define DEFAULT_LOG_LEVEL 100
+// Level 100 - most important only
+#define DEFAULT_LOG_LEVEL 110
 
 // Start a TCP Server on port 6169
 uint16_t port = 6169;
@@ -90,6 +91,7 @@ EdsTouch* edsTouch[ED_COUNT_TOUCH];
 EdsPsxButton* edsPsxButton[ED_COUNT_PSXBUTTON];
 EdsBattery* edsBattery[ED_COUNT_BATTERY];
 EdsSonic* edsSonic[ED_COUNT_SONIC];
+EdsMaze* edsMaze[ED_COUNT_MAZE];
 
 #define CMD_BUFFER_SIZE 160
 

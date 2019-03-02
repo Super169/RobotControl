@@ -101,5 +101,6 @@ void ActionMp3Stop();
 void ActionMp3PlayMp3(byte fileSeq);
 void ActionMp3PlayFile(byte folderSeq, byte fileSeq);
 void ActionServo(uint8_t servoId, int8_t angle, uint8_t time);
+void ActionSonic(uint8_t status);
 
 #endif

@@ -19,6 +19,7 @@ class EventDataSource {
 
         bool _isAvailable = false;
         bool _isEnabled = true;
+        bool _isSuspended = false;
         bool _enableDebug = true;
         /*
             _lastDataReady vs _thisDataReady
@@ -59,6 +60,7 @@ class EventDataSource {
         bool IsAvailable();
         bool IsEnabled();
         bool IsReady();
+        void Suspend(bool suspend);
         virtual bool GetData() = 0;
         bool ForceGetData() { 
             _nextReportMs = 0;

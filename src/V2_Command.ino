@@ -1667,3 +1667,13 @@ void ActionServo(uint8_t servoId, int8_t moveAngle, uint8_t time) {
 	if (_dbg->require(100)) _dbg->log(100,0,"Servo Id %d move to %d in %d ms", servoId, newAngle, time);
 	rs.goAngle(servoId, newAngle, time);
 }
+
+void ActionSonic(uint8_t status) {
+	bool suspend = (status == 0);
+	for (int id = 0; id < ED_COUNT_SONIC; id++) {
+		edsSonic[id]->Suspend(suspend);
+	}
+	for (int id = 0; id < ED_COUNT_MAZE; id++) {
+		edsMaze[id]->Suspend(suspend);
+	}
+}

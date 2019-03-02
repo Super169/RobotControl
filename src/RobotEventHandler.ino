@@ -48,6 +48,15 @@ void InitEventHandler() {
 		eds[eData.DevOffset((byte) EventData::DEVICE::psx_button,id)] = edsPsxButton[id];
 	}
 
+	// TODO: add normal check ms to config object
+	for (int id = 0; id < ED_COUNT_BATTERY; id++) {
+		edsBattery[id] = new EdsBattery(&eData, _dbg, id);
+		_dbg->log(10,0,"edsBattery.Setup(%d, %d, %d, %d)", config.batteryMinValue(), config.batteryMaxValue(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
+		edsBattery[id]->Setup(config.batteryMinValue(), config.batteryMaxValue(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
+		eds[eData.DevOffset((byte) EventData::DEVICE::battery,id)] = edsBattery[id];
+	}
+
+	
 	for (int id = 0; id < ED_COUNT_SONIC; id++) {
 		edsSonic[id] = new EdsSonic(&eData, _dbg, id);
 		edsSonic[id]->SetEnabled(config.sonicEnabled());
@@ -57,17 +66,25 @@ void InitEventHandler() {
 		} else {
 			_dbg->log(10,0,"Sonic sensor disabled");
 		}
+		// By default, suspend sonic related devices
+		edsSonic[id]->Suspend(true);
 		eds[eData.DevOffset((byte) EventData::DEVICE::sonic,id)] = edsSonic[id];
 	}
 
-
-	// TODO: add normal check ms to config object
-	for (int id = 0; id < ED_COUNT_BATTERY; id++) {
-		edsBattery[id] = new EdsBattery(&eData, _dbg, id);
-		_dbg->log(10,0,"edsBattery.Setup(%d, %d, %d, %d)", config.batteryMinValue(), config.batteryMaxValue(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
-		edsBattery[id]->Setup(config.batteryMinValue(), config.batteryMaxValue(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
-		eds[eData.DevOffset((byte) EventData::DEVICE::battery,id)] = edsBattery[id];
+	for (int id = 0; id < ED_COUNT_MAZE; id++) {
+		edsMaze[id] = new EdsMaze(&eData, _dbg, id);
+		edsMaze[id]->SetEnabled(config.sonicEnabled());
+		if (config.sonicEnabled()) {
+			_dbg->log(10,0,"edsMaze[%d].Setup(&ssb, %d, %d)", id, 1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
+			edsMaze[id]->Setup(&ssb, 1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
+		} else {
+			_dbg->log(10,0,"Maze feature disabled");
+		}
+		// By default, suspend sonic related devices
+		edsMaze[id]->Suspend(true);
+		eds[eData.DevOffset((byte) EventData::DEVICE::maze,id)] = edsMaze[id];
 	}
+
 
 	eIdle.LoadData(EVENT_IDEL_FILE);
 	eBusy.LoadData(EVENT_BUSY_FILE);
@@ -219,6 +236,10 @@ void RobotEventHandler() {
 				ActionServo(action.data.parm_1, (int8_t) action.data.parm_2, action.data.parm_3);
                 break;
 
+			case (uint8_t) EventHandler::ACTION_TYPE::sonic:
+                if (_dbg->require(110)) _dbg->log(110,0,"Turn sonic %s", (action.data.parm_1 ==  1 ? "On" : "Off"));
+				ActionSonic(action.data.parm_1);
+				break;
 
             default:
                 if (_dbg->require(110)) _dbg->log(110,0,"Unknown action %d \n", action.data.type);

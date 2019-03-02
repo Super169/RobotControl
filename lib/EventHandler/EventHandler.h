@@ -19,7 +19,7 @@ class EventHandler {
         };
 
         enum class ACTION_TYPE : uint8_t {
-            na = 0, playAction = 1, stopAction = 2, headLed = 3, mp3PlayMp3 = 4, mp3PlayFile = 5, mp3Stop = 6, gpio = 7, system_action = 8, servo = 9
+            na = 0, playAction = 1, stopAction = 2, headLed = 3, mp3PlayMp3 = 4, mp3PlayFile = 5, mp3Stop = 6, gpio = 7, system_action = 8, servo = 9, sonic = 10
         };
 
         enum class EVENT_TYPE : uint8_t {

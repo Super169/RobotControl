@@ -15,7 +15,11 @@ bool EventDataSource::IsEnabled() {
 }
 
 bool EventDataSource::IsReady() { 
-    return (_isAvailable && _isEnabled && (millis() > _nextReportMs)); 
+    return (_isAvailable && _isEnabled && !_isSuspended && (millis() > _nextReportMs)); 
+}
+
+void EventDataSource::Suspend(bool suspend) { 
+    _isSuspended = suspend; 
 }
 
 void EventDataSource::Config(EventData *data, MyDebugger *dbg, byte devId) {
