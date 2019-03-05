@@ -2,7 +2,7 @@
 #define _MY_DATA_H_
 
 #include <ESP8266WiFi.h>
-#include "MyUtil.h"
+#include "myUtil.h"
 
 #define MD_UNKNOWN  (0)
 #define MD_BOOL     (1 << 0)
