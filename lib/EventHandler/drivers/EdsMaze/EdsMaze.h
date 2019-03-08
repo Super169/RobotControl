@@ -6,6 +6,7 @@
 #include "EventHandler.h"
 #include "EventDataSource.h"
 #include "SSBoard.h"
+#include "RobotServo.h"
 
 #define EDS_MAZE_FRONT_ID   0
 #define EDS_MAZE_LEFT_ID    1
@@ -15,6 +16,8 @@
 #define EDS_MAZE_GO_LEFT    1
 #define EDS_MAZE_GO_RIGHT   2
 #define EDS_MAZE_TURN_LEFT  3
+
+
 
 /*
 *   Event Data Source for PSX Button
@@ -36,17 +39,32 @@ class EdsMaze : public EventDataSource {
         EdsMaze(EventData *data, MyDebugger *dbg, byte devId = 0);
         ~EdsMaze();
 
-        void Setup(SSBoard *ssb, unsigned long continueCheckms, unsigned long delayCheckMs);
+        void Setup(SSBoard *ssb, RobotServo *rs, uint8_t wallDistance, 
+                   uint8_t servoId, bool servoReversed, uint16_t servoMoveMs, uint16_t servoWaitMs,
+                   unsigned long continueCheckms, unsigned long delayCheckMs);
         bool GetData() override;
         // void PostHandler(bool eventMatched, bool isRelated, bool pending) override;
 
     private:
-        uint16_t _openDistance = 100;
+        uint8_t _servoId = 0;
+        uint8_t _wallDistance = 100;
         SSBoard *_ssb;
+        RobotServo *_rs;
 
         bool Ping();
         bool Ping(byte id);
         bool ReadSensor(byte id, uint16 *data);
+
+        bool GetOneSensorData(uint16 *disFront, uint16 *disLeft, uint16 *disRight);
+        bool GetThreeSensorData(uint16 *disFront, uint16 *disLeft, uint16 *disRight);
+
+        unsigned long _lastMsgMs = 0;
+
+        bool _servoReversed = false;
+        unsigned long _servoMoveMs = 500;
+        unsigned long _servoWaitMs = 2000;
+
+
         // uint8_t _normalCheckMs = 0;
         // uint8_t _noEventMs = 0;
         // uint16_t _ignoreRepeatMs = 0;

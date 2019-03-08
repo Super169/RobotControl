@@ -75,8 +75,12 @@ void InitEventHandler() {
 		edsMaze[id] = new EdsMaze(&eData, _dbg, id);
 		edsMaze[id]->SetEnabled(config.sonicEnabled());
 		if (config.sonicEnabled()) {
-			_dbg->log(10,0,"edsMaze[%d].Setup(&ssb, %d, %d)", id, 1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
-			edsMaze[id]->Setup(&ssb, 1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
+			_dbg->log(10,0,"edsMaze[%d].Setup(&ssb, &rs, %d, %d, %d, %d, %d, %d, %d)", id,  config.mazeWallDistance(), 
+								config.mazeServo(), config.mazeServoDirection() , config.mazeServoMoveMs(), config.mazeServoWaitMs(),
+								1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
+			edsMaze[id]->Setup(&ssb, &rs, config.mazeWallDistance(), 
+								config.mazeServo(), config.mazeServoDirection() , config.mazeServoMoveMs(), config.mazeServoWaitMs(),
+								1000 / config.sonicCheckFreq(), config.sonicDelaySec() * 1000);
 		} else {
 			_dbg->log(10,0,"Maze feature disabled");
 		}

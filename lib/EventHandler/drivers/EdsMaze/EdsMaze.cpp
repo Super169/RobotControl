@@ -21,10 +21,22 @@ void EdsMaze::Initialize(EventData *data) {
 *          Return:  A8 8A 05 02 00 01 00 08 ED
 */
 
-void EdsMaze::Setup(SSBoard *ssb, unsigned long continueCheckms, unsigned long delayCheckMs ) {
+void EdsMaze::Setup(SSBoard *ssb, RobotServo *rs, uint8_t wallDistance, 
+                    uint8_t servoId, bool servoReversed, uint16_t servoMoveMs, uint16_t servoWaitMs,
+                    unsigned long continueCheckms, unsigned long delayCheckMs) {
      if (_dbg->require(110)) _dbg->log(110, 0, "EdsMaze::Setup(*ssb)");
     _ssb = ssb;
+    _rs = rs;
+    _servoId = servoId;
+    _wallDistance = wallDistance;
+
+    _servoReversed = servoReversed;
+    _servoMoveMs = servoMoveMs;
+    _servoWaitMs = servoWaitMs;
+
     // Check if device available
+
+
 
     Ping();
     if (_isAvailable) {
@@ -41,8 +53,13 @@ void EdsMaze::Setup(SSBoard *ssb, unsigned long continueCheckms, unsigned long d
 bool EdsMaze::Ping() {
     _isAvailable = false;
     if (!Ping(EDS_MAZE_FRONT_ID)) return false;
-    if (!Ping(EDS_MAZE_LEFT_ID)) return false;
-    if (!Ping(EDS_MAZE_RIGHT_ID)) return false;
+    // use 3 sensor if no servo defined
+    if (_servoId) {
+        if (!_rs->exists(_servoId)) return false;
+    } else {
+        if (!Ping(EDS_MAZE_LEFT_ID)) return false;
+        if (!Ping(EDS_MAZE_RIGHT_ID)) return false;
+    }
     _isAvailable = true;
     return true;
 }
@@ -73,17 +90,19 @@ bool EdsMaze::GetData() {
 
     uint16 disFront, disLeft, disRight;
 
-    if (!ReadSensor(EDS_MAZE_FRONT_ID, &disFront)) return false;
-    if (!ReadSensor(EDS_MAZE_LEFT_ID, &disLeft)) return false;
-    if (!ReadSensor(EDS_MAZE_RIGHT_ID, &disRight)) return false;
+    if (_servoId) {
+        if (!GetOneSensorData(&disFront, &disLeft, &disRight)) return false;
+    } else {
+        if (!GetThreeSensorData(&disFront, &disLeft, &disRight)) return false;
+    }
 
     uint16_t action;
 
-    if (disLeft >= _openDistance) {
+    if (disLeft >= _wallDistance) {
         action = EDS_MAZE_GO_LEFT;
-    } else if (disFront >= _openDistance) {
+    } else if (disFront >= _wallDistance) {
         action = EDS_MAZE_GO_FRONT;
-    } else if (disRight >= _openDistance) {
+    } else if (disRight >= _wallDistance) {
         action = EDS_MAZE_GO_RIGHT;
     } else {
         action = EDS_MAZE_TURN_LEFT;
@@ -98,6 +117,54 @@ bool EdsMaze::GetData() {
     return true;
 }
 
+
+bool EdsMaze::GetThreeSensorData(uint16 *disFront, uint16 *disLeft, uint16 *disRight) {
+    bool showMsg = false;
+    if (millis() - _lastMsgMs > 1000) {
+        _dbg->log(10,0,"EdsMaze::GetThreeSensorData()");
+        showMsg = true;
+        _lastMsgMs = millis();
+    }
+    if (!ReadSensor(EDS_MAZE_FRONT_ID, disFront)) return false;
+    if (!ReadSensor(EDS_MAZE_LEFT_ID, disLeft)) return false;
+    if (!ReadSensor(EDS_MAZE_RIGHT_ID, disRight)) return false;    
+    if (showMsg) {
+        _dbg->log(10, 0, "=> %d, %d, %d", *disFront, *disLeft, *disRight);
+    }
+    return true;
+}
+
+bool EdsMaze::GetOneSensorData(uint16 *disFront, uint16 *disLeft, uint16 *disRight) {
+    bool showMsg = false;
+    if (millis() - _lastMsgMs > 1000) {
+        _dbg->log(10,0,"EdsMaze::GetOneSensorData()");
+        showMsg = true;
+        _lastMsgMs = millis();
+    }
+    if (!_rs->exists(_servoId)) return false;
+    //   0 - left
+    //  90 - center
+    // 180 - right
+    // checking left, right, center
+    _rs->goAngle(_servoId, 0, _servoMoveMs); // try if it can go within 500ms
+    delay(_servoWaitMs); // 1s is good enough; maybe add parameter to control later
+    if (!ReadSensor(EDS_MAZE_FRONT_ID, (_servoReversed ? disRight : disLeft))) return false;
+
+    _rs->goAngle(_servoId, 180, _servoMoveMs); // try if it can go within 500ms
+    delay(_servoWaitMs); // 1s is good enough; maybe add parameter to control later
+    if (!ReadSensor(EDS_MAZE_FRONT_ID,  (_servoReversed ? disLeft : disRight))) return false;
+
+    _rs->goAngle(_servoId, 90, _servoMoveMs); // try if it can go within 500ms
+    delay(_servoWaitMs); // 1s is good enough; maybe add parameter to control later
+    if (!ReadSensor(EDS_MAZE_FRONT_ID, disFront)) return false;
+
+    if (showMsg) {
+        _dbg->log(10, 0, "=> %d, %d, %d", *disFront, *disLeft, *disRight);
+    }
+
+    return true;
+}
+
 bool EdsMaze::ReadSensor(byte id, uint16 *data) {
     byte cmd[] = { 0xA8, 0x8A, 0x06, 0x02, 0x00, 0x02, 0x28, 0x02, 0x34, 0xED };
     cmd[4] = id;
@@ -105,6 +172,7 @@ bool EdsMaze::ReadSensor(byte id, uint16 *data) {
     unsigned long startMs = millis();
     if (!_ssb->SendCommand((byte *) cmd, true)) {
         _thisDataError = true;
+        _dbg->log(10, 0, "Fail getting sonic sensor data");
         return false;
     }
 

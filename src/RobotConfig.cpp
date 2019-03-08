@@ -46,10 +46,11 @@ void RobotConfig::initConfig() {
     setBattery(DEFAULT_BATTERY_REF_VOLTAGE, DEFAULT_BATTERY_MIN_VALUE, DEFAULT_BATTERY_MAX_VALUE, DEFAULT_BATTERY_NORMAL_SEC, DEFAULT_BATTERY_ALARM_SEC);
     setTouch(DEFAULT_TOUCH_ENABLED, DEFAULT_TOUCH_DETECT_PERIOD, DEFAULT_TOUCH_RELEASE_PERIOD);
     setMp3(DEFAULT_MP3_ENABLED, DEFAULT_MP3_VOLUME, DEFAULT_MP3_STARTUP);
+    setStartupAction(DEFAULT_STARTUP_ACTION);
     setMpu(DEFAULT_MPU_ENABLED, DEFAULT_MPU_CHECK_FREQ, DEFAULT_MPU_POSITION_CHECK_FREQ);
     setPsx(DEFAULT_PSX_ENABLED, DEFAULT_PSX_CHECK_MS, DEFAULT_PSX_NO_EVENT_MS, DEFAULT_PSX_IGNORE_REPEAT_MS, DEFAULT_PSX_SHOCK);
     setSonic(DEFAULT_SONIC_ENABLED, DEFAULT_SONIC_CHECK_FREQ, DEFAULT_SONIC_DELAY_SEC);
-
+    setMaze(DEFAULT_MAZE_SERVO, DEFAULT_MAZE_WALL_DISTANCE, DEFAULT_MAZE_SERVO_DIRECTION, DEFAULT_MAZE_SERVO_MOVE_MS, DEFAULT_MAZE_SERVO_WAIT_MS);
 }
 
 bool RobotConfig::readConfig() {
@@ -274,6 +275,10 @@ void RobotConfig::setMp3Startup(uint8_t mp3) {
     _data[RC_MP3_STARTUP] = mp3;
 }
 
+void RobotConfig::setStartupAction(uint8_t action) {
+    _data[RC_STARTUP_ACTION] = action;
+}
+
 void RobotConfig::setMpuEnabled(bool enabled) {
     _data[RC_MPU_ENABLED] = enabled;
 }
@@ -318,3 +323,24 @@ void RobotConfig::setSonicCheckFreq(uint8_t checkFreq) {
 void RobotConfig::setSonicDelaySec(uint8_t delaySec) {
     _data[RC_SONIC_DELAY_SEC] = delaySec;
 }
+
+void RobotConfig::setMazeServo(uint8_t servoId) {
+    _data[RC_MAZE_SERVO] = servoId;
+}
+
+void RobotConfig::setMazeWallDistance(uint8_t distance) {
+    _data[RC_MAZE_WALL_DISTANCE] = distance;
+}
+
+void RobotConfig::setMazeServoDirection(uint8_t direction) {
+    _data[RC_MAZE_SERVO_DIRECTION] = direction;
+}
+
+void RobotConfig::setMazeServoMoveMs(uint16_t moveMs) {
+    _data[RC_MAZE_SERVO_MOVE_MS] = moveMs;
+}
+
+void RobotConfig::setMazeServoWaiteMs(uint16_t waitMs) {
+    _data[RC_MAZE_SERVO_WAIT_MS] = waitMs;
+}
+

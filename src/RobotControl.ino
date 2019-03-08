@@ -195,11 +195,6 @@ void setup() {
 		delay(10);
 		mp3_Vol = mp3.getVol();
 		
-		if (config.mp3Startup()) {
-			mp3.playMp3File(config.mp3Startup());
-			delay(10);
-		}
-
 		// software serial is not stable in 9600bps, for safety, disable mp3 connection when not use
 		mp3.end(); 
 
@@ -225,6 +220,19 @@ void setup() {
   
   	// localip = WiFi.localIP().toString();
   	// Serial.println(localip);
+
+	if (config.mp3Enabled() && config.mp3Startup()) {
+		_dbg->log(10, 0, "Play startup MP3: %d", config.mp3Startup());
+		mp3.begin();
+		mp3.playMp3File(config.mp3Startup());
+		delay(10);
+		mp3.end();
+	}
+
+	if (config.startupAction()) {
+		_dbg->log(10, 0, "Play startup action %d", config.startupAction());
+		ActionPlayAction(config.startupAction());
+	}
 
 
 }
