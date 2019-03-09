@@ -1,7 +1,7 @@
 #include "EdsMaze.h"
 
 EdsMaze::EdsMaze(EventData *data, MyDebugger *dbg, byte devId) {
-    _Device = (uint8_t) EventData::DEVICE::sonic;
+    _Device = (uint8_t) EventData::DEVICE::maze;
     Config(data, dbg, devId);
     _isAvailable = false;
 }
@@ -105,7 +105,7 @@ bool EdsMaze::GetData() {
     } else if (disRight >= _wallDistance) {
         action = EDS_MAZE_GO_RIGHT;
     } else {
-        action = EDS_MAZE_TURN_LEFT;
+        action = EDS_MAZE_TURN_BACK;
     }
 
     _data->SetData(_Device, _DevId, 0, action);
@@ -129,7 +129,7 @@ bool EdsMaze::GetThreeSensorData(uint16 *disFront, uint16 *disLeft, uint16 *disR
     if (!ReadSensor(EDS_MAZE_LEFT_ID, disLeft)) return false;
     if (!ReadSensor(EDS_MAZE_RIGHT_ID, disRight)) return false;    
     if (showMsg) {
-        _dbg->log(10, 0, "=> %d, %d, %d", *disFront, *disLeft, *disRight);
+        _dbg->log(10, 0, "=> %d, %d, %d", *disLeft, *disFront, *disRight);
     }
     return true;
 }
@@ -146,20 +146,20 @@ bool EdsMaze::GetOneSensorData(uint16 *disFront, uint16 *disLeft, uint16 *disRig
     //  90 - center
     // 180 - right
     // checking left, right, center
-    _rs->goAngle(_servoId, 0, _servoMoveMs); // try if it can go within 500ms
+    _rs->goAngle(_servoId, (_servoReversed ? 180 : 0) , _servoMoveMs);
     delay(_servoWaitMs); // 1s is good enough; maybe add parameter to control later
-    if (!ReadSensor(EDS_MAZE_FRONT_ID, (_servoReversed ? disRight : disLeft))) return false;
+    if (!ReadSensor(EDS_MAZE_FRONT_ID, disLeft)) return false;
 
-    _rs->goAngle(_servoId, 180, _servoMoveMs); // try if it can go within 500ms
+    _rs->goAngle(_servoId, (_servoReversed ? 0 : 180) , _servoMoveMs);
     delay(_servoWaitMs); // 1s is good enough; maybe add parameter to control later
-    if (!ReadSensor(EDS_MAZE_FRONT_ID,  (_servoReversed ? disLeft : disRight))) return false;
+    if (!ReadSensor(EDS_MAZE_FRONT_ID, disRight)) return false;
 
-    _rs->goAngle(_servoId, 90, _servoMoveMs); // try if it can go within 500ms
+    _rs->goAngle(_servoId, 90, _servoMoveMs); 
     delay(_servoWaitMs); // 1s is good enough; maybe add parameter to control later
     if (!ReadSensor(EDS_MAZE_FRONT_ID, disFront)) return false;
 
     if (showMsg) {
-        _dbg->log(10, 0, "=> %d, %d, %d", *disFront, *disLeft, *disRight);
+        _dbg->log(10, 0, "GetOneSensorData (%d) => %d, %d, %d", _servoReversed,  *disLeft,  *disFront, *disRight);
     }
 
     return true;

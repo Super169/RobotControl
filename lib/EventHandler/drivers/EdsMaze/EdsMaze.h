@@ -15,7 +15,7 @@
 #define EDS_MAZE_GO_FRONT   0
 #define EDS_MAZE_GO_LEFT    1
 #define EDS_MAZE_GO_RIGHT   2
-#define EDS_MAZE_TURN_LEFT  3
+#define EDS_MAZE_TURN_BACK  3
 
 
 
