@@ -39,11 +39,12 @@ Major change on 2.x:
 
 
 PIN Assignment:
-GPIO-12 : One-wire software serial - servo contorl
 GPIO-2  : Serial1 - debug console
-
-GPIO-14, GPIO-13 : software serial Rx,Tx connected to MP3 module
+GPIO-12 : One-wire software serial - servo contorl
+GPIO-14 : One-wire software serial - sub-system board
+GPIO-13 : Touch sensor
 GPIO-15 : Head LED
+GPIO-16 : software serial Tx connected to MP3 module's Rx
 
 */
 
