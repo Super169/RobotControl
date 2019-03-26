@@ -337,10 +337,10 @@ void RobotConfig::setMazeServoDirection(uint8_t direction) {
 }
 
 void RobotConfig::setMazeServoMoveMs(uint16_t moveMs) {
-    _data[RC_MAZE_SERVO_MOVE_MS] = moveMs;
+    setUint16_t(RC_MAZE_SERVO_MOVE_MS, moveMs);
 }
 
 void RobotConfig::setMazeServoWaiteMs(uint16_t waitMs) {
-    _data[RC_MAZE_SERVO_WAIT_MS] = waitMs;
+    setUint16_t(RC_MAZE_SERVO_WAIT_MS, waitMs);
 }
 
