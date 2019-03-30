@@ -32,6 +32,7 @@ void RobotConfig::initConfig() {
     _data[0] = 0xA9;
     _data[1] = 0x9A;
     _data[2] = RC_CONFIG_DATA_SIZE;
+    _data[RC_VERSION] = CURRENT_VERSION;
     _data[RC_RECORD_SIZE-1] = 0xED;
     
     setDebug(DEFAULT_ENABLE_DEBUG);

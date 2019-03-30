@@ -43,7 +43,7 @@
 #define DEFAULT_AUTO_FACE_DOWN  0
 */
 
-#define DEFAULT_TOUCH_ENABLED           false
+#define DEFAULT_TOUCH_ENABLED           true
 #define DEFAULT_TOUCH_NO_ACTION         0
 #define DEFAULT_TOUCH_DETECT_PERIOD     1500
 #define DEFAULT_TOUCH_RELEASE_PERIOD    1000
