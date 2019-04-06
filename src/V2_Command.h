@@ -57,6 +57,7 @@ bool V2_UseGlobalTime = true;
 
 #define V2_CMD_PLAYACTION		0x41
 #define V2_CMD_PLAYCOMBO		0x42
+#define V2_CMD_SET_ACTIONSPEED  0x43
 #define V2_CMD_STOPPLAY			0x4F
 
 #define V2_CMD_GET_ADLIST		0x60

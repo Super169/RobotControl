@@ -171,6 +171,11 @@ bool V2_Command() {
 			return true;
 			break;
 
+		case V2_CMD_SET_ACTIONSPEED:
+			V2_SetActionSpeed(cmd);
+			return true;
+			break;
+
 	}
 
 
@@ -1123,6 +1128,20 @@ void V2_GoAction(byte actionId, byte playCount, bool v2, byte *cmd) {
 void V2_PlayCombo(byte *cmd) {
 	
 }
+
+void V2_SetActionSpeed(byte *cmd) {
+	if (debug) DEBUG.printf("[V2_SetActionSpeed]\n");
+
+	if (cmd[4] == 0) {
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_INVALID);
+		return;
+	}
+
+	if (debug) DEBUG.printf("V2_SetActionSpeed - Set speed to %d\n", cmd[4]);
+	actionTimeFactor = 100.0f / cmd[4];
+	V2_SendSingleByteResult(cmd, 0);
+}
+
 
 #pragma endregion
 

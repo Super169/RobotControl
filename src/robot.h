@@ -43,7 +43,7 @@ SimpleWiFiManager SWFM;
 #define VERSION_MAJOR   2
 #define VERSION_MINOR   2
 #define VERSION_SUB     1
-#define VERSION_FIX     8
+#define VERSION_FIX     9
 
 
 // Level   0 - all
@@ -118,6 +118,8 @@ bool enable_HAILZD = true;
 
 ComboData comboTable[CD_MAX_COMBO];
 ActionData actionData;
+
+float actionTimeFactor = 1.0f;
 
 #define MAX_ACTION      26
 #define MAX_POSES       30 
