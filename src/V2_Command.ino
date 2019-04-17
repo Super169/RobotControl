@@ -154,6 +154,11 @@ bool V2_Command() {
 			return true;
 			break;
 
+		case V2_CMD_MP3_COMMAND:
+			V2_Mp3Command(cmd);
+			return true;
+			break;
+
 		case V2_CMD_STOPPLAY:
 			V2_ResetAction();
 			if (config.mp3Enabled()) {
@@ -295,8 +300,6 @@ bool V2_Command() {
 		case V2_CMD_MP3_PLAYADVERT:
 			V2_Mp3PlayAdvert(cmd);
 			break;
-
-
 
 		case V2_CMD_PLAYACTION:
 			V2_PlayAction(cmd);
@@ -972,6 +975,13 @@ void V2_SetEventHandlerMode(byte *cmd) {
 
 
 #pragma region MP3 Player
+
+void V2_Mp3Command(byte *cmd) {
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_Mp3Command - %02X %02X %02X]", cmd[4], cmd[5], cmd[6]);
+	mp3.begin();
+	mp3.sendCommand(cmd[4],cmd[5],cmd[6]);
+	mp3.end();
+}
 
 void V2_Mp3Stop(byte *cmd) {
 	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_Mp3Stop]");

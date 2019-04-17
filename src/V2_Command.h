@@ -54,6 +54,7 @@ bool V2_UseGlobalTime = true;
 #define V2_CMD_MP3_PLAYMP3      0x34
 #define V2_CMD_MP3_PLAYADVERT   0x35
 #define V2_CMD_MP3_SETVOLUME    0x36
+#define V2_CMD_MP3_COMMAND      0x37
 
 #define V2_CMD_PLAYACTION		0x41
 #define V2_CMD_PLAYCOMBO		0x42

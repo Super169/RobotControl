@@ -118,9 +118,24 @@ void MP3TF16P::sendSingleByteCommand(byte cmd) {
 	sendCommand();    
 }
 
-void MP3TF16P::playFile(byte seq) {
+void MP3TF16P::sendCommand(byte cmd, byte p1, byte p2) {
+	resetCommandBuffer();
+	_buf[3] = cmd;
+	_buf[5] = p1;
+	_buf[6] = p2;
+	sendCommand();    
+}
+
+void MP3TF16P::sendCommand(byte cmd, uint16_t parm) {
+	byte p1 = parm >> 8;
+	byte p2 = parm;
+	sendCommand(cmd, p1, p2);
+}
+
+void MP3TF16P::playFile(uint16_t seq) {
 	resetCommandBuffer();
 	_buf[3] = 0x03;
+	_buf[5] = seq >> 8;
 	_buf[6] = seq;
 	sendCommand();    
 }

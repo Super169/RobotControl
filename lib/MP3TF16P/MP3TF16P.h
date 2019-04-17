@@ -22,9 +22,11 @@ class MP3TF16P {
         void begin();
         void end();
         void sendSingleByteCommand(byte cmd);
+        void sendCommand(byte cmd, byte p1, byte p2);
+        void sendCommand(byte cmd, uint16_t parm);
         inline void playNext()      { sendSingleByteCommand(0x01); }
         inline void playPrev()      { sendSingleByteCommand(0x02); }
-        void playFile(byte seq);    // 0x03
+        void playFile(uint16_t seq);    // 0x03
         void setVol(byte vol);      // 0x06
         inline void resetDevice()   { sendSingleByteCommand(0x0C); }
         inline void play()          { sendSingleByteCommand(0x0D); }
@@ -40,7 +42,6 @@ class MP3TF16P {
         void adjVol(int diff);
         inline void volUp()         { adjVol(1); }
         inline void volDown()       { adjVol(-1); }
-
 
 
     private:
