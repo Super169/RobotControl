@@ -42,9 +42,9 @@
 //   35 - Play Avert File (fix)		: A9 9A 03 35 01 39 ED
 //   36 - MP3 Set Volume (fix)		: A9 9A 04 36 00 0F 49 ED
 //                                    A9 9A 04 36 01 01 3C ED
-
-
-
+//   37 - MP3 Command				: A9 9A 05 37 12 00 01 4F ED    { play first MP3 file }
+//                                    A9 9A 05 37 0F 01 02 4E ED    { play 01\002 file }
+//                                    A9 9A 05 37 16 00 00 52 ED    { stop play }
 //   41 - Play Action               : A9 9A 03 41 00 43 ED
 //   42 - Play Combo                : A9 9A 03 42 00 44 ED
 //   4F - Stop playing              : A9 9A 02 4F 51 ED
