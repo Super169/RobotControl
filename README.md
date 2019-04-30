@@ -8,7 +8,7 @@ Versionn 2.0 will define a new set of communization protocol.
 In this version, it will support both V1 & V2 commands.
 
 
-## Major changes in V2, V2.2
+## Major changes in V2, V2.2, V2.3
 
 - New V2.0 communication protocol to avoid misinterpretation
   (some V1 commands are kept for bluetooth control)
@@ -22,6 +22,7 @@ In this version, it will support both V1 & V2 commands.
 - Define events via Blockly UI in MyAlphaRobot v2.2+
 - Add Sub-System Bus for other device, e.g. Ultrasonic, PSX Control
 - Add USB-TTL mode to work as testing board for serial servos.
+- Option to set action speed
 - ......
 
 
@@ -65,16 +66,16 @@ This is a Visual Studio Code project with PlatformIO IDE.
 | Tx | Connect to Rx of HC-05 |
 | I2C | for MPU6050 and OLED display |
 
-The PC setup program MyAlphaRobot can be found in https://github.com/Super169/MyAlphaRobotV2/releases/tag/MyAlphaRobot_2.2
-![MyAlphaRobot](https://raw.githubusercontent.com/Super169/images/master/MyAlphaRobot/MyAlphaRobot_2_2_1_3_a.png)
+The PC setup program MyAlphaRobot can be found in https://github.com/Super169/MyAlphaRobotV2/releases/tag/MyAlphaRobot_2.3
+![MyAlphaRobot](https://raw.githubusercontent.com/Super169/images/master/MyAlphaRobot/2.3/main-02-serial.png)
 
 The new version support event setting by Blockly UI.
 
-![MyAlphaRobot](https://raw.githubusercontent.com/Super169/images/master/MyAlphaRobot/MyAlphaRobot_2_2_1_3_b.png)
+![MyAlphaRobot](https://raw.githubusercontent.com/Super169/images/master/MyAlphaRobot/2.3/event_handler.png)
 
 And also online update firmware up to 921600bps, it takes less than 10 seconds to flash the firmware.
 
-![MyAlphaRobot](https://raw.githubusercontent.com/Super169/images/master/MyAlphaRobot/MyAlphaRobot_2_2_1_3_c.png)
+![MyAlphaRobot](https://raw.githubusercontent.com/Super169/images/master/MyAlphaRobot/2.3/burn-01.png)
 
 You need a ESP8266 control board in order to use this firmware.
 
