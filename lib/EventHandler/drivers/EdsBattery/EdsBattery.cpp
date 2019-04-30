@@ -3,6 +3,7 @@
 EdsBattery::EdsBattery(EventData *data, MyDebugger *dbg, byte devId) {
     _Device = (uint8_t) EventData::DEVICE::battery;
     Config(data, dbg, devId);
+    _isAvailable = true;
 }
 
 EdsBattery::~EdsBattery() {

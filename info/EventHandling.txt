@@ -1,0 +1,82 @@
+RobotEventHandler.ino
+
+- Data Collection
+  eds[device]->GetData()
+  
+
+EdsDataSource.h (generic)
+- IsReady: millis() > _nextReportMs
+
+  _lastDataReady    : data read for previous checking (can be few rounds before)
+  _thisDataReady    : data read for this round
+  _lastReportMs     : last value report time
+  _lastValueHandled : indicate if last value has event handled
+  
+          
+
+/*
+*   PostHandling (eventMatched, isRelated, pending)
+*   - eventMatched : this round has event matched
+*   - isRelated : the matched event is related to this device
+*   - pending : some event pending on this data within threadhold: see EventHander.cpp
+*               condition require to match for continous time before confirmed (e.g. Mpu6050)
+*/
+Default action:
+1) with data but not checked : force check in next time
+2) post handling delay       : _delayCheckMs      : 1000
+4) pending                   : _pendingCheckMs    : 20
+5) no data or data not match : _continueCheckMs   : 50      
+//  may consider to separate no data & data not match with different setting
+
+EdsMpu6050:
+	edsMpu6050.Setup(EDS_MPU6050_I2CADDR, (1000 / config.mpuPositionCheckFreq()), config.mpuCheckFreq());
+  void EdsMpu6050::Setup(uint8_t i2cAddr, uint16_t threadhold, uint16_t elapseMs) {
+  threadhold        : (1000 / config.mpuPositionCheckFreq()) : sensitivity
+  _continueCheckMs  : config.mpuCheckFreq()
+
+
+EdsTouch:
+	edsTouch.Setup(EDS_TOUCH_GPIO, config.touchDetectPeriod(), config.touchReleasePeriod());
+  void EdsTouch::Setup(uint8_t gpioPin, unsigned long touchDetectPeriod, unsigned long touchReleasePeriod) {
+  ** Further study GetData for details
+  
+EdsPsxButton:
+	edsPsxButton.Setup(&ssb, config.psxCheckMs(), config.psxNoEventMs(), config.psxIgnoreRepeatMs());
+  void EdsPsxButton::Setup(SSBoard *ssb, uint8_t normalCheckMs, uint8_t noEventMs, uint16_t ignoreRepeatMs) {
+
+  _lastReportValue  : last value to be handled
+  _noEventMs        : elapse time if last value being checked 
+  _normalCheckMs    : elapse time if last value is not checked
+  _ignoreRepeatMs   : elapse time to ignore repeated value
+
+  
+  _normalCheckMs  : config.psxCheckMs()
+  _noEventMs      : config.psxNoEventMs()
+  _ignoreRepeatMs : config.psxIgnoreRepeatMs()
+
+  GetData()
+    - Ignore if not change, and handled, and within ignoeRepeatMs
+      (_prevDataRady && (_lastReportValue == data) && (_lastValueHandled) && ((millis() - _lastReportMS) < _ignoreRepeatMs)) 
+
+  PostHandling()
+    - If !eventMatched || isRelated : no event match, or handled => _noEventMs
+      * !isRelated can be blocked by other event
+    - else => _normalCheckMs
+
+EdsSonic:
+  edsSonic.Setup(&ssb);
+  void EdsSonic::Setup(SSBoard *ssb) {
+    
+  * need to use threadHold?
+  * 
+    
+EdsBattery:
+	edsBattery.Setup(config.batteryMinValue(), config.batteryMaxValue(), config.batteryNormalSec() * 1000, config.batteryAlarmSec() * 1000);
+  void EdsBattery::Setup(uint16_t minVoltage, uint16_t maxVoltage, uint16_t normalCheckMs, uint16_t alarmtIntervalMs) {
+
+  threadHold        : EBAT_THREADHOLD
+  _delayCheckMs     : config.batteryAlarmSec() * 1000
+  _pendingCheckMs   : _data->Threadhold(_Device) / 10  (i.e. check 10 times to confirm)
+  _continueCheckMs  : config.batteryNormalSec() * 1000
+
+    

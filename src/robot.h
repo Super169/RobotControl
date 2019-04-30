@@ -8,6 +8,8 @@
 #include "ESP8266WiFi.h"
 #include "WiFiClient.h"
 #include <WiFiUDP.h>
+#include "SimpleWiFiManager.h"
+SimpleWiFiManager SWFM;
 
 #include <Wire.h>
 #include "OLED12864.h"
@@ -25,8 +27,6 @@
 #include "message.h"
 #include "RESULT.h"
 
-#include "SimpleWiFiManager.h"
-SimpleWiFiManager SWFM;
 
 #include "RobotServo.h"
 #include "V2_Command.h"
@@ -41,11 +41,14 @@ SimpleWiFiManager SWFM;
 
 // Version 2.2 - New version for event handler added
 #define VERSION_MAJOR   2
-#define VERSION_MINOR   2
+#define VERSION_MINOR   3
 #define VERSION_SUB     0
 #define VERSION_FIX     0
 
-#define DEFAULT_LOG_LEVEL 200
+
+// Level   0 - all
+// Level 100 - most important only
+#define DEFAULT_LOG_LEVEL 110
 
 // Start a TCP Server on port 6169
 uint16_t port = 6169;
@@ -83,10 +86,12 @@ EventHandler eBusy(&eData);
 EventHandler eTemp(&eData);
 
 SSBoard ssb;
-EdsPsxButton edsPsxButton(&eData, _dbg);
-EdsBattery edsBattery(&eData, _dbg);
-EdsTouch edsTouch(&eData, _dbg);
-EdsMpu6050 edsMpu6050(&eData, _dbg);
+EdsMpu6050* edsMpu6050[ED_COUNT_MPU];
+EdsTouch* edsTouch[ED_COUNT_TOUCH];
+EdsPsxButton* edsPsxButton[ED_COUNT_PSXBUTTON];
+EdsBattery* edsBattery[ED_COUNT_BATTERY];
+EdsSonic* edsSonic[ED_COUNT_SONIC];
+EdsMaze* edsMaze[ED_COUNT_MAZE];
 
 #define CMD_BUFFER_SIZE 160
 
@@ -113,6 +118,8 @@ bool enable_HAILZD = true;
 
 ComboData comboTable[CD_MAX_COMBO];
 ActionData actionData;
+
+float actionTimeFactor = 1.0f;
 
 #define MAX_ACTION      26
 #define MAX_POSES       30 

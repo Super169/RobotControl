@@ -1,4 +1,5 @@
-git clone https://github.com/plerup/espsoftwareserial.git
--- espsoftwareserial can be installed via pio.home
+Already included in lib_deps of platformio.txt:
 
-git clone https://github.com/Super169/OLED12864.git
+OLED12864=https://github.com/Super169/OLED12864/archive/RobotControl_2.0.zip
+
+

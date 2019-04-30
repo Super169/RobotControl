@@ -42,9 +42,9 @@
 //   35 - Play Avert File (fix)		: A9 9A 03 35 01 39 ED
 //   36 - MP3 Set Volume (fix)		: A9 9A 04 36 00 0F 49 ED
 //                                    A9 9A 04 36 01 01 3C ED
-
-
-
+//   37 - MP3 Command				: A9 9A 05 37 12 00 01 4F ED    { play first MP3 file }
+//                                    A9 9A 05 37 0F 01 02 4E ED    { play 01\002 file }
+//                                    A9 9A 05 37 16 00 00 52 ED    { stop play }
 //   41 - Play Action               : A9 9A 03 41 00 43 ED
 //   42 - Play Combo                : A9 9A 03 42 00 44 ED
 //   4F - Stop playing              : A9 9A 02 4F 51 ED
@@ -154,6 +154,11 @@ bool V2_Command() {
 			return true;
 			break;
 
+		case V2_CMD_MP3_COMMAND:
+			V2_Mp3Command(cmd);
+			return true;
+			break;
+
 		case V2_CMD_STOPPLAY:
 			V2_ResetAction();
 			if (config.mp3Enabled()) {
@@ -168,6 +173,11 @@ bool V2_Command() {
 		// allow to disable eventhandler event playing 
 		case V2_CMD_SET_EH_MODE:
 			V2_SetEventHandlerMode(cmd);
+			return true;
+			break;
+
+		case V2_CMD_SET_ACTIONSPEED:
+			V2_SetActionSpeed(cmd);
 			return true;
 			break;
 
@@ -290,8 +300,6 @@ bool V2_Command() {
 		case V2_CMD_MP3_PLAYADVERT:
 			V2_Mp3PlayAdvert(cmd);
 			break;
-
-
 
 		case V2_CMD_PLAYACTION:
 			V2_PlayAction(cmd);
@@ -514,7 +522,7 @@ void V2_CheckBattery(byte *cmd) {
 	result[2] = 5;
 	result[3] = cmd[3];
 	uint16_t v = analogRead(0);
-	byte iPower = edsBattery.GetPower(v);
+	byte iPower = edsBattery[0]->GetPower(v);
 	result[4] = iPower;
 	result[5] = v >> 8;
 	result[6] = v & 0xFF;
@@ -968,6 +976,13 @@ void V2_SetEventHandlerMode(byte *cmd) {
 
 #pragma region MP3 Player
 
+void V2_Mp3Command(byte *cmd) {
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_Mp3Command - %02X %02X %02X]", cmd[4], cmd[5], cmd[6]);
+	mp3.begin();
+	mp3.sendCommand(cmd[4],cmd[5],cmd[6]);
+	mp3.end();
+}
+
 void V2_Mp3Stop(byte *cmd) {
 	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_Mp3Stop]");
 	if (config.mp3Enabled()) {
@@ -1123,6 +1138,20 @@ void V2_GoAction(byte actionId, byte playCount, bool v2, byte *cmd) {
 void V2_PlayCombo(byte *cmd) {
 	
 }
+
+void V2_SetActionSpeed(byte *cmd) {
+	if (debug) DEBUG.printf("[V2_SetActionSpeed]\n");
+
+	if (cmd[4] == 0) {
+		V2_SendSingleByteResult(cmd, RESULT::ERR::PARM_INVALID);
+		return;
+	}
+
+	if (debug) DEBUG.printf("V2_SetActionSpeed - Set speed to %d\n", cmd[4]);
+	actionTimeFactor = 100.0f / cmd[4];
+	V2_SendSingleByteResult(cmd, 0);
+}
+
 
 #pragma endregion
 
@@ -1416,7 +1445,7 @@ void V2_UpdateCombo(byte *cmd) {
 
 void V2_CheckMPU(byte *cmd) {
 	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_CheckMPU]");
-	V2_SendSingleByteResult(cmd, (edsMpu6050.IsAvailable() ? RESULT::SUCCESS : RESULT::ERR::NOT_FOUND));
+	V2_SendSingleByteResult(cmd, (edsMpu6050[0]->IsAvailable() ? RESULT::SUCCESS : RESULT::ERR::NOT_FOUND));
 }
 
 void V2_GetMPUData(byte *cmd) {
@@ -1424,8 +1453,8 @@ void V2_GetMPUData(byte *cmd) {
 	byte result[EMPU_RESULT_SIZE];
 	result[2] = EMPU_RESULT_SIZE - 4;
 	result[3] = cmd[3];
-	if (edsMpu6050.GetMpuData()) {
-		memcpy((byte *)(result + 4), edsMpu6050.MpuBuffer(), EMPU_DATA_SIZE);
+	if (edsMpu6050[0]->GetMpuData()) {
+		memcpy((byte *)(result + 4), edsMpu6050[0]->MpuBuffer(), EMPU_DATA_SIZE);
 	}
 	V2_SendResult(result);
 }
@@ -1666,4 +1695,14 @@ void ActionServo(uint8_t servoId, int8_t moveAngle, uint8_t time) {
 	if (currAngle == newAngle) return;	// no action required
 	if (_dbg->require(100)) _dbg->log(100,0,"Servo Id %d move to %d in %d ms", servoId, newAngle, time);
 	rs.goAngle(servoId, newAngle, time);
+}
+
+void ActionSonic(uint8_t status) {
+	bool suspend = (status == 0);
+	for (int id = 0; id < ED_COUNT_SONIC; id++) {
+		edsSonic[id]->Suspend(suspend);
+	}
+	for (int id = 0; id < ED_COUNT_MAZE; id++) {
+		edsMaze[id]->Suspend(suspend);
+	}
 }

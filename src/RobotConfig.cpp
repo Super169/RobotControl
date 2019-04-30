@@ -32,6 +32,7 @@ void RobotConfig::initConfig() {
     _data[0] = 0xA9;
     _data[1] = 0x9A;
     _data[2] = RC_CONFIG_DATA_SIZE;
+    _data[RC_VERSION] = CURRENT_VERSION;
     _data[RC_RECORD_SIZE-1] = 0xED;
     
     setDebug(DEFAULT_ENABLE_DEBUG);
@@ -46,9 +47,11 @@ void RobotConfig::initConfig() {
     setBattery(DEFAULT_BATTERY_REF_VOLTAGE, DEFAULT_BATTERY_MIN_VALUE, DEFAULT_BATTERY_MAX_VALUE, DEFAULT_BATTERY_NORMAL_SEC, DEFAULT_BATTERY_ALARM_SEC);
     setTouch(DEFAULT_TOUCH_ENABLED, DEFAULT_TOUCH_DETECT_PERIOD, DEFAULT_TOUCH_RELEASE_PERIOD);
     setMp3(DEFAULT_MP3_ENABLED, DEFAULT_MP3_VOLUME, DEFAULT_MP3_STARTUP);
+    setStartupAction(DEFAULT_STARTUP_ACTION);
     setMpu(DEFAULT_MPU_ENABLED, DEFAULT_MPU_CHECK_FREQ, DEFAULT_MPU_POSITION_CHECK_FREQ);
     setPsx(DEFAULT_PSX_ENABLED, DEFAULT_PSX_CHECK_MS, DEFAULT_PSX_NO_EVENT_MS, DEFAULT_PSX_IGNORE_REPEAT_MS, DEFAULT_PSX_SHOCK);
-
+    setSonic(DEFAULT_SONIC_ENABLED, DEFAULT_SONIC_CHECK_FREQ, DEFAULT_SONIC_DELAY_SEC);
+    setMaze(DEFAULT_MAZE_SERVO, DEFAULT_MAZE_WALL_DISTANCE, DEFAULT_MAZE_SERVO_DIRECTION, DEFAULT_MAZE_SERVO_MOVE_MS, DEFAULT_MAZE_SERVO_WAIT_MS);
 }
 
 bool RobotConfig::readConfig() {
@@ -96,7 +99,7 @@ void RobotConfig::checkConversion() {
         }
 
         // Default battery noraml check frequency in 5 seconds
-        _data[RC_BATTERY_NORAML_SEC] = 5;
+        _data[RC_BATTERY_NORMAL_SEC] = 5;
 
         _data[RC_TOUCH_ENABLED] = _data[V0_ENABLE_TOUCH];
 
@@ -130,6 +133,9 @@ void RobotConfig::checkConfig() {
     if (psxCheckMs() < MIN_PSX_MS) setPsxCheckMs(DEFAULT_PSX_CHECK_MS);
     if (psxNoEventMs() < MIN_PSX_MS) setPsxNoEventMs(DEFAULT_PSX_NO_EVENT_MS);
     if (psxIgnoreRepeatMs() < MIN_PSX_IGNORE_REPEAT_MS) setPsxIgnoreRepeatMs(DEFAULT_PSX_IGNORE_REPEAT_MS);
+
+    if (sonicCheckFreq() == 0) setSonicCheckFreq(DEFAULT_SONIC_CHECK_FREQ);
+    if (sonicDelaySec() == 0) setSonicDelaySec(DEFAULT_SONIC_DELAY_SEC);
 
 }
 
@@ -178,6 +184,10 @@ void RobotConfig::dumpConfig() {
  	_dbg->printf("PSX Button: %s, Check Interval: %d, No Event: %d, Ignore Repeat Interval: %d, shock: %s\n", 
                   (psxEnabled() ? "Enabled" : "Disabled"), psxCheckMs(), psxNoEventMs(), psxIgnoreRepeatMs(),(psxShock() ? "Enabled" : "Disabled"));
 
+ 	_dbg->printf("Sonic: %s, Check Freq: %d\n", 
+                  (sonicEnabled() ? "Enabled" : "Disabled"), sonicCheckFreq());
+
+
 	_dbg->println();
 }
 
@@ -223,7 +233,7 @@ void RobotConfig::setBatteryMaxValue(uint16_t maxVoltage) {
 }
 
 void RobotConfig::setBatteryNormalSec(uint8_t value) {
-    _data[RC_BATTERY_NORAML_SEC] = value;
+    _data[RC_BATTERY_NORMAL_SEC] = value;
 }
 
 void RobotConfig::setBatteryAlarmSec(uint8_t value) {
@@ -266,6 +276,10 @@ void RobotConfig::setMp3Startup(uint8_t mp3) {
     _data[RC_MP3_STARTUP] = mp3;
 }
 
+void RobotConfig::setStartupAction(uint8_t action) {
+    _data[RC_STARTUP_ACTION] = action;
+}
+
 void RobotConfig::setMpuEnabled(bool enabled) {
     _data[RC_MPU_ENABLED] = enabled;
 }
@@ -298,3 +312,36 @@ void RobotConfig::setPsxIgnoreRepeatMs(uint16_t value) {
 void RobotConfig::setPsxShock(bool enabled) {
     _data[RC_PSX_SHOCK] = enabled;
 }
+
+void RobotConfig::setSonicEnabled(bool enabled) {
+    _data[RC_SONIC_ENABLED] = enabled;
+}
+
+void RobotConfig::setSonicCheckFreq(uint8_t checkFreq) {
+    _data[RC_SONIC_CHECK_FREQ] = checkFreq;
+}
+
+void RobotConfig::setSonicDelaySec(uint8_t delaySec) {
+    _data[RC_SONIC_DELAY_SEC] = delaySec;
+}
+
+void RobotConfig::setMazeServo(uint8_t servoId) {
+    _data[RC_MAZE_SERVO] = servoId;
+}
+
+void RobotConfig::setMazeWallDistance(uint8_t distance) {
+    _data[RC_MAZE_WALL_DISTANCE] = distance;
+}
+
+void RobotConfig::setMazeServoDirection(uint8_t direction) {
+    _data[RC_MAZE_SERVO_DIRECTION] = direction;
+}
+
+void RobotConfig::setMazeServoMoveMs(uint16_t moveMs) {
+    setUint16_t(RC_MAZE_SERVO_MOVE_MS, moveMs);
+}
+
+void RobotConfig::setMazeServoWaiteMs(uint16_t waitMs) {
+    setUint16_t(RC_MAZE_SERVO_WAIT_MS, waitMs);
+}
+

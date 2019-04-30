@@ -15,7 +15,11 @@ bool EventDataSource::IsEnabled() {
 }
 
 bool EventDataSource::IsReady() { 
-    return (_isAvailable && _isEnabled && (millis() > _nextReportMs)); 
+    return (_isAvailable && _isEnabled && !_isSuspended && (millis() > _nextReportMs)); 
+}
+
+void EventDataSource::Suspend(bool suspend) { 
+    _isSuspended = suspend; 
 }
 
 void EventDataSource::Config(EventData *data, MyDebugger *dbg, byte devId) {
@@ -28,20 +32,34 @@ void EventDataSource::SetNextReportTime() {
     _nextReportMs = millis() + _reportInterval; 
 }
 
+/*
+*   PostHandling (eventMatched, isRelated, pending)
+*   - eventMatched : this round has event matched
+*   - isRelated : the matched event is related to this device
+*   - pending : some event pending on this data within threadhold: see EventHander.cpp
+*               condition require to match for continous time before confirmed (e.g. Mpu6050)
+*/
 void EventDataSource::PostHandler(bool eventMatched, bool isRelated, bool pending) {
     if (!IsReady()) return;
     if (_dbg->require(210)) _dbg->log(210,0,"EventDataSource[%d]::PostHandler(%d,%d,%d)",_Device, eventMatched, isRelated, pending);
     if (_thisDataReady) {
-        if (eventMatched && !isRelated){
-            // handled other events, need to execute again immediately 
-            _nextReportMs = 0;
-        } else  {
-            // either handled or no action for it, can delay longer
+        if (isRelated) {
+            // Current data has event matched
             _nextReportMs = millis() + _delayCheckMs;
+        } else if (eventMatched) {
+            // Maybe handled with other events, should check again in next round
+            _nextReportMs = 0;
+        } else {
+            // Current data did not trigger any event
+            _nextReportMs = millis() + _continueCheckMs;
         }
     } else if (pending) {
         _nextReportMs = millis() + _pendingCheckMs;
-    } else {
+    } else if (_thisDataError) {
         _nextReportMs = millis() + _continueCheckMs;
+    } else {
+        // not ready at GetData, but ready now
+        // Do nothing and let it getData again in next round
     }
+
 }

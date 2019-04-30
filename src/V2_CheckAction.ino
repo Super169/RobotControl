@@ -86,8 +86,9 @@ void V2_CheckAction() {
 	// byte servoTime = (byte) iServoTime;
 	int iServoTime = fServoTimeMs;  // For new servo library, use MS as servo time when calling move command
 	uint16_t servoTime = (uint16_t) iServoTime;
+	servoTime = CalAdjMs(servoTime);
 
-	if (debug && deepDebug) DEBUG.printf("Servo Time: %f -> %d\n", fServoTimeMs, servoTime);
+	if (debug && deepDebug) DEBUG.printf("Servo Time: %f (%f) -> %d\n", fServoTimeMs, actionTimeFactor, servoTime);
 
 	byte ledChange = 0;
 	for (int i = 0; i < 8; i++) {
@@ -124,7 +125,7 @@ void V2_CheckAction() {
 		}
 	}
 
-if (debug) DEBUG.printf("%08ld -- End servo command\n", millis());
+	if (debug) DEBUG.printf("%08ld -- End servo command\n", millis());
 
 	// Check HeadLED, follow servo status 0 - on, 1 - off
 	byte headLight = pose[AD_POFFSET_HEAD];
@@ -160,6 +161,7 @@ if (debug) DEBUG.printf("%08ld -- End servo command\n", millis());
 	}
 
 	uint16_t waitTimeMs = (pose[AD_POFFSET_WTIME] << 8) | pose[AD_POFFSET_WTIME+1];
+	waitTimeMs = CalAdjMs(waitTimeMs);
 	
 	if (V2_UseGlobalTime) {
 		V2_GlobalTimeMs += waitTimeMs;
@@ -186,8 +188,17 @@ if (debug) DEBUG.printf("%08ld -- End servo command\n", millis());
 		if (debug) DEBUG.printf("Action finished, continue with last %d times\n", V2_ActionPlayCount);
 	}
 
-
 	// Try to preLoad next pose by checking is
 	actionData.IsPoseReady(V2_NextPose);
 
+}
+
+
+uint16_t CalAdjMs(uint16_t ms) {
+	// DEBUG.printf("CalAdjMs %d Factor: %f \n", ms, actionTimeFactor);
+	if ((ms == 0) || (actionTimeFactor == 1.0f)) return ms;
+	uint32_t adjMs = (uint32_t) (actionTimeFactor * ms);
+	if (adjMs > 0xFFFF) return 0xFFFF;
+	// DEBUG.printf("CalAdjMs %d Factor: %f => %d \n", ms, actionTimeFactor, adjMs);
+	return (uint16_t) adjMs;
 }

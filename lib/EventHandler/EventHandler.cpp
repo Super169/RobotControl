@@ -8,6 +8,12 @@ EventHandler::EventHandler(EventData *data)
     _evtCount = 0;
     _events = NULL;
     _eventLastMs = NULL;
+    _isRequired = (bool *) malloc(_data->DevCount());
+    _lastEventRelated = (bool *) malloc(_data->DevCount());
+    for (int i = 0; i < _data->DevCount(); i++) {
+        _isRequired[i] = false;
+        _lastEventRelated[i] = false;
+    }
 }
 
 EventHandler::~EventHandler()
@@ -149,20 +155,22 @@ bool EventHandler::WriteFile(const char *fileName, uint8_t *buffer, size_t size)
 	return success;
 }
 
-bool EventHandler::IsRequired(uint8_t device) {
-    if (device <= ED_MAX_DEVICE) return _reqDevice[device];
+bool EventHandler::IsRequired(uint8_t device, uint8_t devId) {
+    if (_data->IsValid(device, devId)) return _isRequired[_data->DevOffset(device, devId)];
     return false;
 }
 
-bool EventHandler::LastEventRelated(uint8_t device) {
-    if (device <= ED_MAX_DEVICE) return _lastEventRelated[device];
+bool EventHandler::LastEventRelated(uint8_t device, uint8_t devId) {
+    if (_data->IsValid(device, devId)) return _lastEventRelated[_data->DevOffset(device, devId)];
     return false;
 }
 
-bool EventHandler::IsPending(uint8_t device) {
+bool EventHandler::IsPending(uint8_t device, uint8_t devId) {
     for (int i = 0; i < _evtCount; i++) {
-        if (_events[i].data.condition.data.device == device) {
-            if (_eventLastMs[device]) return true;
+        if ((_events[i].data.condition.data.device == device) && (_events[i].data.condition.data.devId == devId))    {
+            if (_eventLastMs[i]) {
+                return true;
+            }
         }
     }
     return false;
@@ -170,13 +178,13 @@ bool EventHandler::IsPending(uint8_t device) {
 
 void EventHandler::CheckEventsRequirement() {
     
-    for (int i = 0; i < ED_MAX_DEVICE + 1; i++) _reqDevice[i] = false;
+    for (int i = 0; i < _data->DevCount() + 1; i++) _isRequired[i] = false;
 
     for (uint16_t i = 0; i < _evtCount; i++) {
         if (_data->IsValid(_events[i].data.condition.data.device,
                            _events[i].data.condition.data.devId, 
                            _events[i].data.condition.data.target)) {
-            _reqDevice[_events[i].data.condition.data.device] = true;
+            _isRequired[_data->DevOffset(_events[i].data.condition.data.device,_events[i].data.condition.data.devId)] = true;
         }
     }
 }
@@ -184,7 +192,7 @@ void EventHandler::CheckEventsRequirement() {
 EventHandler::EVENT EventHandler::CheckEvents() {
     EVENT event;
     memset((void *) event.buffer, 0, sizeof(EVENT));
-    for (int i = 0; i < ED_MAX_DEVICE + 1; i++) _lastEventRelated[i] = false;
+    for (int i = 0; i < _data->DevCount(); i++) _lastEventRelated[i] = false;
 
     bool skipEvent = false;
     for (uint16_t i = 0; i < _evtCount; i++) {
@@ -199,11 +207,12 @@ EventHandler::EVENT EventHandler::CheckEvents() {
             if (MatchCondition(i, _events[i].data.condition)) {
                 if (_events[i].data.type == (uint8_t) EVENT_TYPE::handler) {
                     byte condDevice = _events[i].data.condition.data.device; 
+                    byte condDevId =  _events[i].data.condition.data.devId;
                     // just for safety, make a copy of event object for return
                     // Or it can just return _events[i];
                     memcpy((void *) event.buffer, (void *) _events[i].buffer, sizeof(EVENT));
                     // Check events for related devices
-                    _lastEventRelated[condDevice] = true;
+                    _lastEventRelated[_data->DevOffset(condDevice, condDevId)] = true;
                     // Reste lastMs once handled
                     #ifdef EH_DEBUG
                     Serial1.printf("%08ld [%d] Release last ms for %d\n", millis(), i, condDevice);
@@ -214,7 +223,8 @@ EventHandler::EVENT EventHandler::CheckEvents() {
                     while (j >= 0) {
                         if (_events[j].data.type == (uint8_t) EVENT_TYPE::preCond) {
                             condDevice = _events[j].data.condition.data.device;
-                            _lastEventRelated[condDevice] = true;
+                            condDevId =  _events[i].data.condition.data.devId;
+                            _lastEventRelated[_data->DevOffset(condDevice, condDevId)] = true;
                             #ifdef EH_DEBUG
                             Serial1.printf("%08ld [%d] Also release last ms for %d\n", millis(), j,  condDevice);
                             #endif

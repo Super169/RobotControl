@@ -1,0 +1,15 @@
+1) EventData add DEVICE
+
+2) add #define 
+   ED_SIZE_????
+   ED_COUNT_????
+
+3) ED_MAX_DEVICE
+
+4) private:
+   _size
+   _idCount
+
+5) Add driver for new device
+
+6) Update EdsDriver to includ new driver

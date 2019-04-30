@@ -10,10 +10,6 @@ class EventHandler {
 
     public:
 
-        enum class DEVICE_TYPE : uint8_t {
-            mpu6050 = 1, touch = 2, psxButton = 3, batteryReading = 4, batteryLevel =5, gpio = 6
-        };
-
         enum class CHECK_MODE : uint8_t {
             match = 1, greater = 2, less = 3, button = 4
         };
@@ -23,7 +19,7 @@ class EventHandler {
         };
 
         enum class ACTION_TYPE : uint8_t {
-            na = 0, playAction = 1, stopAction = 2, headLed = 3, mp3PlayMp3 = 4, mp3PlayFile = 5, mp3Stop = 6, gpio = 7, system_action = 8, servo = 9
+            na = 0, playAction = 1, stopAction = 2, headLed = 3, mp3PlayMp3 = 4, mp3PlayFile = 5, mp3Stop = 6, gpio = 7, system_action = 8, servo = 9, sonic = 10
         };
 
         enum class EVENT_TYPE : uint8_t {
@@ -80,9 +76,9 @@ class EventHandler {
         bool LoadData(String filename);
         void LoadDummyData();
         bool SaveData(String filename);
-        bool IsRequired(uint8_t device);
-        bool LastEventRelated(uint8_t device);
-        bool IsPending(uint8_t device);
+        bool IsRequired(uint8_t device, uint8_t devId);
+        bool LastEventRelated(uint8_t device, uint8_t devId);
+        bool IsPending(uint8_t device, uint8_t devId);
 
         EVENT CheckEvents();
         uint16_t Count() { return _evtCount; }
@@ -97,12 +93,12 @@ class EventHandler {
         unsigned long *_eventLastMs;
 
         EventData *_data;
-        bool _reqDevice[ED_MAX_DEVICE + 1];
-        void CheckEventsRequirement();  // mark flag in _reqDevice
+        bool *_isRequired;
+        void CheckEventsRequirement();  // mark flag in _isRequired
 
-        bool _lastEventRelated[ED_MAX_DEVICE + 1];
+        // bool _lastEventRelated[ED_MAX_DEVICE + 1];
+        bool *_lastEventRelated; 
         bool MatchCondition(uint16_t idx, CONDITION cod);
-        
 
         size_t FileSize(const char *fileName);
         bool ReadFile(const char *fileName, uint8_t *buffer, size_t size);

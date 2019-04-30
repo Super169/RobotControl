@@ -18,6 +18,15 @@ void ActionPlaySystemAction(byte systemActionId) {
 		case 14:
 			SystemAction_014();
 			break;	
+		case 200:
+			SystemAction_200();
+			break;	
+		case 201:
+			SystemAction_201();
+			break;	
+		case 210:
+			SystemAction_210();
+			break;	
 		case 250:
 			if (_dbg->require(10))	_dbg->log(10,0, "USB-TTL for Robot bus");
 			USB_TTL(&robotPort);
@@ -97,6 +106,61 @@ void SystemAction_014() {
 	}
 
 }
+void SystemAction_200() {
+	DEBUG.printf("\n\nSystem Action 200 (System Information):\n\n");
+	DEBUG.printf("Chip ID: %d\n", system_get_chip_id());
+	DEBUG.printf("CPU Frequency: %d\n", system_get_cpu_freq());
+	DEBUG.printf("Boot Version: %d\n", system_get_boot_version());
+	DEBUG.printf("SDK Version: %s\n", system_get_sdk_version());
+	DEBUG.printf("Free Heap Size: %d\n", system_get_free_heap_size());
+	DEBUG.printf("VDD33: %d\n", system_get_vdd33());
+	
+	DEBUG.printf("\n\n");
+}
+
+void SystemAction_201() {
+	// Force to read and dump all data
+	DEBUG.printf("\n\nSystem Action 201 (dump SPIFFS):\n\n");
+	if (!SPIFFS.begin()) {
+		DEBUG.printf("Fail to start SPIFFS\n\n");
+		return;
+	}
+	Dir dir;
+	dir = SPIFFS.openDir("");
+	unsigned long fcnt, fsize;
+	fcnt = 0;
+	fsize = 0;
+	while (dir.next()) {
+		DEBUG.printf("%-40s", dir.fileName().c_str());
+		File f = dir.openFile("r");
+		DEBUG.printf("   %8d\n", f.size());
+		fcnt++;
+		fsize += f.size();
+		f.close();
+	}
+	DEBUG.printf("\n%12ld File(s)    %10ld bytes\n\n", fcnt, fsize);
+	SPIFFS.end();	
+
+
+}
+
+void SystemAction_210() {
+	// Force to read and dump all data
+	DEBUG.printf("\n\nSystem Action 210 (check data soruce):\n\n");
+	eData.Clear();
+	for (int devIdx = 0; devIdx < eData.DevCount(); devIdx++) {
+		if (eds[devIdx] != NULL) {
+			if (eds[devIdx]->IsAvailable()) {
+				eds[devIdx]->ForceGetData();
+			} else {
+				DEBUG.printf("eds[%d] (Device: %d, DevId: %d) is not available\n", 
+							devIdx, eds[devIdx]->Device(), eds[devIdx]->DevId());
+			}
+		}
+	}
+	eData.DumpData(&DEBUG);
+}
+
 
 void GoMoveServo(byte servoId, int step, int execTime, int waitTime) {
 	if (_dbg->require(110)) _dbg->log(110,0, "GoMoveServo(step: %d, exec: %d, wait: %d)", step, execTime, waitTime);

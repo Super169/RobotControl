@@ -1,0 +1,4 @@
+Simple WiFi Manager Setup:  /system/wifi.config
+Robot Configuration:        /robot/config.dat
+Robot Actions:              /alpha/action/???.dat
+Robot Events:               /alpha/event/idle.event, /alpha/event/busy.event

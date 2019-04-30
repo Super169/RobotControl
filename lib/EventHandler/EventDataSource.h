@@ -9,6 +9,7 @@
 #define EDS_PENDING_CHECK_MS    20
 #define EDS_CONTINUE_CHECK_MS   50
 #define EDS_DELAY_CHECK_MS      1000
+#define EDS_HANDLED_CHECK_MS    1000
 
 class EventDataSource {
 
@@ -16,8 +17,9 @@ class EventDataSource {
         EventData *_data = NULL;
         MyDebugger *_dbg;
 
-        bool _isAvailable = true;
+        bool _isAvailable = false;
         bool _isEnabled = true;
+        bool _isSuspended = false;
         bool _enableDebug = true;
         /*
             _lastDataReady vs _thisDataReady
@@ -30,7 +32,7 @@ class EventDataSource {
         */
         bool _lastDataReady = false;
         bool _thisDataReady = false;
-
+        bool _thisDataError = false;
 
         unsigned long _lastReportMS = 0;
         bool _lastValueHandled = false;
@@ -51,11 +53,19 @@ class EventDataSource {
         EventDataSource() {}
         ~EventDataSource() {}
 
+        uint8_t Device() { return _Device; }
+        uint8_t DevId() { return _DevId; }
+
         bool SetEnabled(bool enabled);
         bool IsAvailable();
         bool IsEnabled();
         bool IsReady();
+        void Suspend(bool suspend);
         virtual bool GetData() = 0;
+        bool ForceGetData() { 
+            _nextReportMs = 0;
+            return GetData();
+        }
         virtual void PostHandler(bool eventMatched, bool isRelated, bool pending);
 
     private:

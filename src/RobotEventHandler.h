@@ -38,6 +38,8 @@ unsigned long nextHandlerMs = 0;
 unsigned long nextShowMs = 0;
 bool lastPlaying = false;
 
+#define EDS_TOUCH_GPIO      13
+#define EDS_MPU6050_I2CADDR 0x68  // I2C address of the MPU-6050
 
 // Too bad, cannot put them here as it cannot reconized the _dbg in robot.h, so have to move to robot.h
 // After Eds moved to robot.h, eData also need to mov e to robot.h, so all moved to robot.h
@@ -46,9 +48,6 @@ bool lastPlaying = false;
 //EventHandler eIdle(&eData);
 //EventHandler eBusy(&eData);
 //EventHandler eTemp(&eData);
-
-#define EDS_TOUCH_GPIO      13
-#define EDS_MPU6050_I2CADDR 0x68  // I2C address of the MPU-6050
 
 //SSBoard ssb;
 //EdsPsxButton edsPsxButton(&eData, _dbg);
@@ -63,7 +62,7 @@ void CheckVoltage() ;
 byte GetPower(uint16_t v);
 
 
-EventDataSource* eds[ED_MAX_DEVICE + 1];
+EventDataSource** eds;
 
 void EnableSsbTxCallBack(bool send);
 void USB_TTL(SoftwareSerial *ttl);

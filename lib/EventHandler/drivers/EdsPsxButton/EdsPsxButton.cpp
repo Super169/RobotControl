@@ -3,6 +3,7 @@
 EdsPsxButton::EdsPsxButton(EventData *data, MyDebugger *dbg, byte devId) {
     _Device = (uint8_t) EventData::DEVICE::psx_button;
     Config(data, dbg, devId);
+    _isAvailable = false;
 }
 
 EdsPsxButton::~EdsPsxButton() {
@@ -23,9 +24,7 @@ void EdsPsxButton::Setup(SSBoard *ssb, uint8_t normalCheckMs, uint8_t noEventMs,
 
     // Check if device available
 
-//    byte cmd[] = {0xA8, 0x8A, 0x02, 0x01, 0x03, 0xED};
-    byte cmd[] = {0xA8, 0x8A, 0x04, 0x01, 0x00, 0x01, 0x06, 0xED};
-    _isAvailable = _ssb->SendCommand((byte *) cmd, true);
+    Ping();
     if (_isAvailable) { 
         if (_dbg->require(10)) _dbg->log(10, 0, "PSX Conbroller detected");
     } else {
@@ -33,8 +32,22 @@ void EdsPsxButton::Setup(SSBoard *ssb, uint8_t normalCheckMs, uint8_t noEventMs,
     }
 }
 
+bool EdsPsxButton::Ping() {
+    byte cmd[] = {0xA8, 0x8A, 0x04, 0x01, 0x00, 0x01, 0x06, 0xED};
+    cmd[4] = _DevId;
+
+    byte tryCnt = 0;
+    while (tryCnt++ < 5) {
+        _isAvailable = _ssb->SendCommand((byte *) cmd, true);
+        if (_isAvailable) break;
+    }
+    return (_isAvailable);
+}
+
+
 bool EdsPsxButton::GetData() {
     _thisDataReady = false;
+    _thisDataError = false;
     if (!IsReady()) return false;
 
     bool _prevDataRady = _lastDataReady;
@@ -44,9 +57,13 @@ bool EdsPsxButton::GetData() {
     // byte cmd[] = {0xA8, 0x8A, 0x02, 0x01, 0x03, 0xED};
     // byte cmd[] = { 0xA8, 0x8A, 0x07, 0x01, 0x00, 0x03, 0x2E, 0x01, 0x01, 0x3C, 0xED };
     byte cmd[] = { 0xA8, 0x8A, 0x06, 0x01, 0x00, 0x02, 0x28, 0x02, 0x33, 0xED };
+    cmd[4] = _DevId;
 
     unsigned long startMs = millis();
-    if (!_ssb->SendCommand((byte *) cmd, true)) return false;
+    if (!_ssb->SendCommand((byte *) cmd, true)) {
+        _thisDataError = true;
+        return false;
+    }
     
     unsigned long diff = millis() - startMs;
     //_dbg->msg("It taks %d ms to read PSX", diff); 
@@ -56,8 +73,8 @@ bool EdsPsxButton::GetData() {
     // New return:  A8 8A 08 01 00 02 28 02  [ EF 00 ] 24 ED 
     uint16_t data;
     byte *button = (byte *) &data;
-    button[0] = result->peek(9);
-    button[1] = result->peek(8);
+    button[0] = result->peek(8);
+    button[1] = result->peek(9);
 
     // Due to the behavious of PSX control board, it will repeat the value within 1s
     // Need to skip repeated value if handled

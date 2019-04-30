@@ -54,9 +54,11 @@ bool V2_UseGlobalTime = true;
 #define V2_CMD_MP3_PLAYMP3      0x34
 #define V2_CMD_MP3_PLAYADVERT   0x35
 #define V2_CMD_MP3_SETVOLUME    0x36
+#define V2_CMD_MP3_COMMAND      0x37
 
 #define V2_CMD_PLAYACTION		0x41
 #define V2_CMD_PLAYCOMBO		0x42
+#define V2_CMD_SET_ACTIONSPEED  0x43
 #define V2_CMD_STOPPLAY			0x4F
 
 #define V2_CMD_GET_ADLIST		0x60
@@ -101,5 +103,6 @@ void ActionMp3Stop();
 void ActionMp3PlayMp3(byte fileSeq);
 void ActionMp3PlayFile(byte folderSeq, byte fileSeq);
 void ActionServo(uint8_t servoId, int8_t angle, uint8_t time);
+void ActionSonic(uint8_t status);
 
 #endif
