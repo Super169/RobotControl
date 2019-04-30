@@ -41,9 +41,9 @@ SimpleWiFiManager SWFM;
 
 // Version 2.2 - New version for event handler added
 #define VERSION_MAJOR   2
-#define VERSION_MINOR   2
-#define VERSION_SUB     1
-#define VERSION_FIX     10
+#define VERSION_MINOR   3
+#define VERSION_SUB     0
+#define VERSION_FIX     0
 
 
 // Level   0 - all
