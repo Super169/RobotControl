@@ -1556,7 +1556,7 @@ byte SaveEventHandler(byte *cmd) {
 	eTarget = (mode ? &eBusy : &eIdle);
 
 	if (eTarget->Clone(&eTemp)) {
-		if (eTarget->SaveData(mode ? EVENT_BUSY_FILE : EVENT_IDEL_FILE)) {
+		if (eTarget->SaveData(mode ? EVENT_BUSY_FILE : EVENT_IDLE_FILE)) {
 			return RESULT::SUCCESS;
 		}
 		return RESULT::ERR::WRITE;

@@ -5,8 +5,11 @@
 #include "EventHandler.h"
 #include "EdsDrivers.h"
 
-#define EVENT_IDEL_FILE "/alpha/event/idle.event"
+#define EVENT_IDLE_FILE "/alpha/event/idle.event"
 #define EVENT_BUSY_FILE "/alpha/event/busy.event"
+
+#define EVENT_IDLE_TEMPLATE "/alpha/event/idle.%03d"
+#define EVENT_BUSY_TEMPLATE "/alpha/event/busy.%03d"
 
 #define EVENT_HANDLER_VERSION  1
 

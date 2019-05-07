@@ -90,9 +90,21 @@ void InitEventHandler() {
 	}
 
 
-	eIdle.LoadData(EVENT_IDEL_FILE);
+	eIdle.LoadData(EVENT_IDLE_FILE);
 	eBusy.LoadData(EVENT_BUSY_FILE);
 
+}
+
+
+void LoadEventHandler(uint8_t eventId) {
+	char fileName[25];
+	memset(fileName, 0, 25);
+	sprintf(fileName, EVENT_IDLE_TEMPLATE, eventId);
+	eIdle.LoadData(fileName);
+	
+	memset(fileName, 0, 25);
+	sprintf(fileName, EVENT_BUSY_TEMPLATE, eventId);
+	eBusy.LoadData(EVENT_BUSY_FILE);
 }
 
 void RobotEventHandler() {
