@@ -116,7 +116,7 @@ bool UBTServo::reset() {
 uint32_t UBTServo::getVersion(byte id) {
 	if (!validId(id)) return 0;
 	int tryCnt = 0;
-	while (tryCnt++ <= _maxRetry) {
+	while (tryCnt++ <= _maxRetry + 1) {
 		resetCommandBuffer();
 		_buf[0] = 0xFC;
 		_buf[1] = 0xCF;
@@ -140,7 +140,7 @@ bool UBTServo::move(byte id, int16_t pos, uint16_t time)  {
 	if (!validId(id)) return false;
 	if (pos < 0)  return false;
 	int tryCnt = 0;
-	while (tryCnt++ <= _maxRetry) {
+	while (tryCnt++ <= _maxRetry + 1) {
 		resetCommandBuffer();
 		_buf[2] = id;
 		_buf[3] = 0x01;
@@ -162,7 +162,7 @@ bool UBTServo::move(byte id, int16_t pos, uint16_t time)  {
 bool UBTServo::setLED(byte id, bool mode)  {
 	if (!validId(id)) return 0;
 	int tryCnt = 0;
-	while (tryCnt++ <= _maxRetry) {
+	while (tryCnt++ <= _maxRetry + 1) {
 		resetCommandBuffer();
 		_buf[2] = id;
 		_buf[3] = 0x04;
@@ -196,7 +196,7 @@ int16_t UBTServo::getPos(byte id, bool lockAfterGet) {
 	}
 
 	int tryCnt = 0;
-	while (tryCnt++ <= _maxRetry) {
+	while (tryCnt++ <= _maxRetry + 1) {
 		resetCommandBuffer();
 		_buf[2] = id;
 		_buf[3] = 0x02;
@@ -235,7 +235,7 @@ bool UBTServo::unlock(byte id) {
 uint16_t UBTServo::getAdjAngle(byte id) {
 	if (!validId(id)) return 0x7F7F;
 	int tryCnt = 0;
-	while (tryCnt++ <= _maxRetry) {
+	while (tryCnt++ <= _maxRetry + 1) {
 		resetCommandBuffer();
 		_buf[2] = id;
 		_buf[3] = 0xD4;
@@ -253,7 +253,7 @@ uint16_t UBTServo::getAdjAngle(byte id) {
 uint16 UBTServo::setAdjAngle(byte id, uint16 adjValue) {
 	if (!validId(id)) return 0x7F7F;
 	int tryCnt = 0;
-	while (tryCnt++ < _maxRetry) {
+	while (tryCnt++ <= _maxRetry + 1 ) {
 		resetCommandBuffer();
 		_buf[2] = id;
 		_buf[3] = 0xD2;
@@ -266,5 +266,7 @@ uint16 UBTServo::setAdjAngle(byte id, uint16 adjValue) {
 		// What can I do if it has not return the position
 		return 0x7F7F;
 	}
+	// Wait 100ms before reading the adjust angle after udpated
+	delay(100);
 	return getAdjAngle(id);
 }

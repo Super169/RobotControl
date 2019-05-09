@@ -168,8 +168,8 @@ union CONFIG_DATA {
         uint8_t     mpuPositionCheckFreq;
         uint8_t     filler_05[3];
         uint8_t     touchEnabled;
-        uint8_t     touchDetectPeriod;
-        uint8_t     touchReleasePeriod;
+        uint16_t    touchDetectPeriod;
+        uint16_t    touchReleasePeriod;
         uint8_t     filler_06[1];
         uint8_t     sonicEnabled;
         uint8_t     sonicCheckFreq;

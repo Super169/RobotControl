@@ -82,7 +82,7 @@ bool HLServo::sendCommand(bool expectReturn, unsigned long waitMs) {
 
 bool HLServo::sendUntilOK(unsigned long waitMs) {
     int tryCnt = 0;
-    while (tryCnt++ < _maxRetry) {
+    while (tryCnt++ <= _maxRetry + 1) {
         if (sendCommand(true, waitMs) && isReturnOK()) return true;
         delay(1);
     }
@@ -169,7 +169,7 @@ bool HLServo::reset() {
 // #{id}PVER\r\n
 uint32_t HLServo::getVersion(byte id) {
     int tryCnt = 0;
-    while (tryCnt++ <= _maxRetry) {
+    while (tryCnt++ <= _maxRetry + 1) {
         String code = "PVER";
         _buffer = "#" + String(id) + code;
         if (sendCommand(true) && (_retCnt >= 6)) {
@@ -383,7 +383,7 @@ byte HLServo::servoCommand(byte *cmd)  {
 
 byte HLServo::getServoMode(int id) {
     int tryCnt = 0;
-    while (tryCnt++ <= _maxRetry) {
+    while (tryCnt++ <= _maxRetry + 1) {
         _buffer = "#" + String(id) + "PMOD";
         if (sendCommand(true) && (_retCnt >= 9)) {
             return _retBuf[8];
