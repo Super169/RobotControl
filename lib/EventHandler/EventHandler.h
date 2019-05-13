@@ -19,7 +19,7 @@ class EventHandler {
         };
 
         enum class ACTION_TYPE : uint8_t {
-            na = 0, playAction = 1, stopAction = 2, headLed = 3, mp3PlayMp3 = 4, mp3PlayFile = 5, mp3Stop = 6, gpio = 7, system_action = 8, servo = 9, sonic = 10
+            na = 0, playAction = 1, stopAction = 2, headLed = 3, mp3PlayMp3 = 4, mp3PlayFile = 5, mp3Stop = 6, gpio = 7, system_action = 8, servo = 9, sonic = 10, counter_set = 11, counter_adj = 12
         };
 
         enum class EVENT_TYPE : uint8_t {
@@ -48,9 +48,20 @@ class EventHandler {
             } data;
             struct {
                 uint8_t type;
+                int8_t parm_1;
+                int8_t parm_2;
+                int8_t parm_3;
+            } i8data;
+            struct {
+                uint8_t type;
                 uint8_t parm_1;
                 uint16_t parm_u16;
             } u16data;
+            struct {
+                uint8_t type;
+                uint8_t parm_1;
+                int16_t parm_i16;
+            } i16data;
         };
 
         union EVENT {
@@ -104,6 +115,8 @@ class EventHandler {
         bool ReadFile(const char *fileName, uint8_t *buffer, size_t size);
         bool DeleteFile(const char *fileName, bool mustExists = false);
         bool WriteFile(const char *fileName, uint8_t *buffer, size_t size);
+
+        unsigned long lastDebugMs = 0;
 };
 
 #endif

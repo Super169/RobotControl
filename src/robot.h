@@ -43,7 +43,7 @@ SimpleWiFiManager SWFM;
 #define VERSION_MAJOR   2
 #define VERSION_MINOR   3
 #define VERSION_SUB     1
-#define VERSION_FIX     1
+#define VERSION_FIX     0
 
 
 // Level   0 - all

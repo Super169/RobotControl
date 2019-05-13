@@ -3,8 +3,8 @@
 
 #include "baseServo.h"
 
-#define _UBTServo_
-//#define _HLServo_
+//#define _UBTServo_
+#define _HLServo_
 
 #if defined(_UBTServo_)
     #include <drivers/UBT/UBTServo.h>

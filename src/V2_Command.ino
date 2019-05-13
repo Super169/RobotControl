@@ -1158,6 +1158,7 @@ void V2_SetActionSpeed(byte *cmd) {
 }
 
 void V2_GetActionStatus(byte *cmd) {
+	if (debug) DEBUG.printf("[V2_GetActionStatus]\n");
 
 	byte len = 8;
 	byte result[len+4];
@@ -1731,3 +1732,4 @@ void ActionSonic(uint8_t status) {
 		edsMaze[id]->Suspend(suspend);
 	}
 }
+

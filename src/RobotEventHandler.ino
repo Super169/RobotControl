@@ -276,6 +276,17 @@ void RobotEventHandler() {
 				ActionSonic(action.data.parm_1);
 				break;
 
+			case (uint8_t) EventHandler::ACTION_TYPE::counter_set:
+                if (_dbg->require(110)) _dbg->log(110,0,"Set counter %d to %d", action.data.parm_1, action.i16data.parm_i16);
+				edsCounter[0]->SetCounter(action.data.parm_1, action.i16data.parm_i16);
+				break;
+
+			case (uint8_t) EventHandler::ACTION_TYPE::counter_adj:
+				edsCounter[0]->AdjustCounter(action.data.parm_1, action.i8data.parm_2, action.data.parm_3);
+                if (_dbg->require(110)) _dbg->log(110,0,"Adjust counter %d with %d, range: 0 - %d => %d", 
+				                                  action.data.parm_1, action.i8data.parm_2, action.data.parm_3, edsCounter[0]->GetCounter(action.data.parm_1));
+				break;
+
             default:
                 if (_dbg->require(110)) _dbg->log(110,0,"Unknown action %d \n", action.data.type);
 				validAction = false;

@@ -28,8 +28,8 @@
 #define ED_OFFSET_SONIC     7
 */
 
-#define ED_MAX_DEVICE       6
-#define ED_DATA_SIZE        64      
+#define ED_MAX_DEVICE       7
+#define ED_DATA_SIZE        128      
 
 
 class EventData {
@@ -103,9 +103,9 @@ class EventData {
 
     private:
         const uint8_t _size[ED_MAX_DEVICE + 1] = 
-            {0, ED_SIZE_MPU, ED_SIZE_TOUCH, ED_SIZE_PSXBUTTON, ED_SIZE_BATTERY, ED_SIZE_SONIC, ED_SIZE_MAZE};
+            {0, ED_SIZE_MPU, ED_SIZE_TOUCH, ED_SIZE_PSXBUTTON, ED_SIZE_BATTERY, ED_SIZE_SONIC, ED_SIZE_MAZE, ED_SIZE_COUNTER};
         const uint8_t _idCount[ED_MAX_DEVICE + 1] = 
-            {0, ED_COUNT_MPU, ED_COUNT_TOUCH, ED_COUNT_PSXBUTTON, ED_COUNT_BATTERY, ED_COUNT_SONIC, ED_COUNT_MAZE};
+            {0, ED_COUNT_MPU, ED_COUNT_TOUCH, ED_COUNT_PSXBUTTON, ED_COUNT_BATTERY, ED_COUNT_SONIC, ED_COUNT_MAZE, ED_COUNT_COUNTER};
         // const uint8_t _offset[ED_MAX_DEVICE + 1] = {0, ED_OFFSET_MPU, ED_OFFSET_TOUCH, ED_OFFSET_PSXBUTTON, ED_OFFSET_BATTERY, ED_OFFSET_SONIC };
         // uint16_t _threadhold[ED_MAX_DEVICE + 1] = {0, 0, 0, 0, 0,0 };
 

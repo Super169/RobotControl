@@ -13,6 +13,7 @@ EventData::EventData()
         _dataSize += _size[i] * _idCount[i];
         _devCount += _idCount[i];
     }
+
     _ready = (bool *) malloc(_dataSize);
     _threadhold = (uint16_t *) malloc(_devCount * sizeof(uint16_t));
     Clear();

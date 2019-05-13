@@ -20,6 +20,8 @@ class EdsCounter : public EventDataSource {
         void Setup();
         bool GetData() override;
         bool SetCounter(uint8_t target, int16_t value);
+        bool AdjustCounter(uint8_t target, int8_t adjustment, uint8_t maxValue);
+        int16_t GetCounter(uint8_t target);
 
         byte GetPower(uint16_t v);
 

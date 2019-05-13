@@ -268,9 +268,14 @@ void EventHandler::DumpEvents(Stream *output) {
 
 
 bool EventHandler::MatchCondition(uint16_t idx, CONDITION cond) {
-    if (!_data->IsReady(cond.data.device, cond.data.devId, cond.data.target)) return false;
+    if (!_data->IsReady(cond.data.device, cond.data.devId, cond.data.target)) {
+        return false;
+    }
     int16_t value = _data->GetData(cond.data.device, cond.data.devId, cond.data.target);
     bool match = false;
+
+
+
     switch (cond.data.checkMode) {
         case (uint8_t) CHECK_MODE::match:
             match = (value == cond.data.value);
@@ -307,6 +312,7 @@ bool EventHandler::MatchCondition(uint16_t idx, CONDITION cond) {
                 #endif
             }
         }
+
     } else {
         #ifdef EH_DEBUG
         if (_eventLastMs[idx]) {
