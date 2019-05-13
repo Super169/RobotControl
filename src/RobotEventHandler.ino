@@ -11,6 +11,8 @@ void InitEventHandler() {
 	eds = (EventDataSource**) malloc(sizeof(EventDataSource*) * (eData.DevCount()));
 	for (int i = 0; i < eData.DevCount(); i++) eds[i] = NULL;
 
+	//    EdsMpu6050
+
 	for (int id = 0; id < ED_COUNT_MPU; id++) {
 		edsMpu6050[id] = new EdsMpu6050(&eData, _dbg, id);
 		edsMpu6050[id]->SetEnabled(config.mpuEnabled());
@@ -22,6 +24,8 @@ void InitEventHandler() {
 		}
 		eds[eData.DevOffset((byte) EventData::DEVICE::mpu,id)] = edsMpu6050[id];
 	}
+
+	//    EdsTouch
 
 	for (int id = 0; id < ED_COUNT_TOUCH; id++) {
 		edsTouch[id] = new EdsTouch(&eData, _dbg, 0);
@@ -36,6 +40,8 @@ void InitEventHandler() {
 	}
 	_dbg->log(10,0,"Sub-system board: GPIO: %d, BAUD: %ld, BUffer: %d", ssbConfig.tx_pin, ssbConfig.baud, ssbConfig.buffer_size);
 
+	//    EdsPSXButton
+
 	for (int id = 0; id < ED_COUNT_PSXBUTTON; id++) {
 		edsPsxButton[id] = new EdsPsxButton(&eData, _dbg, id);
 		edsPsxButton[id]->SetEnabled(config.psxEnabled());
@@ -48,6 +54,8 @@ void InitEventHandler() {
 		eds[eData.DevOffset((byte) EventData::DEVICE::psx_button,id)] = edsPsxButton[id];
 	}
 
+	//    EdsBattery
+
 	// TODO: add normal check ms to config object
 	for (int id = 0; id < ED_COUNT_BATTERY; id++) {
 		edsBattery[id] = new EdsBattery(&eData, _dbg, id);
@@ -56,6 +64,7 @@ void InitEventHandler() {
 		eds[eData.DevOffset((byte) EventData::DEVICE::battery,id)] = edsBattery[id];
 	}
 
+	//    EdsSonic
 	
 	for (int id = 0; id < ED_COUNT_SONIC; id++) {
 		edsSonic[id] = new EdsSonic(&eData, _dbg, id);
@@ -70,6 +79,8 @@ void InitEventHandler() {
 		edsSonic[id]->Suspend(true);
 		eds[eData.DevOffset((byte) EventData::DEVICE::sonic,id)] = edsSonic[id];
 	}
+
+	//    EdsMaze
 
 	for (int id = 0; id < ED_COUNT_MAZE; id++) {
 		edsMaze[id] = new EdsMaze(&eData, _dbg, id);
@@ -89,6 +100,14 @@ void InitEventHandler() {
 		eds[eData.DevOffset((byte) EventData::DEVICE::maze,id)] = edsMaze[id];
 	}
 
+
+	//    EdsCounter
+
+	for (int id = 0; id < ED_COUNT_COUNTER; id++) {
+		edsCounter[id] = new EdsCounter(&eData, _dbg, id);
+		_dbg->log(10,0,"%d Counters initialized", ECNT_MAX);
+		eds[eData.DevOffset((byte) EventData::DEVICE::counter,id)] = edsCounter[id];
+	}
 
 	eIdle.LoadData(EVENT_IDLE_FILE);
 	eBusy.LoadData(EVENT_BUSY_FILE);

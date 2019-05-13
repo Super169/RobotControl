@@ -42,7 +42,7 @@ SimpleWiFiManager SWFM;
 // Version 2.2 - New version for event handler added
 #define VERSION_MAJOR   2
 #define VERSION_MINOR   3
-#define VERSION_SUB     0
+#define VERSION_SUB     1
 #define VERSION_FIX     1
 
 
@@ -92,6 +92,7 @@ EdsPsxButton* edsPsxButton[ED_COUNT_PSXBUTTON];
 EdsBattery* edsBattery[ED_COUNT_BATTERY];
 EdsSonic* edsSonic[ED_COUNT_SONIC];
 EdsMaze* edsMaze[ED_COUNT_MAZE];
+EdsCounter* edsCounter[ED_COUNT_COUNTER];
 
 #define CMD_BUFFER_SIZE 160
 

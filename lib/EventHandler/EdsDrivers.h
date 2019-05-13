@@ -7,5 +7,6 @@
 #include <drivers/EdsMpu6050/EdsMpu6050.h>
 #include <drivers/EdsSonic/EdsSonic.h>
 #include <drivers/EdsMaze/EdsMaze.h>
+#include <drivers/EdsCounter/EdsCounter.h>
 
 #endif

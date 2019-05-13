@@ -119,23 +119,51 @@ void RobotConfig::checkConversion() {
 void RobotConfig::checkConfig() {
     
     // Just for safety, to check for possible invalid interval to prevent continue trigger event
-   
-    if (touchDetectPeriod() < MIN_TOUCH_PERIOD) setTouchDetectPeriod(DEFAULT_TOUCH_DETECT_PERIOD);
-    if (touchReleasePeriod() < MIN_TOUCH_PERIOD) setTouchReleasePeriod(DEFAULT_TOUCH_RELEASE_PERIOD);
 
-    if ((mpuCheckFreq() < MIN_BATTERY_CHECK_FREQ) || (mpuCheckFreq() > MAX_BATTERY_CHECK_FREQ)) {
+    // Battery related setting
+
+    if ((batteryRefVoltage() < 1) || (batteryRefVoltage() > 10000)) setBatteryRefVoltage(DEFAULT_BATTERY_REF_VOLTAGE);
+    if ((batteryMinValue() < 1) || (batteryMinValue() < 10000)) setBatteryMinValue(DEFAULT_BATTERY_MIN_VALUE);
+    if ((batteryMaxValue() < 1) || (batteryMaxValue() < 10000)) setBatteryMaxValue(DEFAULT_BATTERY_MAX_VALUE);
+    if ((batteryMaxValue() <= batteryMinValue())) {
+        setBatteryMinValue(DEFAULT_BATTERY_MIN_VALUE);
+        setBatteryMaxValue(DEFAULT_BATTERY_MAX_VALUE);
+    }
+    if ((batteryNormalSec() < 1) || (batteryNormalSec() > 255)) setBatteryNormalSec(DEFAULT_BATTERY_NORMAL_SEC);
+    if ((batteryAlarmSec() < 10) || (batteryAlarmSec() > 255)) setBatteryAlarmSec(DEFAULT_BATTERY_ALARM_SEC);
+
+
+    // Servo setting
+
+    if ((maxServo() < 1) || (maxServo() > 32)) setMaxServo(DEFAULT_MAX_SERVO);
+
+
+    if ((mp3Volume() < 0) || (mp3Volume() > 30)) setMp3Volume(DEFAULT_MP3_VOLUME);
+
+
+    if ((touchDetectPeriod() < MIN_TOUCH_PERIOD) || (touchDetectPeriod() >  MAX_TOUCH_PERIOD)) setTouchDetectPeriod(DEFAULT_TOUCH_DETECT_PERIOD);
+    if ((touchReleasePeriod() < MIN_TOUCH_PERIOD) || (touchReleasePeriod() > MAX_TOUCH_PERIOD)) setTouchReleasePeriod(DEFAULT_TOUCH_RELEASE_PERIOD);
+
+
+    if ((mpuCheckFreq() < MIN_MPU_CHECK_FREQ) || (mpuCheckFreq() > MAX_MPU_CHECK_FREQ)) {
         setMpuCheckFreq(DEFAULT_MPU_CHECK_FREQ);
     }
-    if ((mpuPositionCheckFreq() < MIN_BATTERY_CHECK_FREQ) || (mpuPositionCheckFreq() > MAX_BATTERY_CHECK_FREQ)) {
+    if ((mpuPositionCheckFreq() < MIN_MPU_POS_FREQ) || (mpuPositionCheckFreq() > MAX_MPU_POS_FREQ)) {
         setMpuPositionCheckFreq(DEFAULT_MPU_POSITION_CHECK_FREQ);
     } 
 
     if (psxCheckMs() < MIN_PSX_MS) setPsxCheckMs(DEFAULT_PSX_CHECK_MS);
     if (psxNoEventMs() < MIN_PSX_MS) setPsxNoEventMs(DEFAULT_PSX_NO_EVENT_MS);
-    if (psxIgnoreRepeatMs() < MIN_PSX_IGNORE_REPEAT_MS) setPsxIgnoreRepeatMs(DEFAULT_PSX_IGNORE_REPEAT_MS);
+    if ((psxIgnoreRepeatMs() < MIN_PSX_IGNORE_REPEAT_MS) || (psxIgnoreRepeatMs() > MAX_PSX_IGNORE_REPEAT_MS)) setPsxIgnoreRepeatMs(DEFAULT_PSX_IGNORE_REPEAT_MS);
 
-    if (sonicCheckFreq() == 0) setSonicCheckFreq(DEFAULT_SONIC_CHECK_FREQ);
+    if ((sonicCheckFreq() < MIN_SONIC_CHECK_FREQ) || (sonicCheckFreq() > MIN_SONIC_CHECK_FREQ)) setSonicCheckFreq(DEFAULT_SONIC_CHECK_FREQ);
     if (sonicDelaySec() == 0) setSonicDelaySec(DEFAULT_SONIC_DELAY_SEC);
+
+    if (mazeServo() > maxServo()) setMaxServo(DEFAULT_MAX_SERVO);
+    if ((mazeWallDistance() < MIN_MAZE_WALL_DISTANCE) || (mazeWallDistance() > MAX_MAZE_WALL_DISTANCE)) setMazeWallDistance(DEFAULT_MAZE_WALL_DISTANCE);
+    if ((mazeServoMoveMs() < MIN_MAZE_SERVO_MOVE_MS) || (mazeServoMoveMs() > MAX_MAZE_SERVO_MOVE_MS)) setMazeServoMoveMs(DEFAULT_MAZE_SERVO_MOVE_MS);
+    if ((mazeServoWaitMs() < MIN_MAZE_SERVO_WAIT_MS) || (mazeServoWaitMs() > MAX_MAZE_SERVO_WAIT_MS)) setMazeServoWaitMs(DEFAULT_MAZE_SERVO_WAIT_MS);
+
 
 }
 
@@ -341,7 +369,7 @@ void RobotConfig::setMazeServoMoveMs(uint16_t moveMs) {
     setUint16_t(RC_MAZE_SERVO_MOVE_MS, moveMs);
 }
 
-void RobotConfig::setMazeServoWaiteMs(uint16_t waitMs) {
+void RobotConfig::setMazeServoWaitMs(uint16_t waitMs) {
     setUint16_t(RC_MAZE_SERVO_WAIT_MS, waitMs);
 }
 

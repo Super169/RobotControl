@@ -34,6 +34,11 @@
 #define DEFAULT_MP3_STARTUP             1
 #define DEFAULT_STARTUP_ACTION          0
 
+
+#define MIN_MPU_CHECK_FREQ              10
+#define MAX_MPU_CHECK_FREQ              100
+#define MIN_MPU_POS_FREQ                20
+#define MAX_MPU_POS_FREQ                100
 #define DEFAULT_MPU_ENABLED             false
 #define DEFAULT_MPU_CHECK_FREQ          10
 #define DEFAULT_MPU_POSITION_CHECK_FREQ 20
@@ -47,7 +52,8 @@
 #define DEFAULT_TOUCH_NO_ACTION         0
 #define DEFAULT_TOUCH_DETECT_PERIOD     1500
 #define DEFAULT_TOUCH_RELEASE_PERIOD    1000
-#define MIN_TOUCH_PERIOD                100
+#define MIN_TOUCH_PERIOD                1000
+#define MAX_TOUCH_PERIOD                5000
 
 #define DEFAULT_PSX_ENABLED             false
 #define DEFAULT_PSX_CHECK_MS            20
@@ -56,10 +62,21 @@
 #define DEFAULT_PSX_SHOCK               false
 #define MIN_PSX_MS                      10
 #define MIN_PSX_IGNORE_REPEAT_MS        50
+#define MAX_PSX_IGNORE_REPEAT_MS        2000
+
+#define MIN_SONIC_CHECK_FREQ            1
+#define MAX_SONIC_CHECK_FREQ            10
 
 #define DEFAULT_SONIC_ENABLED           false
 #define DEFAULT_SONIC_CHECK_FREQ        5
 #define DEFAULT_SONIC_DELAY_SEC         1
+
+#define MIN_MAZE_WALL_DISTANCE          10
+#define MAX_MAZE_WALL_DISTANCE          255
+#define MIN_MAZE_SERVO_MOVE_MS          100
+#define MAX_MAZE_SERVO_MOVE_MS          5000
+#define MIN_MAZE_SERVO_WAIT_MS          100
+#define MAX_MAZE_SERVO_WAIT_MS          5000
 
 #define DEFAULT_MAZE_SERVO              0
 #define DEFAULT_MAZE_WALL_DISTANCE      20
@@ -267,13 +284,13 @@ class RobotConfig {
         void setMazeWallDistance(uint8_t distance);
         void setMazeServoDirection(uint8_t direction);
         void setMazeServoMoveMs(uint16_t moveMs);
-        void setMazeServoWaiteMs(uint16_t waitMs);
+        void setMazeServoWaitMs(uint16_t waitMs);
         inline void setMaze(uint8_t servoId, uint8_t distance, uint8_t direciton, uint16_t moveMs, uint16_t waitMs) {
             setMazeServo(servoId);
             setMazeWallDistance(distance);
             setMazeServoDirection(direciton);
             setMazeServoMoveMs(moveMs);
-            setMazeServoWaiteMs(waitMs);
+            setMazeServoWaitMs(waitMs);
         }
 
         bool enableDebug() { return _data[RC_ENABLE_DEBUG]; }

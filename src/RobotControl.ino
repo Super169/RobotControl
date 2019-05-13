@@ -117,7 +117,7 @@ void setup() {
 	
 	// retBuffer = servo.retBuffer();
 
-	if (debug) DEBUG.println(F("\nUBTech Robot Control v2.0\n"));
+	if (debug) DEBUG.printf("\nUBTech Robot Control v%d.%d.%d.%d\n\n", VERSION_MAJOR, VERSION_MINOR, VERSION_SUB, VERSION_FIX);
 
 	char buf[20];
 

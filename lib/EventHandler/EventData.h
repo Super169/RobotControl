@@ -10,6 +10,7 @@
 #define ED_SIZE_BATTERY     2
 #define ED_SIZE_SONIC       1
 #define ED_SIZE_MAZE        1
+#define ED_SIZE_COUNTER     10
 
 #define ED_COUNT_MPU        1
 #define ED_COUNT_TOUCH      1
@@ -17,6 +18,7 @@
 #define ED_COUNT_BATTERY    1
 #define ED_COUNT_SONIC      4
 #define ED_COUNT_MAZE       1
+#define ED_COUNT_COUNTER    1
 
 /*
 #define ED_OFFSET_MPU       0
@@ -35,7 +37,7 @@ class EventData {
     public:
 
         enum class DEVICE : uint8_t {
-            mpu = 1, touch = 2, psx_button = 3, battery = 4, sonic = 5, maze = 6
+            mpu = 1, touch = 2, psx_button = 3, battery = 4, sonic = 5, maze = 6, counter = 7
         };
 
         enum class MPU_TARGET : uint8_t {

@@ -159,6 +159,11 @@ bool V2_Command() {
 			return true;
 			break;
 
+		case V2_CMD_GET_ACTION_STATUS:
+			V2_GetActionStatus(cmd);
+			return true;
+			break;
+
 		case V2_CMD_STOPPLAY:
 			V2_ResetAction();
 			if (config.mp3Enabled()) {
@@ -176,7 +181,7 @@ bool V2_Command() {
 			return true;
 			break;
 
-		case V2_CMD_SET_ACTIONSPEED:
+		case V2_CMD_SET_ACTION_SPEED:
 			V2_SetActionSpeed(cmd);
 			return true;
 			break;
@@ -1150,6 +1155,26 @@ void V2_SetActionSpeed(byte *cmd) {
 	if (debug) DEBUG.printf("V2_SetActionSpeed - Set speed to %d\n", cmd[4]);
 	actionTimeFactor = 100.0f / cmd[4];
 	V2_SendSingleByteResult(cmd, 0);
+}
+
+void V2_GetActionStatus(byte *cmd) {
+
+	byte len = 8;
+	byte result[len+4];
+	memset(result, 0, len+4);
+	
+	result[2] = len;
+	result[3] = cmd[3];
+
+	if (V2_ActionPlaying) {
+		result[4] = 1;					// Action playing
+		result[5] = V2_ActionCombo;		// combo 
+		result[6] = 0;					// combo step
+		result[7] = V2_NextAction;		// Next Action
+		result[8] = V2_NextPose >> 8;		// Next Pose
+		result[9] = V2_NextPose & 0xFF;		// Next Pose
+	} 
+	V2_SendResult(result);
 }
 
 
