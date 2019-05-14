@@ -42,7 +42,7 @@ SimpleWiFiManager SWFM;
 // Version 2.2 - New version for event handler added
 #define VERSION_MAJOR   2
 #define VERSION_MINOR   3
-#define VERSION_SUB     1
+#define VERSION_SUB     2
 #define VERSION_FIX     0
 
 
@@ -84,6 +84,7 @@ EventData eData;
 EventHandler eIdle(&eData);
 EventHandler eBusy(&eData);
 EventHandler eTemp(&eData);
+byte eTempMode, eTempId;
 
 SSBoard ssb;
 EdsMpu6050* edsMpu6050[ED_COUNT_MPU];

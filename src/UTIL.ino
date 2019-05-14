@@ -85,3 +85,19 @@ void DebugShowSkipByte() {
 		DEBUG.printf("Skip byte: %02X\n", cmdBuffer.peek());
 	}
 }
+
+void DumpSPIFFS(Stream *output) {
+	output->printf("\nDumpSPIFFS\n\n");
+	if (!SPIFFS.begin()) {
+		output->printf("Fail to begin SPIFFS\n\n");
+		return;
+	}
+	Dir dir = SPIFFS.openDir("/");
+	while (dir.next()) {
+		output->printf("%s  ", dir.fileName().c_str());
+		File f = dir.openFile("r");
+		output->printf("%d\n", f.size());
+		f.close();
+	}
+	SPIFFS.end();
+}

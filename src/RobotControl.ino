@@ -74,6 +74,7 @@ void setup() {
 	_dbg->setLogLevel(DEFAULT_LOG_LEVEL);
 
 	DEBUG.println("\n\n");
+	DEBUG.printf("\nUBTech Robot Control v%d.%d.%d.%d\n\n", VERSION_MAJOR, VERSION_MINOR, VERSION_SUB, VERSION_FIX);
 
 	// TODO: must remove
 	//robotPort.begin(busConfig.baud);
@@ -117,7 +118,6 @@ void setup() {
 	
 	// retBuffer = servo.retBuffer();
 
-	if (debug) DEBUG.printf("\nUBTech Robot Control v%d.%d.%d.%d\n\n", VERSION_MAJOR, VERSION_MINOR, VERSION_SUB, VERSION_FIX);
 
 	char buf[20];
 

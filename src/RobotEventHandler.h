@@ -14,13 +14,15 @@
 #define EVENT_HANDLER_VERSION  1
 
 #define EH_OFFSET_MODE          4
-#define EH_OFFSET_VERSION       5
-#define EH_OFFSET_COUNT         6
-#define EH_OFFSET_ACTION        7
+#define EH_OFFSET_HANDLER_ID    5
+#define EH_OFFSET_VERSION       6
+#define EH_OFFSET_COUNT         7
+#define EH_OFFSET_ACTION        8
 
 #define ED_OFFSET_MODE          4
-#define ED_OFFSET_STARTIDX      5
-#define ED_OFFSET_COUNT         6
+#define ED_OFFSET_HANDLER_ID    5
+#define ED_OFFSET_STARTIDX      6
+#define ED_OFFSET_COUNT         7
 
 
 #define EVENT_HANDLER_ELAPSE_MS 10
@@ -63,6 +65,7 @@ void CheckPosition();
 void CheckTouch();
 void CheckVoltage() ;
 byte GetPower(uint16_t v);
+void LoadEventHandler(uint8_t eventHandlerId);
 
 
 EventDataSource** eds;

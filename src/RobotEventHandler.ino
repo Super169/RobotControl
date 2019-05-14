@@ -109,21 +109,57 @@ void InitEventHandler() {
 		eds[eData.DevOffset((byte) EventData::DEVICE::counter,id)] = edsCounter[id];
 	}
 
+	DumpSPIFFS(&DEBUG);
+	ConvertEventHandler(false);
+	LoadEventHandler(0);
+
+	/*
 	eIdle.LoadData(EVENT_IDLE_FILE);
 	eBusy.LoadData(EVENT_BUSY_FILE);
+	*/
+
 
 }
 
+void CopyHandler(String srcFile, String destFile, bool forceConvert) {
+	if (!forceConvert) {
+		bool fileExists = false;
+		if (SPIFFS.begin()) {
+			fileExists = SPIFFS.exists(destFile);
+			SPIFFS.end();
+		}
+		if (fileExists) {
+			return;
+		}
+	}
+	eTemp.LoadData(srcFile);
+	eTemp.SaveData(destFile);
+	eTemp.ReleaseMemory();
+}
 
-void LoadEventHandler(uint8_t eventId) {
+void ConvertEventHandler(bool forceConvert) {
+	// Move existing event file to event/<type>.000
 	char fileName[25];
 	memset(fileName, 0, 25);
-	sprintf(fileName, EVENT_IDLE_TEMPLATE, eventId);
+	sprintf(fileName, EVENT_IDLE_TEMPLATE, 0);
+	CopyHandler(EVENT_IDLE_FILE, fileName, forceConvert);
+
+	memset(fileName, 0, 25);
+	sprintf(fileName, EVENT_BUSY_TEMPLATE, 0);
+	CopyHandler(EVENT_BUSY_FILE, fileName, forceConvert);
+}
+
+void LoadEventHandler(uint8_t eventHandlerId) {
+	char fileName[25];
+	memset(fileName, 0, 25);
+	sprintf(fileName, EVENT_IDLE_TEMPLATE, eventHandlerId);
 	eIdle.LoadData(fileName);
 	
 	memset(fileName, 0, 25);
-	sprintf(fileName, EVENT_BUSY_TEMPLATE, eventId);
-	eBusy.LoadData(EVENT_BUSY_FILE);
+	sprintf(fileName, EVENT_BUSY_TEMPLATE, eventHandlerId);
+	eBusy.LoadData(fileName);
+
+	_dbg->log(10,0,"Event Handler %d loaded", eventHandlerId);
 }
 
 void RobotEventHandler() {

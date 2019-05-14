@@ -12,5 +12,6 @@ void clearInputBuffer();
 bool cmdSkip(bool flag);
 
 void DebugShowSkipByte();
+void DumpSPIFFS(Stream *output);
 
 #endif

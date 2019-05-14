@@ -82,6 +82,8 @@ bool V2_UseGlobalTime = true;
 #define V2_CMD_GET_EVENT_DATA       0x92
 #define V2_CMD_SAVE_EVENT_HEADER    0x93
 #define V2_CMD_SAVE_EVENT_DATA      0x94
+#define V2_CMD_CHANGE_EVENT_HANDLER 0x95
+
 
 /*
 #define V2_CMD_READSPIFFS   	0xF1

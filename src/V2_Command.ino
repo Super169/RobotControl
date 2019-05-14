@@ -186,6 +186,11 @@ bool V2_Command() {
 			return true;
 			break;
 
+		case V2_CMD_CHANGE_EVENT_HANDLER:
+			V2_ChangeEventHandler(cmd);
+			return true;
+			break;
+
 	}
 
 
@@ -1496,19 +1501,43 @@ void V2_GetEventHeader(byte *cmd) {
 	memset(result, 0, EVENT_HEADER_RESULT_SIZE);
 	result[2] = EVENT_HEADER_RESULT_SIZE - 4;
 	result[3] = cmd[3];
-	result[EH_OFFSET_VERSION] = EVENT_HANDLER_VERSION;
-	EventHandler *eh;
-	if (cmd[EH_OFFSET_MODE]) {
-		eh = &eBusy;
-		result[EH_OFFSET_MODE] = 1;
+	byte mode = (cmd[4] ? 1 : 0);
+	byte id;
+	// Handle for both version.
+	if (cmd[2] == 4) {
+		id = cmd[5];
 	} else {
-		eh = &eIdle;
-		result[EH_OFFSET_MODE] = 0;
+		id = 0;
 	}
-	uint16_t count = eh->Count();
+
+	result[EH_OFFSET_VERSION] = EVENT_HANDLER_VERSION;
+	result[EH_OFFSET_MODE] = mode;
+	result[EH_OFFSET_HANDLER_ID] = id;
+
+	LoadETemp(mode, id, true);
+
+
+	uint16_t count = eTemp.Count();
 	result[EH_OFFSET_COUNT] = (count & 0xFF);  // Only support 255 events at this version
 	result[EH_OFFSET_ACTION] = 0;
+
 	V2_SendResult(result);
+}
+
+bool LoadETemp(byte mode, byte id, bool forceLoad) {
+	if (!forceLoad && (mode == eTempMode) && (id == eTempId)) return true;
+	
+	eTempMode = (mode ? 1 : 0);
+	eTempId = id;
+
+	char fileName[25];
+	memset(fileName, 0, 25);
+	sprintf(fileName, (eTempMode ? EVENT_BUSY_TEMPLATE : EVENT_IDLE_TEMPLATE), eTempId);
+	eTemp.LoadData(fileName);
+
+	if (_dbg->require(110)) _dbg->log(110, 0, "%s loaded into eTemp, with %d events", fileName, eTemp.Count());
+
+	return true;
 }
 
 void V2_GetEventData(byte *cmd) {
@@ -1517,18 +1546,23 @@ void V2_GetEventData(byte *cmd) {
 	memset(result, 0, EVENT_DATA_RESULT_SIZE);
 	result[2] = EVENT_DATA_RESULT_SIZE - 4;
 	result[3] = cmd[3];
-	EventHandler *eh;
-	if (cmd[ED_OFFSET_MODE]) {
-		 eh = &eBusy;
-		 result[ED_OFFSET_MODE] = 0x01;
-	 } else {
-		 eh = &eIdle;
-		 result[ED_OFFSET_MODE] = 0x00;
-	 }
+	byte mode = (cmd[ED_OFFSET_MODE] ? 1 : 0);
+	byte id;
+	byte startIdx;
+	// Handle for both version.
+	if (cmd[2] == 5) {
+		id = cmd[5];
+		startIdx = cmd[6];
+	} else {
+		id = 0;
+		startIdx = cmd[5];
+	}
+
+	LoadETemp(mode, id, false);
+	
 	EventHandler::EVENT* events;
-	events = eh->Events();
-	byte count = eh->Count();
-	byte startIdx = cmd[ED_OFFSET_STARTIDX];
+	events = eTemp.Events();
+	byte count = eTemp.Count();
 	byte sendCnt = 0;
 	if (count > startIdx) {
 		sendCnt = count - startIdx;
@@ -1537,6 +1571,7 @@ void V2_GetEventData(byte *cmd) {
 		byte *source = (byte *) events[startIdx].buffer;
 		memcpy(dest, source, 12 * sendCnt);
 	}
+	result[ED_OFFSET_MODE] = mode;
 	result[ED_OFFSET_STARTIDX] = startIdx;
 	result[ED_OFFSET_COUNT] = sendCnt;
 	V2_SendResult(result);
@@ -1549,6 +1584,7 @@ void V2_SaveEventHeader(byte *cmd) {
 	byte version = cmd[EH_OFFSET_VERSION];	
 	byte count = cmd[EH_OFFSET_COUNT];
 	byte action = cmd[EH_OFFSET_ACTION];
+	byte id = cmd[EH_OFFSET_HANDLER_ID];	
 	if (version == EVENT_HANDLER_VERSION) {
 		switch (action) {
 			case 1:
@@ -1572,6 +1608,7 @@ byte SaveEventHandler(byte *cmd) {
 	byte mode = cmd[EH_OFFSET_MODE];	
 	byte count = cmd[EH_OFFSET_COUNT];
 	byte action = cmd[EH_OFFSET_ACTION];	
+	byte id = cmd[EH_OFFSET_HANDLER_ID];	
 	// after data sent, update SPIFFS
 	if (count != eTemp.Count()) return RESULT::ERR::NOT_MATCH;
 	if (!eTemp.IsValid()) {
@@ -1582,7 +1619,10 @@ byte SaveEventHandler(byte *cmd) {
 	eTarget = (mode ? &eBusy : &eIdle);
 
 	if (eTarget->Clone(&eTemp)) {
-		if (eTarget->SaveData(mode ? EVENT_BUSY_FILE : EVENT_IDLE_FILE)) {
+		char fileName[25];
+		memset(fileName, 0, 25);
+		sprintf(fileName, (mode ? EVENT_BUSY_TEMPLATE : EVENT_IDLE_TEMPLATE), id);
+		if (eTarget->SaveData(fileName)) {
 			return RESULT::SUCCESS;
 		}
 		return RESULT::ERR::WRITE;
@@ -1596,6 +1636,7 @@ void V2_SaveEventData(byte *cmd) {
 	byte mode = cmd[ED_OFFSET_MODE];
 	byte startIdx = cmd[ED_OFFSET_STARTIDX];
 	byte count = cmd[ED_OFFSET_COUNT];
+	byte id = cmd[ED_OFFSET_HANDLER_ID];
 	if ((startIdx < eTemp.Count()) && (startIdx + count <= eTemp.Count())) {
 		size_t dataCnt = 12 * count;
 		byte *source = (byte *) (cmd + 16);
@@ -1606,6 +1647,18 @@ void V2_SaveEventData(byte *cmd) {
 		result = RESULT::SUCCESS;
 	} else {
 		result = RESULT::ERR::DATA_OVERFLOW;
+	}
+	V2_SendSingleByteResult(cmd, result);
+}
+
+void V2_ChangeEventHandler(byte *cmd) {
+	if (_dbg->require(110)) _dbg->log(110, 0, "[V2_ChanveEventHandler]");
+	byte result = RESULT::ERR::UNKNOWN;
+	if (cmd[2] == 3) {
+		LoadEventHandler(cmd[4]);
+		result = RESULT::SUCCESS;
+	} else {
+		result = RESULT::ERR::PARM_SIZE;
 	}
 	V2_SendSingleByteResult(cmd, result);
 }
