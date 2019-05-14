@@ -1589,6 +1589,8 @@ void V2_SaveEventHeader(byte *cmd) {
 		switch (action) {
 			case 1:
 				// before sending data
+				eTempId = id;
+				eTempMode = mode;
 				eTemp.Reset(count);
 				result = RESULT::SUCCESS;
 				break;
@@ -1609,25 +1611,37 @@ byte SaveEventHandler(byte *cmd) {
 	byte count = cmd[EH_OFFSET_COUNT];
 	byte action = cmd[EH_OFFSET_ACTION];	
 	byte id = cmd[EH_OFFSET_HANDLER_ID];	
+
 	// after data sent, update SPIFFS
 	if (count != eTemp.Count()) return RESULT::ERR::NOT_MATCH;
 	if (!eTemp.IsValid()) {
-		DEBUG.println("eTemp->Not valid");
+		if (_dbg->require(110)) _dbg->log(110, 0, "eTemp->Not valid");
 		return RESULT::ERR::NOT_READY;
 	}
-	EventHandler* eTarget;
-	eTarget = (mode ? &eBusy : &eIdle);
 
-	if (eTarget->Clone(&eTemp)) {
-		char fileName[25];
-		memset(fileName, 0, 25);
-		sprintf(fileName, (mode ? EVENT_BUSY_TEMPLATE : EVENT_IDLE_TEMPLATE), id);
-		if (eTarget->SaveData(fileName)) {
-			return RESULT::SUCCESS;
-		}
-		return RESULT::ERR::WRITE;
+	if (eTempId != id) {
+		if (_dbg->require(110)) _dbg->log(110, 0, "Not matched: %s.%03d (eTemp: %s.%03d)", (mode ? "BUSY" : "IDLE"), id, (eTempMode ? "BUSY" : "IDLE"), eTempId);
+		return RESULT::ERR::NOT_MATCH;
 	}
-	return RESULT::ERR::COPY;
+
+	// Replace handler if updating current handler
+	if (eCurrId == eTempId) {
+		EventHandler* eTarget;
+		eTarget = (mode ? &eBusy : &eIdle);
+		if (!eTarget->Clone(&eTemp)) {
+			if (_dbg->require(110)) _dbg->log(110, 0, "Fail replacing current handler with %s.%03d", (mode ? "BUSY" : "IDLE"), id);
+			return RESULT::ERR::COPY;
+		}
+	}
+
+	char fileName[25];
+	memset(fileName, 0, 25);
+	sprintf(fileName, (mode ? EVENT_BUSY_TEMPLATE : EVENT_IDLE_TEMPLATE), id);
+	if (eTemp.SaveData(fileName)) {
+		return RESULT::SUCCESS;
+	}
+	if (_dbg->require(110)) _dbg->log(110, 0, "Fail updating handler file for %s.%03d", (mode ? "BUSY" : "IDLE"), id);
+	return RESULT::ERR::WRITE;
 }
 
 void V2_SaveEventData(byte *cmd) {

@@ -114,7 +114,7 @@ void SystemAction_200() {
 	DEBUG.printf("SDK Version: %s\n", system_get_sdk_version());
 	DEBUG.printf("Free Heap Size: %d\n", system_get_free_heap_size());
 	DEBUG.printf("VDD33: %d\n", system_get_vdd33());
-	
+	DumpSPIFFS(&DEBUG);
 	DEBUG.printf("\n\n");
 }
 

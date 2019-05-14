@@ -84,7 +84,7 @@ EventData eData;
 EventHandler eIdle(&eData);
 EventHandler eBusy(&eData);
 EventHandler eTemp(&eData);
-byte eTempMode, eTempId;
+byte eCurrId, eTempMode, eTempId;
 
 SSBoard ssb;
 EdsMpu6050* edsMpu6050[ED_COUNT_MPU];
